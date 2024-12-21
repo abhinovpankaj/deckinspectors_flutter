@@ -239,9 +239,9 @@ class _SectionPageState extends State<SectionPage> {
     if (parentType != 'project') {
       currentLocation = realmServices.getLocation(widget.parentId) as Location;
     }
-    //_listenForPiIpAddress();
+    // _listenForPiIpAddress();
     //for hardcoded websocket URL use init2
-    websocketUrl = "http://e3cam.local:8090";
+    websocketUrl = "http://192.168.1.3:8090";
     SignallingService.instance.init(
       websocketUrl: websocketUrl,
       selfCallerID: selfCallerID,
@@ -254,7 +254,7 @@ class _SectionPageState extends State<SectionPage> {
     //receiver.send([1, 2, 3, 4], Endpoint.any(port: const Port(5005)));
     receiver.asStream().listen((datagram) {
       if (datagram != null) {
-        String message = String.fromCharCodes(datagram.data);
+        String message = String.fromCharCodes(datagram.data).split(' ')[0];
 
         final websocket = SignallingService.instance.socket;
         websocketUrl = "http://${message}:8090";
