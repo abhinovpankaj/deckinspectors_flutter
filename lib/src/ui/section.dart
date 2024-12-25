@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:E3InspectionsMultiTenant/src/bloc/images_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
+import 'package:E3InspectionsMultiTenant/src/ui/capture_multipic_raspi.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
 
 import 'package:http/http.dart' as http;
@@ -241,7 +242,7 @@ class _SectionPageState extends State<SectionPage> {
     }
     // _listenForPiIpAddress();
     //for hardcoded websocket URL use init2
-    websocketUrl = "http://192.168.1.3:8090";
+    websocketUrl = "http://192.168.125.1:8090";
     SignallingService.instance.init(
       websocketUrl: websocketUrl,
       selfCallerID: selfCallerID,
@@ -525,6 +526,23 @@ class _SectionPageState extends State<SectionPage> {
           }
         });
       });
+    } else if (value == 4) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PiZeroCameraScreen()),
+      ).then((value) {
+        setState(() {
+          if (value != null) {
+            capturedImages.addAll(value);
+            if (value.isNotEmpty) {
+              setState(() {
+                unitUnavailable = false;
+                isFormUpdated = true;
+              });
+            }
+          }
+        });
+      });
     } else {
       //Code toopen gallery
       final ImagePicker picker = ImagePicker();
@@ -620,8 +638,10 @@ class _SectionPageState extends State<SectionPage> {
                               'Camera', Icons.camera_alt_outlined, 1),
                           _buildPopupMenuItem(
                               'Gallery', Icons.browse_gallery_outlined, 2),
+                          _buildPopupMenuItem('External Mobile Cam',
+                              Icons.camera_outdoor_outlined, 3),
                           _buildPopupMenuItem(
-                              'External Cam', Icons.camera_outdoor_outlined, 3),
+                              'E3 Cam', Icons.camera_outdoor_outlined, 4),
                         ],
                       ),
                     ],
