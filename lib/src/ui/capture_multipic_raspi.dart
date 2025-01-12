@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:udp/udp.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'image_widget.dart';
@@ -15,7 +16,7 @@ class PiZeroCameraScreen extends StatefulWidget {
 }
 
 class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
-  final String baseUrl = "http://192.168.200.200:5000";
+  String baseUrl = "";
   late WebViewController controller;
   List<XFile> capturedImages = [];
   bool isCapturing = false;
@@ -23,9 +24,29 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
   @override
   void initState() {
     super.initState();
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('$baseUrl/video_feed'));
+    _listenForPiIpAddress();
+    controller = WebViewController();
+  }
+
+  Future<void> _listenForPiIpAddress() async {
+    var receiver = await UDP.bind(Endpoint.any(port: const Port(5005)));
+    //receiver.send([1, 2, 3, 4], Endpoint.any(port: const Port(5005)));
+    receiver.asStream().listen((datagram) {
+      if (datagram != null) {
+        String message = String.fromCharCodes(datagram.data);
+        setState(() {
+          baseUrl = 'http://${message.split(' ')[0]}:5000';
+          debugPrint('Raspberry Pi IP Address: ${message.split(' ')[0]}');
+
+          controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+          controller.loadRequest(Uri.parse('$baseUrl/video_feed'));
+        });
+        receiver.close();
+      }
+    });
+    // Keep the receiver open for 60 seconds
+    await Future.delayed(const Duration(seconds: 60));
+    receiver.close();
   }
 
   @override
@@ -38,7 +59,9 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
         //   child: const Icon(Icons.video_call),
         // ),
         appBar: AppBar(
-          title: const Text('Live Stream from E3 Camera'),
+          title: baseUrl == ""
+              ? const Text('Loading')
+              : const Text('Live Stream from E3 Camera'),
         ),
         body: Column(
           children: [
