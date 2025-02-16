@@ -149,7 +149,7 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
 
   String streamingURL = '';
   String _raspberryIpAddress = 'Fetching...';
-
+  double _currentZoomLevel = 1.0;
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -193,8 +193,30 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Slider(
+                            value: _currentZoomLevel,
+                            min: 1.0,
+                            max: 10.0,
+                            divisions: 9,
+                            activeColor: Colors.white,
+                            inactiveColor: Colors.white70,
+                            onChanged: (value) async {
+                              setState(() {
+                                _currentZoomLevel = value;
+                              });
+
+                              SignallingService.instance.socket!
+                                  .emit('zoomFeed', {
+                                "calleeId": calleeId,
+                                "zoomValue": _currentZoomLevel,
+                              });
+                            },
+                          ),
+                        ),
                         Align(
                           alignment: Alignment.topRight,
                           child: ElevatedButton.icon(
