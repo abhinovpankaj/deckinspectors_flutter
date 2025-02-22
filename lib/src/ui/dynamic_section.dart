@@ -956,8 +956,8 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
                                 height: 5,
                               ),
                               DropdownButtonFormField(
-                                decoration:
-                                    InputDecoration(hintText: question.name),
+                                // decoration:
+                                //     InputDecoration(hintText: question.name),
                                 value: question.answer.isEmpty
                                     ? null
                                     : question.answer,
