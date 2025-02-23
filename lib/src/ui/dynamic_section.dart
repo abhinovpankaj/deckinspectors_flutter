@@ -17,6 +17,9 @@ import '../bloc/images_bloc.dart';
 import '../bloc/settings_bloc.dart';
 import '../models/success_response.dart';
 import '../resources/realm/realm_services.dart';
+import '../services/signalling.service.dart';
+import 'capture_multipic_esp_32.dart';
+import 'capture_multipic_raspi.dart';
 import 'capturemultipic.dart';
 import 'package:http/http.dart' as http;
 
@@ -91,9 +94,18 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
     if (parentType != 'project') {
       currentLocation = realmServices.getLocation(widget.parentId) as Location;
     }
-
+    websocketUrl = "http://192.168.125.1:8090";
+    SignallingService.instance.init(
+      websocketUrl: websocketUrl,
+      selfCallerID: selfCallerID,
+    );
     super.initState();
   }
+
+  String websocketUrl = ""; // = "ws://192.168.1.2:8090";
+
+  // generate callerID of local user
+  final String selfCallerID = 'e3camReceiver';
 
   bool isFormUpdated = false;
   bool isRunning = false;
@@ -395,6 +407,40 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
           }
         });
       });
+    } else if (value == 3) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ESP32CameraScreen()),
+      ).then((value) {
+        setState(() {
+          if (value != null) {
+            capturedImages.addAll(value);
+            if (value.isNotEmpty) {
+              setState(() {
+                unitUnavailable = false;
+                isFormUpdated = true;
+              });
+            }
+          }
+        });
+      });
+    } else if (value == 4) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PiZeroCameraScreen()),
+      ).then((value) {
+        setState(() {
+          if (value != null) {
+            capturedImages.addAll(value);
+            if (value.isNotEmpty) {
+              setState(() {
+                unitUnavailable = false;
+                isFormUpdated = true;
+              });
+            }
+          }
+        });
+      });
     } else {
       //Code toopen gallery
       final ImagePicker picker = ImagePicker();
@@ -534,6 +580,10 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
                               'Camera', Icons.camera_alt_outlined, 1),
                           _buildPopupMenuItem(
                               'Gallery', Icons.browse_gallery_outlined, 2),
+                          _buildPopupMenuItem('External Mobile Cam',
+                              Icons.camera_outdoor_outlined, 3),
+                          _buildPopupMenuItem(
+                              'E3 Cam', Icons.camera_outdoor_outlined, 4),
                         ],
                       ),
                     ],
