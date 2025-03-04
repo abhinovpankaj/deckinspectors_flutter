@@ -9,6 +9,7 @@ import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
 import '../resources/realm/realm_services.dart';
 //import 'breadcrumb_navigation.dart';
+import '../services/realm_local_services.dart';
 import 'capture_image.dart';
 
 class AddEditLocationPage extends StatefulWidget {
@@ -83,7 +84,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
 
-  save(BuildContext context, RealmProjectServices realmServices) async {
+  save(BuildContext context, RealmLocalServices realmServices) async {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       // If the form is valid, display a snackbar. In the real world,
@@ -157,7 +158,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmProjectServices>(context);
+    final realmServices = Provider.of<RealmLocalServices>(context);
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
@@ -401,7 +402,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
   }
 
   void deleteLocation(
-      BuildContext context, RealmProjectServices realmServices) async {
+      BuildContext context, RealmLocalServices realmServices) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Deleting $pageType...')),
     );

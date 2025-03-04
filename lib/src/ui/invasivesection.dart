@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:E3InspectionsMultiTenant/src/bloc/images_bloc.dart';
+import 'package:E3InspectionsMultiTenant/src/services/realm_local_services.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
@@ -52,7 +53,7 @@ class InvasiveSectionPage extends StatefulWidget {
 
 class _InvasiveSectionPageState extends State<InvasiveSectionPage>
     with SingleTickerProviderStateMixin {
-  late RealmProjectServices realmServices;
+  late RealmLocalServices realmServices;
   //late TabController _tabController;
   late int selectedTabIndex = 0;
   @override
@@ -219,7 +220,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
 
     // _tabController.addListener(_handleTabSelection);
 
-    realmServices = Provider.of<RealmProjectServices>(context, listen: false);
+    realmServices = Provider.of<RealmLocalServices>(context, listen: false);
     isNewSection = widget.isNewSection;
 
     capturedImages.clear();
@@ -313,7 +314,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
   final TextEditingController _conclusiveDescriptionController =
       TextEditingController(text: '');
 
-  save(BuildContext context, RealmProjectServices realmServices) async {
+  save(BuildContext context, RealmLocalServices realmServices) async {
     if (_invasiveDescriptionController.text.isEmpty ||
         capturedInvasiveImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -1840,8 +1841,10 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                                       OutlinedButton.styleFrom(
                                                           side: BorderSide.none,
                                                           // the height is 50, the width is full
-                                                          minimumSize: const Size
-                                                              .fromHeight(30),
+                                                          minimumSize:
+                                                              const Size
+                                                                  .fromHeight(
+                                                                  30),
                                                           backgroundColor:
                                                               Colors.white,
                                                           shadowColor:

@@ -17,6 +17,7 @@ import '../bloc/images_bloc.dart';
 import '../bloc/settings_bloc.dart';
 import '../models/success_response.dart';
 import '../resources/realm/realm_services.dart';
+import '../services/realm_local_services.dart';
 import '../services/signalling.service.dart';
 import 'capture_multipic_esp_32.dart';
 import 'capture_multipic_raspi.dart';
@@ -62,12 +63,12 @@ class DynamicVisualSectionPage extends StatefulWidget {
 class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
   //late DynamicVisualSection _dynamicVisualSection;
 
-  late RealmProjectServices realmServices;
+  late RealmLocalServices realmServices;
   List<String> capturedImages = [];
   List<Question> questions = [];
   @override
   void initState() {
-    realmServices = Provider.of<RealmProjectServices>(context, listen: false);
+    realmServices = Provider.of<RealmLocalServices>(context, listen: false);
     isNewSection = widget.isNewSection;
 
     if (isNewSection) {
@@ -1137,7 +1138,7 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
   }
 
   bool isSaved = false;
-  Future<bool> save(BuildContext context, RealmProjectServices realmServices,
+  Future<bool> save(BuildContext context, RealmLocalServices realmServices,
       bool createNew) async {
     if (_formKey.currentState!.validate()) {
       //check if everything is filled.

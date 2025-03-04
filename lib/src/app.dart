@@ -40,8 +40,8 @@ class _AppState extends State<App> {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
                   boldText: false,
-                  textScaleFactor:
-                      data.textScaleFactor > 2 ? 1.2 : data.textScaleFactor),
+                  textScaler: data.textScaler
+                      .clamp(minScaleFactor: 1, maxScaleFactor: 1.2)),
               child: child!,
             );
           },

@@ -10,6 +10,7 @@ import 'package:realm/realm.dart';
 import '../models/realm/realm_schemas.dart';
 import '../resources/realm/realm_services.dart';
 //import 'breadcrumb_navigation.dart';
+import '../services/realm_local_services.dart';
 import 'cachedimage_widget.dart';
 import 'dynamic_section.dart';
 import 'showprojecttype_widget.dart';
@@ -52,7 +53,7 @@ class _LocationPageState extends State<LocationPage> {
   @override
   Widget build(BuildContext context) {
     final realmServices =
-        Provider.of<RealmProjectServices>(context, listen: true);
+        Provider.of<RealmLocalServices>(context, listen: true);
     formId = realmServices.currentFormId;
     return Scaffold(
         appBar: AppBar(

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/users_bloc.dart';
-import '../resources/realm/realm_services.dart';
+import '../services/realm_local_services.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -120,29 +120,28 @@ class _SettingsPageState extends State<SettingsPage> {
   int reportImageQuality = 100;
   int imageCount = 4;
   String companyName = 'DeckInspectors';
-  late RealmProjectServices realmServices;
+  //late RealmProjectServices realmServices;
   bool isImageUploading = false;
   @override
   void initState() {
     super.initState();
     _initPackageInfo();
-    realmServices = Provider.of<RealmProjectServices>(context, listen: false);
+
     imageCount = imageCountList.first;
     companyName = list.first;
     reportImageQuality = reportQulityList.first;
 
     _loadImageSettings();
-    // realmServices.addListener(() {
-    //   isImageUploading = App.isImageUploading;
-    // });
   }
 
   void setImageQuality(String quality) {
     _applyImageSettings(quality);
   }
 
+  late RealmLocalServices realmLocalServices;
   @override
   Widget build(BuildContext context) {
+    realmLocalServices = Provider.of<RealmLocalServices>(context);
     debugPrint(App.isImageUploading.toString());
     return Scaffold(
       appBar: AppBar(
@@ -391,13 +390,13 @@ class _SettingsPageState extends State<SettingsPage> {
     if (isSyncOn == false) {
       setState(() {
         isSyncOn = true;
-        realmServices.sessionSwitch(true);
+        //realmServices.sessionSwitch(true);
         appSettings.activeConnection = true;
       });
     } else {
       setState(() {
         isSyncOn = false;
-        realmServices.sessionSwitch(false);
+        //realmServices.sessionSwitch(false);
         appSettings.activeConnection = false;
       });
     }

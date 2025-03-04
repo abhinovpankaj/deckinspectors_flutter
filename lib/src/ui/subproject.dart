@@ -8,6 +8,7 @@ import 'package:realm/realm.dart';
 import '../models/realm/realm_schemas.dart';
 
 import '../resources/realm/realm_services.dart';
+import '../services/realm_local_services.dart';
 import 'addedit_location.dart';
 import 'addedit_subproject.dart';
 
@@ -126,7 +127,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmProjectServices>(context);
+    final realmServices = Provider.of<RealmLocalServices>(context);
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,

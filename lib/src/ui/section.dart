@@ -21,6 +21,7 @@ import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
 import 'package:path/path.dart' as path;
 import '../resources/realm/realm_services.dart';
+import '../services/realm_local_services.dart';
 import '../services/signalling.service.dart';
 import 'breadcrumb_navigation.dart';
 //import 'capture_multipic_esp_32.dart';
@@ -59,7 +60,7 @@ class SectionPage extends StatefulWidget {
 }
 
 class _SectionPageState extends State<SectionPage> {
-  late RealmProjectServices realmServices;
+  late RealmLocalServices realmServices;
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +225,7 @@ class _SectionPageState extends State<SectionPage> {
   @override
   void initState() {
     parentType = widget.parentType;
-    realmServices = Provider.of<RealmProjectServices>(context, listen: false);
+    realmServices = Provider.of<RealmLocalServices>(context, listen: false);
     isNewSection = widget.isNewSection;
     if (isNewSection) {
       currentVisualSection = getNewVisualSection();
@@ -337,7 +338,7 @@ class _SectionPageState extends State<SectionPage> {
 
   bool isSaved = false;
 
-  Future<bool> save(BuildContext context, RealmProjectServices realmServices,
+  Future<bool> save(BuildContext context, RealmLocalServices realmServices,
       bool createNew) async {
     if (_formKey.currentState!.validate()) {
       //check if everything is filled.
@@ -1530,7 +1531,7 @@ class _SectionPageState extends State<SectionPage> {
   }
 
   void saveAndNext(
-      BuildContext context, RealmProjectServices realmServices) async {
+      BuildContext context, RealmLocalServices realmServices) async {
     //Navigator.of(context).pop();
 //if (!context.mounted) return;
     await save(context, realmServices, true);

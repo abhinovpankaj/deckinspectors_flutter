@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
 import '../models/realm/realm_schemas.dart';
 
+import '../services/realm_local_services.dart';
 import 'addedit_subproject.dart';
 
 //import 'breadcrumb_navigation.dart';
@@ -61,7 +62,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   late List<Child?> buildings;
   late bool isInvasiveMode;
   late ObjectId projectId;
-  late RealmProjectServices realmProjServices;
+  late RealmLocalServices realmProjServices;
   List<String> assignedUsers = [];
   Location getNewLocation() {
     var newLocation = Location(ObjectId(), projectId, false,
@@ -211,7 +212,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   @override
   Widget build(BuildContext context) {
     final realmServices =
-        Provider.of<RealmProjectServices>(context, listen: false);
+        Provider.of<RealmLocalServices>(context, listen: false);
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
@@ -371,8 +372,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   Widget projectDetails(String name, String url, ObjectId id,
       String description, String editedat, String address) {
-    realmProjServices =
-        Provider.of<RealmProjectServices>(context, listen: false);
+    realmProjServices = Provider.of<RealmLocalServices>(context, listen: false);
     return Padding(
       padding: const EdgeInsets.all(0.0),
       child: Column(

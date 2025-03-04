@@ -1,5 +1,6 @@
 import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/models/realm/realm_schemas.dart';
+import 'package:E3InspectionsMultiTenant/src/services/realm_local_services.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
 
-import '../resources/realm/realm_services.dart';
 import 'addedit_project.dart';
 import 'project_details.dart';
 
@@ -80,7 +80,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     //projectsBloc.fetchAllProjects();
-    final realmServices = Provider.of<RealmProjectServices?>(context);
+    final realmServices = Provider.of<RealmLocalServices?>(context);
     return Scaffold(
         appBar: AppBar(
             automaticallyImplyLeading: false,
@@ -259,8 +259,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                     child: Padding(
                                                         padding:
                                                             const EdgeInsets
-                                                                    .fromLTRB(0,
-                                                                8, 0, 0),
+                                                                .fromLTRB(0, 8,
+                                                                0, 0),
                                                         child: GestureDetector(
                                                             onTap: () {
                                                               if (projects[
@@ -287,7 +287,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                                     .bottomRight,
                                                                 padding:
                                                                     const EdgeInsets
-                                                                            .fromLTRB(
+                                                                        .fromLTRB(
                                                                         0,
                                                                         8,
                                                                         8,

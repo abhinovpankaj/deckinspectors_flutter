@@ -1,51 +1,43 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:provider/provider.dart';
 import 'src/app.dart';
 import 'src/bloc/notificationcontroller.dart';
-import 'src/resources/realm/app_services.dart';
-import 'src/resources/realm/realm_services.dart';
+import 'src/services/realm_local_services.dart';
+import 'src/services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final realmConfig = json
-      .decode(await rootBundle.loadString('assets/config/atlasConfig.json'));
-  String appId = realmConfig['appId'];
-  Uri baseUrl = Uri.parse(realmConfig['baseUrl']);
+
   // Always initialize Awesome Notifications
   await NotificationController.initializeLocalNotifications();
   await NotificationController.initializeIsolateReceivePort();
-  if (Platform.isAndroid) {
-    AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
+  final GoogleMapsFlutterPlatform mapsImplementation =
+      GoogleMapsFlutterPlatform.instance;
+  if (mapsImplementation is GoogleMapsFlutterAndroid) {
+    // Force Hybrid Composition mode.
+    mapsImplementation.useAndroidViewSurface = true;
   }
   return runApp(MultiProvider(providers: [
-    ChangeNotifierProvider<AppServices>(
-        create: (_) => AppServices(appId, baseUrl)),
-    ChangeNotifierProxyProvider<AppSettings, RealmProjectServices?>(
+    ChangeNotifierProvider<AppSettings>(
+      create: (_) => AppSettings(),
+    ),
+    ChangeNotifierProxyProvider<AppSettings, RealmLocalServices?>(
         create: (context) => null,
         update: (BuildContext context, AppSettings appSettings,
-            RealmProjectServices? realmServices) {
-          realmServices?.uploadLocalImages();
+            RealmLocalServices? realmServices) {
+          if (usersBloc.userDetails.username != null) {
+            realmServices = RealmLocalServices(
+                usersBloc.userDetails.username as String,
+                usersBloc.userDetails.companyidentifer as String);
+            realmServices.uploadLocalImages();
+            final syncService = SyncService(realmServices);
+            syncService.startSync();
+          }
           return realmServices;
-        }),
-    ChangeNotifierProxyProvider<AppServices, RealmProjectServices?>(
-        // RealmServices can only be initialized only if the user is logged in.
-        create: (context) => null,
-        update: (BuildContext context, AppServices appServices,
-            RealmProjectServices? realmServices) {
-          return (appServices.app.currentUser != null &&
-                  usersBloc.userDetails.username != null)
-              ? RealmProjectServices(
-                  appServices.app,
-                  usersBloc.userDetails.username as String,
-                  usersBloc.userDetails.companyidentifer as String)
-              : null;
         }),
   ], child: const App()));
 }

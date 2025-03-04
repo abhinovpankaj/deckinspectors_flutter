@@ -12,6 +12,7 @@ import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
 import '../models/realm/realm_schemas.dart';
+import '../services/realm_local_services.dart';
 import 'invasivesection.dart';
 import 'package:flutter/material.dart';
 import 'addedit_project.dart';
@@ -114,7 +115,7 @@ class _SingleProjectDetailsPageState extends State<SingleProjectDetailsPage>
   @override
   Widget build(BuildContext context) {
     final realmServices =
-        Provider.of<RealmProjectServices>(context, listen: false);
+        Provider.of<RealmLocalServices>(context, listen: false);
     return Scaffold(
         // floatingActionButton: Padding(
         //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),

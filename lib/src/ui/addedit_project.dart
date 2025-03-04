@@ -18,6 +18,7 @@ import '../bloc/images_bloc.dart';
 import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
 import '../resources/realm/realm_services.dart';
+import '../services/realm_local_services.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
 
@@ -84,7 +85,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   bool showAssetPic = true;
-  late RealmProjectServices realmProjServices;
+  late RealmLocalServices realmProjServices;
   bool isNewProject = true;
   late String userFullName;
   late Project currentProject;
@@ -211,8 +212,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   LocationForm? selectedValue;
   @override
   Widget build(BuildContext context) {
-    realmProjServices =
-        Provider.of<RealmProjectServices>(context, listen: false);
+    realmProjServices = Provider.of<RealmLocalServices>(context, listen: false);
     var forms = realmProjServices.getAllForms();
 
     List<DropdownMenuItem<LocationForm>> dropdownItems = [];
