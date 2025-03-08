@@ -17,28 +17,27 @@ Future<XFile?> captureImage(BuildContext context) async {
     case ImageQuality.low:
       imageQuality = 40;
       break;
-    default:
   }
 
   return showModalBottomSheet<XFile?>(
-      context: context,
-      isDismissible: true,
-      builder: (context) {
-        return Wrap(children: [
+    context: context,
+    isDismissible: true,
+    builder: (context) {
+      return Wrap(
+        children: [
           ListTile(
-              leading: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.blue,
-              ),
-              title: const Text('Camera'),
-              onTap: () async {
-                imageFile = await picker.pickImage(
-                    source: ImageSource.camera,
-                    imageQuality: imageQuality,
-                    requestFullMetadata: false);
+            leading: const Icon(Icons.camera_alt_outlined, color: Colors.blue),
+            title: const Text('Camera'),
+            onTap: () async {
+              imageFile = await picker.pickImage(
+                source: ImageSource.camera,
+                imageQuality: imageQuality,
+                requestFullMetadata: false,
+              );
 
-                Navigator.pop(context, imageFile);
-              }),
+              Navigator.pop(context, imageFile);
+            },
+          ),
           ListTile(
             leading: const Icon(
               Icons.browse_gallery_outlined,
@@ -48,12 +47,16 @@ Future<XFile?> captureImage(BuildContext context) async {
             onTap: () async {
               //todo
               imageFile = await picker.pickImage(
-                  source: ImageSource.gallery, imageQuality: imageQuality);
+                source: ImageSource.gallery,
+                imageQuality: imageQuality,
+              );
 
               Navigator.pop(context, imageFile);
             },
-          )
-        ]);
-      });
+          ),
+        ],
+      );
+    },
+  );
   // return imageFile;
 }

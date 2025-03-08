@@ -69,7 +69,7 @@ class SubProject {
     data['lasteditedby'] = lasteditedby;
     data['assignedto'] = assignedto;
     data['children'] =
-        children != null ? children!.map((v) => v.toJson()).toList() : null;
+        children?.map((v) => v.toJson()).toList();
     return data;
   }
 }

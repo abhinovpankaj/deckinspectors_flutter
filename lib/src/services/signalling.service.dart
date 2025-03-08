@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -11,11 +12,11 @@ class SignallingService {
 
   init({required String websocketUrl, required String selfCallerID}) {
     // init Socket
-    print(websocketUrl);
+    debugPrint(websocketUrl);
     try {
       socket = io(websocketUrl, {
         "transports": ['websocket'],
-        "query": {"callerId": selfCallerID}
+        "query": {"callerId": selfCallerID},
       });
 
       // listen onConnect event
@@ -31,7 +32,7 @@ class SignallingService {
       // connect socket
       socket!.connect();
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -39,7 +40,7 @@ class SignallingService {
     wsChannel = WebSocketChannel.connect(Uri.parse(websocketUrl));
 
     wsChannel!.stream.listen((message) {
-      print('Signaling data received: $message');
+      debugPrint('Signaling data received: $message');
       // Handle SDP or ICE candidates
     });
   }

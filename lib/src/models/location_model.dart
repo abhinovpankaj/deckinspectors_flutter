@@ -108,7 +108,7 @@ class Location {
     data['editedat'] = editedat;
     data['lasteditedby'] = lasteditedby;
     data['sections'] =
-        sections != null ? sections!.map((v) => v.toJson()).toList() : null;
+        sections?.map((v) => v.toJson()).toList();
     return data;
   }
 }

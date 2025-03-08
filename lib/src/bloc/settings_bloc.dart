@@ -20,14 +20,15 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> initConnectivity() async {
     // Platform messages may fail, so we use a try/catch PlatformException.
-    connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+      _updateConnectionStatus,
+    );
     late List<ConnectivityResult> result;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       result = await _connectivity.checkConnectivity();
     } on PlatformException catch (e) {
-      print('Couldn\'t check connectivity status + $e');
+      debugPrint('Couldn\'t check connectivity status + $e');
       return;
     }
 

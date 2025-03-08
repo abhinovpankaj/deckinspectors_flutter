@@ -9,8 +9,6 @@ import 'package:provider/provider.dart';
 import '../bloc/images_bloc.dart';
 import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
-import '../resources/realm/realm_services.dart';
-//import 'breadcrumb_navigation.dart';
 import '../services/realm_local_services.dart';
 import 'capture_image.dart';
 
@@ -21,8 +19,7 @@ class AddEditSubProjectPage extends StatefulWidget {
   final bool isNewBuilding;
   const AddEditSubProjectPage(this.currentBuilding, this.isNewBuilding,
       this.fullUserName, this.prevPageName,
-      {Key? key})
-      : super(key: key);
+      {super.key});
   static MaterialPageRoute getRoute(SubProject subProject, bool isNew,
           String userName, String prevPageName) =>
       MaterialPageRoute(

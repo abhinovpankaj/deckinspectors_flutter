@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:realm/realm.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -19,7 +20,7 @@ class SyncService {
     );
 
     socket.onConnect((_) {
-      print("Connected to WebSocket Server");
+      debugPrint("Connected to WebSocket Server");
       syncUnsyncedData(); // Sync unsynced data when connected
     });
 
@@ -27,7 +28,7 @@ class SyncService {
       updateLocalRealm(data);
     });
 
-    socket.onDisconnect((_) => print("Disconnected from WebSocket"));
+    socket.onDisconnect((_) => debugPrint("Disconnected from WebSocket"));
   }
 
   void sendUpdate(Map<String, dynamic> project) {
@@ -38,30 +39,31 @@ class SyncService {
   void updateLocalRealm(dynamic data) {
     final project = realmServices.realm.write(() {
       return realmServices.realm.add<Project>(
-          Project(
-            ObjectId.fromHexString(data['_id']),
-            name: data['name'],
-            projecttype: data['projecttype'],
-            description: data['description'],
-            address: data['address'],
-            createdby: data['createdby'],
-            createdat: data['createdat'],
-            url: data['url'],
-            editedat: data['editedat'],
-            companyIdentifier: data['companyIdentifier'],
-            lasteditedby: data['lasteditedby'],
-            assignedto: Set<String>.from(data['assignedto']),
-            children: [], // Parse children if needed
-            sections: [], // Parse sections if needed
-            latitude: data['latitude'],
-            longitude: data['longitude'],
-            formId: ObjectId.fromHexString(data['formId']),
-            isSynced: true,
-          ),
-          update: true);
+        Project(
+          ObjectId.fromHexString(data['_id']),
+          data['companyIdentifier'],
+          name: data['name'],
+          projecttype: data['projecttype'],
+          description: data['description'],
+          address: data['address'],
+          createdby: data['createdby'],
+          createdat: data['createdat'],
+          url: data['url'],
+          editedat: data['editedat'],
+          lasteditedby: data['lasteditedby'],
+          assignedto: Set<String>.from(data['assignedto']),
+          children: [], // Parse children if needed
+          sections: [], // Parse sections if needed
+          latitude: data['latitude'],
+          longitude: data['longitude'],
+          formId: ObjectId.fromHexString(data['formId']),
+          isSynced: true,
+        ),
+        update: true,
+      );
     });
 
-    print("Updated Realm with new data: ${project.name}");
+    debugPrint("Updated Realm with new data: ${project.name}");
   }
 
   void markAsSynced(ObjectId id) {
@@ -122,9 +124,9 @@ class SyncService {
   }
 
   void startSync() {
-    Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> results) {
+    Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
       if (results.isNotEmpty &&
           results.any((result) => result != ConnectivityResult.none)) {
         syncData();

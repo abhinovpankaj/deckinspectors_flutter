@@ -13,17 +13,20 @@ class LoginResponse {
   String? accesstype;
   String? token;
   String? companyidentifer;
+  String? companyId;
 
-  LoginResponse(
-      {this.id,
-      this.username,
-      this.lastname,
-      this.firstname,
-      this.email,
-      this.role,
-      this.token,
-      this.companyidentifer,
-      this.accesstype});
+  LoginResponse({
+    this.id,
+    this.username,
+    this.lastname,
+    this.firstname,
+    this.email,
+    this.role,
+    this.token,
+    this.companyidentifer,
+    this.accesstype,
+    this.companyId,
+  });
 
   LoginResponse.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
@@ -34,6 +37,7 @@ class LoginResponse {
     role = json['role'];
     token = json['token'];
     companyidentifer = json['companyIdentifier'];
+    companyId = json['companyId'];
     accesstype = json['access_type'];
   }
 
@@ -47,6 +51,7 @@ class LoginResponse {
     data['role'] = role;
     data['access_type'] = accesstype;
     data['companyIdentifier'] = companyidentifer;
+    data['companyId'] = companyId;
     data['token'] = token;
     return data;
   }
@@ -57,11 +62,7 @@ class RegisterResponse {
   String? insertedId;
   String? token;
 
-  RegisterResponse({
-    this.acknowledged,
-    this.insertedId,
-    this.token,
-  });
+  RegisterResponse({this.acknowledged, this.insertedId, this.token});
 
   RegisterResponse.fromJson(Map<String, dynamic> json) {
     acknowledged = json['acknowledged'];

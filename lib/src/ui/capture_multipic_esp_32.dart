@@ -1,22 +1,12 @@
-//import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-//import 'package:flutter_vlc_player/flutter_vlc_player.dart';
-
 import 'package:get/get.dart';
-//import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
-//import 'package:udp/udp.dart';
-// import 'package:http/http.dart' as http;
 import '../services/signalling.service.dart';
 import 'image_widget.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ESP32CameraScreen extends StatefulWidget {
   const ESP32CameraScreen({super.key});
@@ -36,10 +26,6 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
 
   // list of rtcCandidates to be sent over signalling
   List<RTCIceCandidate> rtcIceCadidates = [];
-
-  //Random().nextInt(999999).toString().padLeft(6, '0');
-  late WebSocketChannel _channel;
-  late Uint8List _imageData = Uint8List(0);
 
   List<XFile> capturedImages = [];
   bool hardwareKeyConnected = false;
@@ -64,7 +50,7 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
         //   ]
         // }
       ],
-      'iceTransportPolicy': 'all'
+      'iceTransportPolicy': 'all',
     });
     final socket = SignallingService.instance.socket;
     // listen for remotePeer mediaTrack event
@@ -97,7 +83,9 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
             data["sdpAnswer"]["type"],
           ),
         );
-      } catch (e) {}
+      } catch (e) {
+        log('Error setting remote description: $e');
+      }
 
       // send iceCandidate generated to remote peer over signalling
       for (RTCIceCandidate candidate in rtcIceCadidates) {
@@ -106,8 +94,8 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
           "iceCandidate": {
             "id": candidate.sdpMid,
             "label": candidate.sdpMLineIndex,
-            "candidate": candidate.candidate
-          }
+            "candidate": candidate.candidate,
+          },
         });
       }
     });
@@ -148,7 +136,6 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
   }
 
   String streamingURL = '';
-  String _raspberryIpAddress = 'Fetching...';
   double _currentZoomLevel = 1.0;
   @override
   Widget build(BuildContext context) {
@@ -159,9 +146,7 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
           tooltip: 'Refresh',
           child: const Icon(Icons.video_call),
         ),
-        appBar: AppBar(
-          title: const Text('Live Stream from E3 Camera'),
-        ),
+        appBar: AppBar(title: const Text('Live Stream from E3 Camera')),
         body: Column(
           children: [
             Expanded(
@@ -172,19 +157,23 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Expanded(
-                          // Use Expanded to ensure this section takes available space
-                          child: remoteRTCVideoRenderer.srcObject != null
-                              ? RTCVideoView(
+                        // Use Expanded to ensure this section takes available space
+                        child:
+                            remoteRTCVideoRenderer.srcObject != null
+                                ? RTCVideoView(
                                   remoteRTCVideoRenderer,
-                                  objectFit: RTCVideoViewObjectFit
-                                      .RTCVideoViewObjectFitCover,
+                                  objectFit:
+                                      RTCVideoViewObjectFit
+                                          .RTCVideoViewObjectFitCover,
                                 )
-                              : const Align(
+                                : const Align(
                                   alignment: Alignment.center,
                                   child: Text(
                                     'Waiting for the feed',
                                     style: TextStyle(fontSize: 15),
-                                  ))),
+                                  ),
+                                ),
+                      ),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -211,9 +200,9 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
 
                               SignallingService.instance.socket!
                                   .emit('zoomFeed', {
-                                "calleeId": calleeId,
-                                "zoomValue": _currentZoomLevel,
-                              });
+                                    "calleeId": calleeId,
+                                    "zoomValue": _currentZoomLevel,
+                                  });
                             },
                           ),
                         ),
@@ -227,13 +216,11 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                               ),
                             ),
                             onPressed: () {
-                              Navigator.of(context).pop(
-                                  capturedImages.map((e) => e.path).toList());
+                              Navigator.of(
+                                context,
+                              ).pop(capturedImages.map((e) => e.path).toList());
                             },
-                            icon: const Icon(
-                              Icons.done,
-                              size: 40,
-                            ),
+                            icon: const Icon(Icons.done, size: 40),
                             label: Text(
                               'Save ${capturedImages.length}',
                               style: const TextStyle(fontSize: 15),
@@ -246,10 +233,10 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                             onTap: () async {
                               try {
                                 // capture image from mediastream
-                                final videoTrack = remoteRTCVideoRenderer
-                                    .srcObject!
-                                    .getVideoTracks()
-                                    .first;
+                                final videoTrack =
+                                    remoteRTCVideoRenderer.srcObject!
+                                        .getVideoTracks()
+                                        .first;
                                 final frameBuffer =
                                     await videoTrack.captureFrame();
 
@@ -264,13 +251,17 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                                   capturedImages.add(XFile(imagePath));
                                 });
 
-                                Get.snackbar("Image Save", "Success!",
-                                    duration: const Duration(seconds: 3));
+                                Get.snackbar(
+                                  "Image Save",
+                                  "Success!",
+                                  duration: const Duration(seconds: 3),
+                                );
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                        'Error occurred while taking picture: $e'),
+                                      'Error occurred while taking picture: $e',
+                                    ),
                                   ),
                                 );
                               }
@@ -318,47 +309,50 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
 
   Widget horizontalScrollChildren(BuildContext context, int index) {
     return SizedBox(
-        width: 100,
-        height: 100,
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                    color: Colors.orange,
-                    // image: networkImage(currentProject.url as String),
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                    boxShadow: [
-                      BoxShadow(blurRadius: 1.0, color: Colors.blue)
-                    ]),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: networkImage(capturedImages[index].path),
-                ),
+      width: 100,
+      height: 100,
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.orange,
+                // image: networkImage(currentProject.url as String),
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                boxShadow: [BoxShadow(blurRadius: 1.0, color: Colors.blue)],
               ),
-              Positioned(
-                top: 0,
-                width: 30,
-                height: 20,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () {
-                      if (capturedImages.isNotEmpty) {
-                        setState(() {
-                          capturedImages.remove(capturedImages[index]);
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.delete_forever,
-                        size: 20, color: Colors.blueAccent),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: networkImage(capturedImages[index].path),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              width: 30,
+              height: 20,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () {
+                    if (capturedImages.isNotEmpty) {
+                      setState(() {
+                        capturedImages.remove(capturedImages[index]);
+                      });
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.delete_forever,
+                    size: 20,
+                    color: Colors.blueAccent,
                   ),
                 ),
               ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

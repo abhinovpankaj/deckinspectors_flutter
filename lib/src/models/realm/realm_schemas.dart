@@ -1,5 +1,5 @@
 import 'package:realm/realm.dart';
-part 'realm_schemas.g.dart';
+part 'realm_schemas.realm.dart';
 
 @RealmModel()
 class _Project {
@@ -15,7 +15,7 @@ class _Project {
   late String? createdat;
   late String? url;
   late String? editedat;
-  late String? companyIdentifier;
+  late String companyIdentifier;
   String? lasteditedby;
   late Set<String> assignedto;
   List<_Child> children = [];
@@ -26,31 +26,6 @@ class _Project {
   late double? longitude;
   ObjectId? formId;
   bool isSynced = false;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'name': name,
-      'projecttype': projecttype,
-      'description': description,
-      'address': address,
-      'createdby': createdby,
-      'createdat': createdat,
-      'url': url,
-      'editedat': editedat,
-      'companyIdentifier': companyIdentifier,
-      'lasteditedby': lasteditedby,
-      'assignedto': assignedto.toList(),
-      'children': children.map((e) => e.toJson()).toList(),
-      'iscomplete': iscomplete,
-      'isInvasive': isInvasive,
-      'sections': sections.map((e) => e.toJson()).toList(),
-      'latitude': latitude,
-      'longitude': longitude,
-      'formId': formId?.toString(),
-      'isSynced': isSynced,
-    };
-  }
 }
 
 @RealmModel(ObjectType.embeddedObject)
@@ -96,26 +71,7 @@ class _SubProject {
   late bool isInvasive;
   List<_Child> children = [];
   bool isSynced = false;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'name': name,
-      'type': type,
-      'description': description,
-      'parentid': parentid.toString(),
-      'parenttype': parenttype,
-      'createdby': createdby,
-      'createdat': createdat,
-      'url': url,
-      'assignedto': assignedto.toList(),
-      'editedat': editedat,
-      'lasteditedby': lasteditedby,
-      'isInvasive': isInvasive,
-      'isSynced': isSynced,
-      'children': children.map((e) => e.toJson()).toList(),
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel()
@@ -137,26 +93,7 @@ class _Location {
   late bool isInvasive;
   List<_Section> sections = [];
   bool isSynced = false;
-  // List<_Section> invasiveSections = [];
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'name': name,
-      'type': type,
-      'description': description,
-      'parentid': parentid.toString(),
-      'parenttype': parenttype,
-      'createdby': createdby,
-      'createdat': createdat,
-      'url': url,
-      'editedat': editedat,
-      'lasteditedby': lasteditedby,
-      'isInvasive': isInvasive,
-      'isSynced': isSynced,
-      'sections': sections.map((e) => e.toJson()).toList(),
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel(ObjectType.embeddedObject)
@@ -174,7 +111,6 @@ class _Section {
   //@Ignored()
   bool isuploading = false;
   String? sequenceNo;
-  //bool isSynced = false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -220,32 +156,7 @@ class _VisualSection {
   // ConclusiveSection? conclusiveSection;
   String? editedat;
   String? lasteditedby;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'name': name,
-      'images': images,
-      'exteriorelements': exteriorelements,
-      'waterproofingelements': waterproofingelements,
-      'additionalconsiderations': additionalconsiderations,
-      'visualreview': visualreview,
-      'visualsignsofleak': visualsignsofleak,
-      'furtherinvasivereviewrequired': furtherinvasivereviewrequired,
-      'conditionalassessment': conditionalassessment,
-      'eee': eee,
-      'lbc': lbc,
-      'awe': awe,
-      'isSynced': isSynced,
-      'parentid': parentid.toString(),
-      'createdby': createdby,
-      'createdat': createdat,
-      'parenttype': parenttype,
-      'unitUnavailable': unitUnavailable,
-      'editedat': editedat,
-      'lasteditedby': lasteditedby,
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel()
@@ -258,16 +169,7 @@ class _InvasiveSection {
   late String invasiveDescription;
   late List<String> invasiveimages;
   bool isSynced = false;
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'parentid': parentid.toString(),
-      'postinvasiverepairsrequired': postinvasiverepairsrequired,
-      'invasiveDescription': invasiveDescription,
-      'invasiveimages': invasiveimages,
-      'isSynced': isSynced,
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel()
@@ -284,21 +186,7 @@ class _ConclusiveSection {
   late String aweconclusive;
   late List<String> conclusiveimages;
   bool isSynced = false;
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'parentid': parentid.toString(),
-      'propowneragreed': propowneragreed,
-      'invasiverepairsinspectedandcompleted':
-          invasiverepairsinspectedandcompleted,
-      'conclusiveconsiderations': conclusiveconsiderations,
-      'eeeconclusive': eeeconclusive,
-      'lbcconclusive': lbcconclusive,
-      'aweconclusive': aweconclusive,
-      'conclusiveimages': conclusiveimages,
-      'isSynced': isSynced,
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel()
@@ -315,21 +203,7 @@ class _DeckImage {
   late String containerName;
   late String uploadedBy;
   bool isSynced = false;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'imageLocalPath': imageLocalPath,
-      'onlinePath': onlinePath,
-      'isUploaded': isUploaded,
-      'parentId': parentId.toString(),
-      'parentType': parentType,
-      'entityName': entityName,
-      'containerName': containerName,
-      'uploadedBy': uploadedBy,
-      'isSynced': isSynced,
-    };
-  }
+  late String companyIdentifier;
 }
 
 @RealmModel(ObjectType.embeddedObject)
@@ -375,26 +249,6 @@ class _DynamicVisualSection {
   String? lasteditedby;
   String? additionalconsiderations;
   bool isSynced = false;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'companyIdentifier': companyIdentifier,
-      'name': name,
-      'images': images,
-      'isSynced': isSynced,
-      'questions': questions.map((e) => e.toJson()).toList(),
-      'furtherinvasivereviewrequired': furtherinvasivereviewrequired,
-      'parentid': parentid.toString(),
-      'createdby': createdby,
-      'createdat': createdat,
-      'parenttype': parenttype,
-      'unitUnavailable': unitUnavailable,
-      'editedat': editedat,
-      'lasteditedby': lasteditedby,
-      'additionalconsiderations': additionalconsiderations,
-    };
-  }
 }
 
 @RealmModel()
@@ -406,13 +260,4 @@ class _LocationForm {
   late String companyIdentifier;
   late List<_Question> questions;
   bool isSynced = false;
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id.toString(),
-      'name': name,
-      'isSynced': isSynced,
-      'companyIdentifier': companyIdentifier,
-      'questions': questions.map((e) => e.toJson()).toList(),
-    };
-  }
 }

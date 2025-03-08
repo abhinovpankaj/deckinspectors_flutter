@@ -106,7 +106,7 @@ class Project {
     data['lasteditedby'] = lasteditedby;
     data['assignedto'] = assignedto;
     data['children'] =
-        children != null ? children!.map((v) => v.toJson()).toList() : null;
+        children?.map((v) => v.toJson()).toList();
     return data;
   }
 }
@@ -132,7 +132,7 @@ class Projects {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['projects'] =
-        projects != null ? projects!.map((v) => v?.toJson()).toList() : null;
+        projects?.map((v) => v?.toJson()).toList();
     data['message'] = message;
     data['code'] = code;
     return data;

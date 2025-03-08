@@ -22,7 +22,7 @@ class RealmLocalServices with ChangeNotifier {
   bool isWaiting = false;
   String loggedInUser;
   String company;
-  RealmLocalServices(this.company, this.loggedInUser) {
+  RealmLocalServices(this.loggedInUser, this.company) {
     SharedPreferences.getInstance().then((value) {
       var configValue = value.getString('appSync') ?? 'true';
       if (configValue == 'false') {
@@ -30,53 +30,57 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         offlineModeOn = false;
       }
-      if (offlineModeOn) {
-        realm.syncSession.pause();
-      }
     });
 
-    realm = Realm(Configuration.local([
-      Project.schema,
-      Child.schema,
-      SubProject.schema,
-      Location.schema,
-      Section.schema,
-      VisualSection.schema,
-      DeckImage.schema,
-      InvasiveSection.schema,
-      ConclusiveSection.schema,
-      LocationForm.schema,
-      DynamicVisualSection.schema,
-      Question.schema
-    ]));
+    realm = Realm(
+      Configuration.local([
+        Project.schema,
+        Child.schema,
+        SubProject.schema,
+        Location.schema,
+        Section.schema,
+        VisualSection.schema,
+        DeckImage.schema,
+        InvasiveSection.schema,
+        ConclusiveSection.schema,
+        LocationForm.schema,
+        DynamicVisualSection.schema,
+        Question.schema,
+      ]),
+    );
   }
   SyncData getUnsyncedData() {
     final unsyncedProjects =
         realm.all<Project>().where((project) => !project.isSynced).toList();
-    final unsyncedSubProjects = realm
-        .all<SubProject>()
-        .where((subProject) => !subProject.isSynced)
-        .toList();
+    final unsyncedSubProjects =
+        realm
+            .all<SubProject>()
+            .where((subProject) => !subProject.isSynced)
+            .toList();
     final unsyncedLocations =
         realm.all<Location>().where((location) => !location.isSynced).toList();
-    final unsyncedVisualSections = realm
-        .all<VisualSection>()
-        .where((section) => !section.isSynced)
-        .toList();
-    final unsyncedInvasiveSections = realm
-        .all<InvasiveSection>()
-        .where((section) => !section.isSynced)
-        .toList();
-    final unsyncedConclusiveSections = realm
-        .all<ConclusiveSection>()
-        .where((section) => !section.isSynced)
-        .toList();
+    final unsyncedVisualSections =
+        realm
+            .all<VisualSection>()
+            .where((section) => !section.isSynced)
+            .toList();
+    final unsyncedInvasiveSections =
+        realm
+            .all<InvasiveSection>()
+            .where((section) => !section.isSynced)
+            .toList();
+    final unsyncedConclusiveSections =
+        realm
+            .all<ConclusiveSection>()
+            .where((section) => !section.isSynced)
+            .toList();
     final unsyncedDeckImages =
         realm.all<DeckImage>().where((image) => !image.isUploaded).toList();
-    final unsyncedDynamicVisualSections = realm
-        .all<DynamicVisualSection>()
-        .where((section) => !section.isSynced)
-        .toList();
+    final unsyncedDynamicVisualSections =
+        realm
+            .all<DynamicVisualSection>()
+            .where((section) => !section.isSynced)
+            .toList();
     final unsyncedLocationForms =
         realm.all<LocationForm>().where((form) => !form.isSynced).toList();
 
@@ -166,15 +170,17 @@ class RealmLocalServices with ChangeNotifier {
     try {
       if (offlineModeOn || !appSettings.activeConnection) {
         DeckImage image = DeckImage(
-            ObjectId(),
-            url,
-            '',
-            false,
-            project.id,
-            'project',
-            'projectimage',
-            project.name as String,
-            usersBloc.userDetails.username as String);
+          ObjectId(),
+          url,
+          '',
+          false,
+          project.id,
+          'project',
+          'projectimage',
+          project.name as String,
+          usersBloc.userDetails.username as String,
+          company,
+        );
         realm.write(() {
           realm.add<DeckImage>(image, update: true);
         });
@@ -191,15 +197,16 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool addupdateProject(
-      Project project,
-      String name,
-      String address,
-      String description,
-      String userName,
-      double longitude,
-      double lattitude,
-      ObjectId? formId,
-      bool isNewProject) {
+    Project project,
+    String name,
+    String address,
+    String description,
+    String userName,
+    double longitude,
+    double lattitude,
+    ObjectId? formId,
+    bool isNewProject,
+  ) {
     try {
       if (loggedInUser == "") {
         loggedInUser = usersBloc.userDetails.username as String;
@@ -236,18 +243,33 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-//Update Project Children data
-  void updateProjectChildren(ObjectId childId, ObjectId parentId,
-      bool isInvasive, String name, String type, String description) {
+  //Update Project Children data
+  void updateProjectChildren(
+    ObjectId childId,
+    ObjectId parentId,
+    bool isInvasive,
+    String name,
+    String type,
+    String description,
+  ) {
     var parentProject = realm.find<Project>(parentId);
 
     if (parentProject != null) {
       parentProject.isInvasive = isInvasive;
-      var found =
-          parentProject.children.where((element) => element.id == childId);
+      var found = parentProject.children.where(
+        (element) => element.id == childId,
+      );
       if (found.isEmpty) {
-        parentProject.children.add(Child(childId, isInvasive,
-            name: name, type: type, description: description, url: ""));
+        parentProject.children.add(
+          Child(
+            childId,
+            isInvasive,
+            name: name,
+            type: type,
+            description: description,
+            url: "",
+          ),
+        );
       } else {
         var foundChild = found.first;
         foundChild.name = name;
@@ -260,8 +282,9 @@ class RealmLocalServices with ChangeNotifier {
   void deleteProjectChildren(ObjectId childId, ObjectId parentId) {
     var parentProject = realm.find<Project>(parentId);
     if (parentProject != null) {
-      var foundChild =
-          parentProject.children.firstWhere((element) => element.id == childId);
+      var foundChild = parentProject.children.firstWhere(
+        (element) => element.id == childId,
+      );
       parentProject.children.remove(foundChild);
     }
   }
@@ -270,8 +293,9 @@ class RealmLocalServices with ChangeNotifier {
     var parentProject = realm.find<Project>(parentId);
     try {
       if (parentProject != null) {
-        var found =
-            parentProject.children.where((element) => element.id == childId);
+        var found = parentProject.children.where(
+          (element) => element.id == childId,
+        );
 
         var foundChild = found.first;
 
@@ -307,7 +331,7 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-//Update SubProject Children data
+  //Update SubProject Children data
   void updateSubProjectChildren(
     ObjectId childId,
     ObjectId parentId,
@@ -319,11 +343,20 @@ class RealmLocalServices with ChangeNotifier {
     var parentProject = realm.find<SubProject>(parentId);
 
     if (parentProject != null) {
-      var found =
-          parentProject.children.where((element) => element.id == childId);
+      var found = parentProject.children.where(
+        (element) => element.id == childId,
+      );
       if (found.isEmpty) {
-        parentProject.children.add(Child(childId, isInvasive,
-            name: name, type: type, description: description, url: ""));
+        parentProject.children.add(
+          Child(
+            childId,
+            isInvasive,
+            name: name,
+            type: type,
+            description: description,
+            url: "",
+          ),
+        );
       } else {
         var foundChild = found.first;
         foundChild.name = name;
@@ -335,8 +368,9 @@ class RealmLocalServices with ChangeNotifier {
   void deleteSubProjectChildren(ObjectId childId, ObjectId parentId) {
     var parentProject = realm.find<SubProject>(parentId);
     if (parentProject != null) {
-      var foundChild =
-          parentProject.children.firstWhere((element) => element.id == childId);
+      var foundChild = parentProject.children.firstWhere(
+        (element) => element.id == childId,
+      );
       parentProject.children.remove(foundChild);
     }
   }
@@ -344,8 +378,9 @@ class RealmLocalServices with ChangeNotifier {
   void updateSubChildUrl(ObjectId childId, ObjectId parentId, String url) {
     var parentProject = realm.find<SubProject>(parentId);
     if (parentProject != null) {
-      var found =
-          parentProject.children.where((element) => element.id == childId);
+      var found = parentProject.children.where(
+        (element) => element.id == childId,
+      );
 
       var foundChild = found.first;
 
@@ -394,15 +429,17 @@ class RealmLocalServices with ChangeNotifier {
     try {
       if (offlineModeOn || !appSettings.activeConnection) {
         DeckImage image = DeckImage(
-            ObjectId(),
-            url,
-            '',
-            false,
-            subProject.id,
-            'subProject',
-            'subProjectimage',
-            subProject.name as String,
-            usersBloc.userDetails.username as String);
+          ObjectId(),
+          url,
+          '',
+          false,
+          subProject.id,
+          'subProject',
+          'subProjectimage',
+          subProject.name as String,
+          usersBloc.userDetails.username as String,
+          company,
+        );
         realm.write(() {
           realm.add<DeckImage>(image, update: true);
         });
@@ -419,8 +456,13 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  bool addupdateSubProject(SubProject subProject, String name,
-      String description, bool isNewBuilding, String fullUserName) {
+  bool addupdateSubProject(
+    SubProject subProject,
+    String name,
+    String description,
+    bool isNewBuilding,
+    String fullUserName,
+  ) {
     try {
       var creationtime = DateTime.now().toString();
 
@@ -439,12 +481,13 @@ class RealmLocalServices with ChangeNotifier {
 
         //find the project and update it.
         updateProjectChildren(
-            subProject.id,
-            subProject.parentid,
-            subProject.isInvasive,
-            subProject.name as String,
-            subProject.type as String,
-            subProject.description as String);
+          subProject.id,
+          subProject.parentid,
+          subProject.isInvasive,
+          subProject.name as String,
+          subProject.type as String,
+          subProject.description as String,
+        );
         realm.add<SubProject>(subProject, update: true);
       });
       notifyListeners();
@@ -454,7 +497,7 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-//Locations
+  //Locations
   void createLocation(Location location) {
     try {
       realm.write<Location>(() => realm.add<Location>(location));
@@ -468,15 +511,17 @@ class RealmLocalServices with ChangeNotifier {
     try {
       if (offlineModeOn || !appSettings.activeConnection) {
         DeckImage image = DeckImage(
-            ObjectId(),
-            url,
-            '',
-            false,
-            currentLocation.id,
-            'location',
-            'locationImage',
-            currentLocation.name as String,
-            usersBloc.userDetails.username as String);
+          ObjectId(),
+          url,
+          '',
+          false,
+          currentLocation.id,
+          'location',
+          'locationImage',
+          currentLocation.name as String,
+          usersBloc.userDetails.username as String,
+          company,
+        );
         realm.write(() {
           realm.add<DeckImage>(image, update: true);
         });
@@ -522,8 +567,13 @@ class RealmLocalServices with ChangeNotifier {
     return realm.find<Location>(id);
   }
 
-  bool addupdateLocation(Location location, String name, String description,
-      String fullUserName, bool isNewLocation) {
+  bool addupdateLocation(
+    Location location,
+    String name,
+    String description,
+    String fullUserName,
+    bool isNewLocation,
+  ) {
     try {
       var creationtime = DateTime.now().toString();
 
@@ -541,12 +591,13 @@ class RealmLocalServices with ChangeNotifier {
         //find the project and update it.
         if (location.parenttype == 'project') {
           updateProjectChildren(
-              location.id,
-              location.parentid,
-              location.isInvasive,
-              location.name as String,
-              location.type as String,
-              location.description as String);
+            location.id,
+            location.parentid,
+            location.isInvasive,
+            location.name as String,
+            location.type as String,
+            location.description as String,
+          );
           // updateProjectInvasiveChildren(
           //     location.id,
           //     location.parentid,
@@ -555,12 +606,13 @@ class RealmLocalServices with ChangeNotifier {
           //     location.description as String);
         } else {
           updateSubProjectChildren(
-              location.id,
-              location.parentid,
-              location.isInvasive,
-              location.name as String,
-              location.type as String,
-              location.description as String);
+            location.id,
+            location.parentid,
+            location.isInvasive,
+            location.name as String,
+            location.type as String,
+            location.description as String,
+          );
           // updateSubProjectInvasiveChildren(
           //     location.id,
           //     location.parentid,
@@ -578,7 +630,7 @@ class RealmLocalServices with ChangeNotifier {
     //notifyListeners();
   }
 
-//Visual Sections
+  //Visual Sections
   void createVisualSection(VisualSection visualSection) {
     try {
       var creationtime = DateTime.now().toString();
@@ -595,7 +647,11 @@ class RealmLocalServices with ChangeNotifier {
     try {
       realm.write(() {
         deleteLocationSection(
-            section.parenttype, section.id, section.parentid, false);
+          section.parenttype,
+          section.id,
+          section.parentid,
+          false,
+        );
         realm.delete(section);
       });
       notifyListeners();
@@ -609,7 +665,11 @@ class RealmLocalServices with ChangeNotifier {
     try {
       realm.write(() {
         deleteLocationSection(
-            section.parenttype, section.id, section.parentid, false);
+          section.parenttype,
+          section.id,
+          section.parentid,
+          false,
+        );
         realm.delete(section);
       });
       notifyListeners();
@@ -628,9 +688,13 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   void updateImageUploadStatus(
-      Location parentLocation, ObjectId sectionId, bool status) {
-    var found =
-        parentLocation.sections.where((element) => element.id == sectionId);
+    Location parentLocation,
+    ObjectId sectionId,
+    bool status,
+  ) {
+    var found = parentLocation.sections.where(
+      (element) => element.id == sectionId,
+    );
     if (found.isNotEmpty) {
       realm.write(() => found.first.isuploading = status);
     }
@@ -638,32 +702,35 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool addupdateVisualSection(
-      VisualSection visualSection,
-      String name,
-      String concerns,
-      List<ElementModel> selectedExteriorelements,
-      List<ElementModel> selectedWaterproofingElements,
-      VisualReview? review,
-      ConditionalAssessment? assessment,
-      ExpectancyYears? eee,
-      ExpectancyYears? lbc,
-      ExpectancyYears? awe,
-      bool invasiveReviewRequired,
-      bool hasSignsOfLeak,
-      bool isNewSection,
-      String userFullName,
-      bool unitUnavailable) {
+    VisualSection visualSection,
+    String name,
+    String concerns,
+    List<ElementModel> selectedExteriorelements,
+    List<ElementModel> selectedWaterproofingElements,
+    VisualReview? review,
+    ConditionalAssessment? assessment,
+    ExpectancyYears? eee,
+    ExpectancyYears? lbc,
+    ExpectancyYears? awe,
+    bool invasiveReviewRequired,
+    bool hasSignsOfLeak,
+    bool isNewSection,
+    String userFullName,
+    bool unitUnavailable,
+  ) {
     try {
       realm.write(() {
         visualSection.name = name;
         visualSection.unitUnavailable = unitUnavailable;
         visualSection.additionalconsiderations = concerns;
         visualSection.exteriorelements.clear();
-        visualSection.exteriorelements
-            .addAll(selectedExteriorelements.map((element) => element.name));
+        visualSection.exteriorelements.addAll(
+          selectedExteriorelements.map((element) => element.name),
+        );
         visualSection.waterproofingelements.clear();
         visualSection.waterproofingelements.addAll(
-            selectedWaterproofingElements.map((element) => element.name));
+          selectedWaterproofingElements.map((element) => element.name),
+        );
 
         visualSection.visualreview = review == null ? "" : review.name;
         visualSection.conditionalassessment =
@@ -685,15 +752,16 @@ class RealmLocalServices with ChangeNotifier {
         visualSection.editedat = DateTime.now().toString();
         //update parent with the section detail
         updateLocationSection(
-            visualSection.parenttype,
-            visualSection.id,
-            visualSection.parentid,
-            visualSection.name,
-            visualSection.visualreview,
-            visualSection.visualsignsofleak,
-            visualSection.furtherinvasivereviewrequired,
-            visualSection.conditionalassessment,
-            visualSection.images.length);
+          visualSection.parenttype,
+          visualSection.id,
+          visualSection.parentid,
+          visualSection.name,
+          visualSection.visualreview,
+          visualSection.visualsignsofleak,
+          visualSection.furtherinvasivereviewrequired,
+          visualSection.conditionalassessment,
+          visualSection.images.length,
+        );
 
         realm.add(visualSection, update: true);
       });
@@ -705,14 +773,15 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool addupdateDynamicVisualSection(
-      DynamicVisualSection visualSection,
-      String name,
-      String concerns,
-      bool invasiveReviewRequired,
-      bool isNewSection,
-      String userFullName,
-      List<Question> questions,
-      bool unitUnavailable) {
+    DynamicVisualSection visualSection,
+    String name,
+    String concerns,
+    bool invasiveReviewRequired,
+    bool isNewSection,
+    String userFullName,
+    List<Question> questions,
+    bool unitUnavailable,
+  ) {
     try {
       realm.write(() {
         visualSection.name = name;
@@ -734,15 +803,16 @@ class RealmLocalServices with ChangeNotifier {
         visualSection.editedat = DateTime.now().toString();
         //update parent with the section detail
         updateLocationSection(
-            visualSection.parenttype,
-            visualSection.id,
-            visualSection.parentid,
-            visualSection.name,
-            null,
-            false,
-            invasiveReviewRequired,
-            "",
-            visualSection.images.length);
+          visualSection.parenttype,
+          visualSection.id,
+          visualSection.parentid,
+          visualSection.name,
+          null,
+          false,
+          invasiveReviewRequired,
+          "",
+          visualSection.images.length,
+        );
 
         realm.add(visualSection, update: true);
       });
@@ -759,11 +829,12 @@ class RealmLocalServices with ChangeNotifier {
         localVisualSection.images.remove(url);
 
         updateImageCount(
-            localVisualSection.parenttype,
-            localVisualSection.id,
-            localVisualSection.parentid,
-            localVisualSection.images.length,
-            localVisualSection.images.last);
+          localVisualSection.parenttype,
+          localVisualSection.id,
+          localVisualSection.parentid,
+          localVisualSection.images.length,
+          localVisualSection.images.last,
+        );
       });
 
       notifyListeners();
@@ -774,17 +845,20 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool removeImageUrlFromDynamic(
-      DynamicVisualSection localVisualSection, String url) {
+    DynamicVisualSection localVisualSection,
+    String url,
+  ) {
     try {
       realm.write(() {
         localVisualSection.images.remove(url);
 
         updateImageCount(
-            localVisualSection.parenttype,
-            localVisualSection.id,
-            localVisualSection.parentid,
-            localVisualSection.images.length,
-            localVisualSection.images.last);
+          localVisualSection.parenttype,
+          localVisualSection.id,
+          localVisualSection.parentid,
+          localVisualSection.images.length,
+          localVisualSection.images.last,
+        );
       });
 
       notifyListeners();
@@ -805,23 +879,28 @@ class RealmLocalServices with ChangeNotifier {
     return "";
   }
 
-  bool addImagesUrl(VisualSection localVisualSection, List<String> localPaths,
-      List<String> onlinePaths) {
+  bool addImagesUrl(
+    VisualSection localVisualSection,
+    List<String> localPaths,
+    List<String> onlinePaths,
+  ) {
     try {
       int k = 0;
       if (offlineModeOn || !appSettings.activeConnection) {
         realm.write(() {
           for (var url in onlinePaths) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                '',
-                false,
-                localVisualSection.id,
-                'visualSection',
-                'section',
-                localVisualSection.name as String,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              '',
+              false,
+              localVisualSection.id,
+              'visualSection',
+              'section',
+              localVisualSection.name as String,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
             if (localVisualSection.images.contains(url)) {
@@ -839,15 +918,17 @@ class RealmLocalServices with ChangeNotifier {
         realm.write(() {
           for (var url in localPaths) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                onlinePaths[k],
-                true,
-                localVisualSection.id,
-                'visualSection',
-                'section',
-                localVisualSection.name as String,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              onlinePaths[k],
+              true,
+              localVisualSection.id,
+              'visualSection',
+              'section',
+              localVisualSection.name as String,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
 
@@ -866,11 +947,12 @@ class RealmLocalServices with ChangeNotifier {
 
       realm.write(() {
         updateImageCount(
-            localVisualSection.parenttype,
-            localVisualSection.id,
-            localVisualSection.parentid,
-            localVisualSection.images.length,
-            onlinePaths.last);
+          localVisualSection.parenttype,
+          localVisualSection.id,
+          localVisualSection.parentid,
+          localVisualSection.images.length,
+          onlinePaths.last,
+        );
       });
 
       notifyListeners();
@@ -880,23 +962,28 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  bool addImagesUrlToDynamicform(DynamicVisualSection localVisualSection,
-      List<String> localPaths, List<String> onlinePaths) {
+  bool addImagesUrlToDynamicform(
+    DynamicVisualSection localVisualSection,
+    List<String> localPaths,
+    List<String> onlinePaths,
+  ) {
     try {
       int k = 0;
       if (offlineModeOn || !appSettings.activeConnection) {
         realm.write(() {
           for (var url in onlinePaths) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                '',
-                false,
-                localVisualSection.id,
-                'dynamicvisualSection',
-                'section',
-                localVisualSection.name as String,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              '',
+              false,
+              localVisualSection.id,
+              'dynamicvisualSection',
+              'section',
+              localVisualSection.name as String,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
             if (localVisualSection.images.contains(url)) {
@@ -914,15 +1001,17 @@ class RealmLocalServices with ChangeNotifier {
         realm.write(() {
           for (var url in localPaths) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                onlinePaths[k],
-                true,
-                localVisualSection.id,
-                'dynamicvisualSection',
-                'section',
-                localVisualSection.name as String,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              onlinePaths[k],
+              true,
+              localVisualSection.id,
+              'dynamicvisualSection',
+              'section',
+              localVisualSection.name as String,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
 
@@ -941,11 +1030,12 @@ class RealmLocalServices with ChangeNotifier {
 
       realm.write(() {
         updateImageCount(
-            localVisualSection.parenttype,
-            localVisualSection.id,
-            localVisualSection.parentid,
-            localVisualSection.images.length,
-            onlinePaths.last);
+          localVisualSection.parenttype,
+          localVisualSection.id,
+          localVisualSection.parentid,
+          localVisualSection.images.length,
+          onlinePaths.last,
+        );
       });
 
       notifyListeners();
@@ -967,8 +1057,6 @@ class RealmLocalServices with ChangeNotifier {
       //List<DeckImage> imagesTobeDelete = [];
 
       if (!realm.isClosed) {
-        realm.syncSession.resume();
-
         final images = realm.query<DeckImage>("isUploaded == false");
         //just removing the notifications part, perhaps failing the whole method.
         if (images.isNotEmpty && !offlineModeOn) {
@@ -1001,16 +1089,19 @@ class RealmLocalServices with ChangeNotifier {
           }
           try {
             var result = await imagesBloc.uploadImage(
-                transformedPath,
-                image.containerName,
-                image.uploadedBy,
-                image.id.toString(),
-                image.parentType,
-                image.entityName);
+              transformedPath,
+              image.containerName,
+              image.uploadedBy,
+              image.id.toString(),
+              image.parentType,
+              image.entityName,
+            );
             if (result is ImageResponse) {
-//check if the image is already added to db
-              final addedImage =
-                  realm.query<DeckImage>("imageLocalPath == \$0", [localPath]);
+              //check if the image is already added to db
+              final addedImage = realm.query<DeckImage>(
+                "imageLocalPath == \$0",
+                [localPath],
+              );
               realm.write(() {
                 if (addedImage.isEmpty) {
                   if (result.url!.startsWith('http')) {
@@ -1040,47 +1131,58 @@ class RealmLocalServices with ChangeNotifier {
                   case 'subproject':
                     var subproject = realm.find<SubProject>(parentId);
                     subproject?.url = result.url;
-                    updateChildUrl(parentId, subproject?.parentid as ObjectId,
-                        result.url as String);
+                    updateChildUrl(
+                      parentId,
+                      subproject?.parentid as ObjectId,
+                      result.url as String,
+                    );
                     break;
                   case 'location':
                     var location = realm.find<Location>(parentId);
                     location?.url = result.url;
-                    updateSubChildUrl(parentId, location?.parentid as ObjectId,
-                        result.url as String);
+                    updateSubChildUrl(
+                      parentId,
+                      location?.parentid as ObjectId,
+                      result.url as String,
+                    );
                     break;
                   case 'visualsection':
                     var visualsection = realm.find<VisualSection>(parentId);
                     if (visualsection != null) {
                       int index = visualsection.images.indexWhere(
-                          (element) => element == image.imageLocalPath);
+                        (element) => element == image.imageLocalPath,
+                      );
                       if (index != -1) {
                         visualsection.images[index] = result.url as String;
                         //update coverurls
                         updateImageCount(
-                            visualsection.parenttype,
-                            visualsection.id,
-                            visualsection.parentid,
-                            visualsection.images.length,
-                            visualsection.images.last);
+                          visualsection.parenttype,
+                          visualsection.id,
+                          visualsection.parentid,
+                          visualsection.images.length,
+                          visualsection.images.last,
+                        );
                       }
                     }
                     break;
                   case 'dynamicvisualsection':
-                    var visualsection =
-                        realm.find<DynamicVisualSection>(parentId);
+                    var visualsection = realm.find<DynamicVisualSection>(
+                      parentId,
+                    );
                     if (visualsection != null) {
                       int index = visualsection.images.indexWhere(
-                          (element) => element == image.imageLocalPath);
+                        (element) => element == image.imageLocalPath,
+                      );
                       if (index != -1) {
                         visualsection.images[index] = result.url as String;
                         //update coverurls
                         updateImageCount(
-                            visualsection.parenttype,
-                            visualsection.id,
-                            visualsection.parentid,
-                            visualsection.images.length,
-                            visualsection.images.last);
+                          visualsection.parenttype,
+                          visualsection.id,
+                          visualsection.parentid,
+                          visualsection.images.length,
+                          visualsection.images.last,
+                        );
                       }
                     }
                     break;
@@ -1088,7 +1190,8 @@ class RealmLocalServices with ChangeNotifier {
                     var invasiveSection = realm.find<InvasiveSection>(parentId);
                     if (invasiveSection != null) {
                       int index = invasiveSection.invasiveimages.indexWhere(
-                          (element) => element == image.imageLocalPath);
+                        (element) => element == image.imageLocalPath,
+                      );
                       if (index != -1) {
                         invasiveSection.invasiveimages[index] =
                             result.url as String;
@@ -1096,11 +1199,13 @@ class RealmLocalServices with ChangeNotifier {
                     }
                     break;
                   case 'conclusivesection':
-                    var conclusiveSection =
-                        realm.find<ConclusiveSection>(parentId);
+                    var conclusiveSection = realm.find<ConclusiveSection>(
+                      parentId,
+                    );
                     if (conclusiveSection != null) {
                       int index = conclusiveSection.conclusiveimages.indexWhere(
-                          (element) => element == image.imageLocalPath);
+                        (element) => element == image.imageLocalPath,
+                      );
                       if (index != -1) {
                         conclusiveSection.conclusiveimages[index] =
                             result.url as String;
@@ -1128,8 +1233,12 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  void deleteLocationSection(String parentType, ObjectId id, ObjectId parentid,
-      bool updateInvasiveSection) {
+  void deleteLocationSection(
+    String parentType,
+    ObjectId id,
+    ObjectId parentid,
+    bool updateInvasiveSection,
+  ) {
     if (parentType == 'project') {
       try {
         var parentProject = realm.find<Project>(parentid);
@@ -1141,8 +1250,9 @@ class RealmLocalServices with ChangeNotifier {
 
             // parentProject.invasiveSections.remove(foundChild);
           } else {
-            foundChild = parentProject.sections
-                .firstWhere((element) => element.id == id);
+            foundChild = parentProject.sections.firstWhere(
+              (element) => element.id == id,
+            );
 
             parentProject.sections.remove(foundChild);
           }
@@ -1165,15 +1275,17 @@ class RealmLocalServices with ChangeNotifier {
                 // parentProject.invasiveChildren.remove(invasiveChild);
               }
             } else {
-              var parentSubProject =
-                  realm.find<SubProject>(parentLocation.parentid);
+              var parentSubProject = realm.find<SubProject>(
+                parentLocation.parentid,
+              );
               if (parentSubProject != null) {
                 // LocalChild invasiveChild = parentSubProject.invasiveChildren
                 //     .firstWhere((element) => element.id == parentid);
                 // parentSubProject.invasiveChildren.remove(invasiveChild);
                 //remove from project as well.
-                var parentProject =
-                    realm.find<Project>(parentSubProject.parentid);
+                var parentProject = realm.find<Project>(
+                  parentSubProject.parentid,
+                );
                 if (parentProject != null) {
                   // invasiveChild = parentProject.invasiveChildren.firstWhere(
                   //     (element) => element.id == parentSubProject.id);
@@ -1182,8 +1294,9 @@ class RealmLocalServices with ChangeNotifier {
               }
             }
           } else {
-            foundChild = parentLocation.sections
-                .firstWhere((element) => element.id == id);
+            foundChild = parentLocation.sections.firstWhere(
+              (element) => element.id == id,
+            );
             parentLocation.sections.remove(foundChild);
           }
         } catch (e) {
@@ -1211,13 +1324,18 @@ class RealmLocalServices with ChangeNotifier {
       if (parentProject != null) {
         var found = parentProject.sections.where((element) => element.id == id);
         if (found.isEmpty) {
-          parentProject.sections.add(Section(id, furtherinvasivereviewrequired,
+          parentProject.sections.add(
+            Section(
+              id,
+              furtherinvasivereviewrequired,
               name: name,
               visualreview: visualreview,
               visualsignsofleak: visualsignsofleak,
               furtherinvasivereviewrequired: furtherinvasivereviewrequired,
               conditionalassessment: conditionalassessment,
-              count: length));
+              count: length,
+            ),
+          );
         } else {
           var foundChild = found.first;
           foundChild.name = name;
@@ -1234,16 +1352,22 @@ class RealmLocalServices with ChangeNotifier {
       var parentLocation = realm.find<Location>(parentid);
 
       if (parentLocation != null) {
-        var found =
-            parentLocation.sections.where((element) => element.id == id);
+        var found = parentLocation.sections.where(
+          (element) => element.id == id,
+        );
         if (found.isEmpty) {
-          parentLocation.sections.add(Section(id, furtherinvasivereviewrequired,
+          parentLocation.sections.add(
+            Section(
+              id,
+              furtherinvasivereviewrequired,
               name: name,
               visualreview: visualreview,
               visualsignsofleak: visualsignsofleak,
               furtherinvasivereviewrequired: furtherinvasivereviewrequired,
               conditionalassessment: conditionalassessment,
-              count: length));
+              count: length,
+            ),
+          );
         } else {
           var foundChild = found.first;
           foundChild.name = name;
@@ -1256,36 +1380,44 @@ class RealmLocalServices with ChangeNotifier {
           foundChild.isInvasive = furtherinvasivereviewrequired;
         }
         //set invasive property of location.
-        parentLocation.isInvasive = parentLocation.sections
-            .any((element) => element.furtherinvasivereviewrequired == true);
+        parentLocation.isInvasive = parentLocation.sections.any(
+          (element) => element.furtherinvasivereviewrequired == true,
+        );
         //update parents
         if (parentLocation.parenttype == 'project') {
           var parentProject = realm.find<Project>(parentLocation.parentid);
           if (parentProject != null) {
-            var childLocation = parentProject.children
-                .where((element) => element.id == parentLocation.id);
+            var childLocation = parentProject.children.where(
+              (element) => element.id == parentLocation.id,
+            );
             childLocation.first.isInvasive = parentLocation.isInvasive;
-            parentProject.isInvasive = parentProject.children
-                .any((element) => element.isInvasive == true);
+            parentProject.isInvasive = parentProject.children.any(
+              (element) => element.isInvasive == true,
+            );
           }
         }
         if (parentLocation.parenttype == 'subproject') {
-          var parentSubProject =
-              realm.find<SubProject>(parentLocation.parentid);
+          var parentSubProject = realm.find<SubProject>(
+            parentLocation.parentid,
+          );
           if (parentSubProject != null) {
-            var childLocation = parentSubProject.children
-                .where((element) => element.id == parentLocation.id);
+            var childLocation = parentSubProject.children.where(
+              (element) => element.id == parentLocation.id,
+            );
             childLocation.first.isInvasive = parentLocation.isInvasive;
-            parentSubProject.isInvasive = parentSubProject.children
-                .any((element) => element.isInvasive == true);
+            parentSubProject.isInvasive = parentSubProject.children.any(
+              (element) => element.isInvasive == true,
+            );
 
             var parentProject = realm.find<Project>(parentSubProject.parentid);
             if (parentProject != null) {
-              var childLocation = parentProject.children
-                  .where((element) => element.id == parentSubProject.id);
+              var childLocation = parentProject.children.where(
+                (element) => element.id == parentSubProject.id,
+              );
               childLocation.first.isInvasive = parentSubProject.isInvasive;
-              parentProject.isInvasive = parentProject.children
-                  .any((element) => element.isInvasive == true);
+              parentProject.isInvasive = parentProject.children.any(
+                (element) => element.isInvasive == true,
+              );
             }
           }
         }
@@ -1293,15 +1425,21 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  void updateImageCount(String parentType, ObjectId id, ObjectId parentid,
-      int length, String url) {
+  void updateImageCount(
+    String parentType,
+    ObjectId id,
+    ObjectId parentid,
+    int length,
+    String url,
+  ) {
     try {
       if (parentType == 'project') {
         var parentProject = realm.find<Project>(parentid);
 
         if (parentProject != null) {
-          var found =
-              parentProject.sections.where((element) => element.id == id);
+          var found = parentProject.sections.where(
+            (element) => element.id == id,
+          );
           var foundChild = found.first;
           foundChild.count = length;
           if (url != '') {
@@ -1321,8 +1459,9 @@ class RealmLocalServices with ChangeNotifier {
         var parentLocation = realm.find<Location>(parentid);
 
         if (parentLocation != null) {
-          var found =
-              parentLocation.sections.where((element) => element.id == id);
+          var found = parentLocation.sections.where(
+            (element) => element.id == id,
+          );
           var foundChild = found.first;
           foundChild.count = length;
           if (url != '') {
@@ -1349,6 +1488,7 @@ class RealmLocalServices with ChangeNotifier {
       ObjectId(),
       sectionId,
       "",
+      usersBloc.userDetails.companyidentifer as String,
       postinvasiverepairsrequired: false,
     );
   }
@@ -1361,27 +1501,33 @@ class RealmLocalServices with ChangeNotifier {
       "",
       "",
       "",
+      usersBloc.userDetails.companyidentifer as String,
       propowneragreed: false,
       invasiverepairsinspectedandcompleted: false,
     );
   }
 
-  bool addInvasiveImagesUrl(String visualSectionName,
-      InvasiveSection currentInvasiveSection, List<String> urls) {
+  bool addInvasiveImagesUrl(
+    String visualSectionName,
+    InvasiveSection currentInvasiveSection,
+    List<String> urls,
+  ) {
     try {
       if (offlineModeOn || !appSettings.activeConnection) {
         realm.write(() {
           for (var url in urls) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                '',
-                false,
-                currentInvasiveSection.id,
-                'invasiveSection',
-                'invasiveSectionImage',
-                visualSectionName,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              '',
+              false,
+              currentInvasiveSection.id,
+              'invasiveSection',
+              'invasiveSectionImage',
+              visualSectionName,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
           }
@@ -1400,22 +1546,27 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  bool addConclusiveImagesUrl(String visualSectionName,
-      ConclusiveSection currentConclusiveSection, List<String> urls) {
+  bool addConclusiveImagesUrl(
+    String visualSectionName,
+    ConclusiveSection currentConclusiveSection,
+    List<String> urls,
+  ) {
     try {
       if (offlineModeOn || !appSettings.activeConnection) {
         realm.write(() {
           for (var url in urls) {
             DeckImage image = DeckImage(
-                ObjectId(),
-                url,
-                '',
-                false,
-                currentConclusiveSection.id,
-                'conclusiveSection',
-                'conclusiveSectionImage',
-                visualSectionName,
-                usersBloc.userDetails.username as String);
+              ObjectId(),
+              url,
+              '',
+              false,
+              currentConclusiveSection.id,
+              'conclusiveSection',
+              'conclusiveSectionImage',
+              visualSectionName,
+              usersBloc.userDetails.username as String,
+              company,
+            );
 
             realm.add<DeckImage>(image, update: true);
           }
@@ -1498,7 +1649,9 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool removeConclusiveImageUrl(
-      ConclusiveSection localConclusiveSection, String url) {
+    ConclusiveSection localConclusiveSection,
+    String url,
+  ) {
     try {
       realm.write(() {
         localConclusiveSection.conclusiveimages.remove(url);
@@ -1514,7 +1667,9 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   bool removeInvasiveImageUrl(
-      InvasiveSection localInvasiveSection, String url) {
+    InvasiveSection localInvasiveSection,
+    String url,
+  ) {
     try {
       realm.write(() {
         localInvasiveSection.invasiveimages.remove(url);
@@ -1529,8 +1684,11 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  Future<List<String>> getImagesNotUploaded(List<String> capturedImages,
-      bool activeConnection, bool isNewSection) async {
+  Future<List<String>> getImagesNotUploaded(
+    List<String> capturedImages,
+    bool activeConnection,
+    bool isNewSection,
+  ) async {
     List<String> offlineImages = [];
     RealmResults<DeckImage> deckImages;
     try {
@@ -1541,8 +1699,9 @@ class RealmLocalServices with ChangeNotifier {
           return capturedImages;
         } else {
           for (var imgpath in capturedImages) {
-            deckImages =
-                realm.query<DeckImage>('imageLocalPath == \$0', [imgpath]);
+            deckImages = realm.query<DeckImage>('imageLocalPath == \$0', [
+              imgpath,
+            ]);
             if (deckImages.isNotEmpty) {
               // if (!deckImages.first.isUploaded) {
               //   offlineImages.add(deckImages.first.imageLocalPath);

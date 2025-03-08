@@ -8,7 +8,6 @@ import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart'
 
 import 'package:flutter/material.dart';
 //import 'package:get/get.dart';
-
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +16,6 @@ import '../bloc/images_bloc.dart';
 
 import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
-import '../resources/realm/realm_services.dart';
 import '../services/realm_local_services.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
@@ -29,14 +27,19 @@ class AddEditProjectPage extends StatefulWidget {
   final bool isNewProject;
 
   const AddEditProjectPage(
-      this.newProject, this.isNewProject, this.userFullName,
-      {Key? key})
-      : super(key: key);
+    this.newProject,
+    this.isNewProject,
+    this.userFullName, {
+    super.key,
+  });
   static MaterialPageRoute getRoute(
-          Project project, bool isNew, String userName) =>
-      MaterialPageRoute(
-          settings: const RouteSettings(name: 'Edit Project'),
-          builder: (context) => AddEditProjectPage(project, isNew, userName));
+    Project project,
+    bool isNew,
+    String userName,
+  ) => MaterialPageRoute(
+    settings: const RouteSettings(name: 'Edit Project'),
+    builder: (context) => AddEditProjectPage(project, isNew, userName),
+  );
   @override
   State<AddEditProjectPage> createState() => _AddEditProjectPageState();
 }
@@ -66,7 +69,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       isNewProject = false;
       showAssetPic = false;
       dateInput.text = getCustomFormattedDateTime(
-          currentProject.editedat as String, 'MM-dd-yyyy');
+        currentProject.editedat as String,
+        'MM-dd-yyyy',
+      );
     } else {
       prevPageName = 'Projects';
       dateInput.text = "";
@@ -97,9 +102,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
     if (_formKey.currentState!.validate()) {
       // If the form is valid, display a snackbar. In the real world,
       // you'd often call a server or save the information in a database.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saving Project...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Saving Project...')));
 
       bool result;
 
@@ -113,34 +118,46 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       // }
 
       result = realmProjServices.addupdateProject(
-          currentProject,
-          _nameController.text,
-          _addressController.text,
-          _descriptionController.text,
-          userFullName,
-          longitude,
-          lattitude,
-          selectedValue == null ? null : selectedValue!.id,
-          isNewProject);
+        currentProject,
+        _nameController.text,
+        _addressController.text,
+        _descriptionController.text,
+        userFullName,
+        longitude,
+        lattitude,
+        selectedValue?.id,
+        isNewProject,
+      );
 
       if (!mounted) {
         return;
       }
       if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Project saved successfully.')));
+          const SnackBar(content: Text('Project saved successfully.')),
+        );
         if (isNewProject) {
           if (currentProject.projecttype == 'singlelevel') {
             Navigator.pushReplacement(
-                context,
-                SingleProjectDetailsPage.getRoute(currentProject.id,
-                    userFullName, false, currentProject.name as String));
+              context,
+              SingleProjectDetailsPage.getRoute(
+                currentProject.id,
+                userFullName,
+                false,
+                currentProject.name as String,
+              ),
+            );
             // .then((value) => setState(() {}));
           } else {
             Navigator.pushReplacement(
-                context,
-                ProjectDetailsPage.getRoute(currentProject.id, userFullName,
-                    false, currentProject.name as String));
+              context,
+              ProjectDetailsPage.getRoute(
+                currentProject.id,
+                userFullName,
+                false,
+                currentProject.name as String,
+              ),
+            );
             // .then((value) => setState(() {
 
             // })
@@ -162,12 +179,13 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         Object result;
 
         result = await imagesBloc.uploadImage(
-            imageURL,
-            currentProject.name as String,
-            userFullName,
-            currentProject.id.toString(),
-            '',
-            'project');
+          imageURL,
+          currentProject.name as String,
+          userFullName,
+          currentProject.id.toString(),
+          '',
+          'project',
+        );
 
         if (result is ImageResponse) {
           //update the gallery
@@ -175,7 +193,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           await ImageGallerySaver.saveFile(result.originalPath as String);
 
           realmProjServices.updateProjectUrl(
-              currentProject, result.url as String);
+            currentProject,
+            result.url as String,
+          );
         }
       }
     }
@@ -187,10 +207,12 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   final TextEditingController _nameController = TextEditingController(text: '');
   //late TextEditingController _activeController;
 
-  final TextEditingController _addressController =
-      TextEditingController(text: '');
-  final TextEditingController _descriptionController =
-      TextEditingController(text: '');
+  final TextEditingController _addressController = TextEditingController(
+    text: '',
+  );
+  final TextEditingController _descriptionController = TextEditingController(
+    text: '',
+  );
   String prevPageName = '';
   late String projectName, projectAddress, projectDescription, projectUrl;
   late String projectType;
@@ -217,17 +239,16 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
 
     List<DropdownMenuItem<LocationForm>> dropdownItems = [];
     if (forms.isNotEmpty) {
-      dropdownItems = forms
-          .map<DropdownMenuItem<LocationForm>>((form) => DropdownMenuItem(
-                value: form,
-                child: Text(
-                  form.name,
-                ),
-              ))
-          .toList();
+      dropdownItems =
+          forms
+              .map<DropdownMenuItem<LocationForm>>(
+                (form) => DropdownMenuItem(value: form, child: Text(form.name)),
+              )
+              .toList();
     }
-    dropdownItems
-        .add(const DropdownMenuItem(value: null, child: Text("E3 Form")));
+    dropdownItems.add(
+      const DropdownMenuItem(value: null, child: Text("E3 Form")),
+    );
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -236,10 +257,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         leadingWidth: 120,
         leading: ElevatedButton.icon(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.blue,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
           label: const Text(
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -256,31 +274,31 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         elevation: 0,
         actions: [
           InkWell(
-              onTap: () {
-                save(context);
-              },
-              child: const Chip(
-                avatar: Icon(
-                  Icons.save_outlined,
-                  color: Color(0xFF3F3F3F),
-                ),
-                labelPadding: EdgeInsets.all(2),
-                label: Text(
-                  'Save',
-                  style: TextStyle(color: Color(0xFF3F3F3F)),
-                  selectionColor: Colors.white,
-                ),
-                shadowColor: Colors.blue,
-                backgroundColor: Colors.blue,
-                elevation: 10,
-                autofocus: true,
-              )),
+            onTap: () {
+              save(context);
+            },
+            child: const Chip(
+              avatar: Icon(Icons.save_outlined, color: Color(0xFF3F3F3F)),
+              labelPadding: EdgeInsets.all(2),
+              label: Text(
+                'Save',
+                style: TextStyle(color: Color(0xFF3F3F3F)),
+                selectionColor: Colors.white,
+              ),
+              shadowColor: Colors.blue,
+              backgroundColor: Colors.blue,
+              elevation: 10,
+              autofocus: true,
+            ),
+          ),
         ],
         title: Text(
           pageTitle,
           maxLines: 2,
           style: const TextStyle(
-              color: Colors.black, fontWeight: FontWeight.normal),
+            color: Colors.black,
+            fontWeight: FontWeight.normal,
+          ),
         ),
       ),
       // floatingActionButton: Padding(
@@ -292,158 +310,183 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         child: Form(
           key: _formKey,
           child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 1.3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 1.3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      if (isNewProject)
+                        const Text(
+                          'Is Project Single Level',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      if (isNewProject)
+                        Switch(
+                          onChanged: (value) {
+                            toggleSwitch(value);
+                          },
+                          value: isProjectSingleLevel,
+                        ),
+                    ],
+                  ),
+                  const Text('Project name'),
+                  const SizedBox(height: 8),
+                  inputWidgetwithValidation(
+                    'Project name',
+                    'Please enter project name',
+                    _nameController,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Description'),
+                  const SizedBox(height: 8),
+                  inputWidgetNoValidation(
+                    'Description',
+                    3,
+                    _descriptionController,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Address'),
+
+                  inputWidgetNoValidation('Address', 2, _addressController),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide.none,
+                      // the height is 50, the width is full
+                      minimumSize: const Size.fromHeight(40),
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 1,
+                    ),
+                    onPressed: () {
+                      var initlattitude = currentProject.latitude ?? 28.7;
+                      var initlongitude = currentProject.longitude ?? 70.7;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => GoogleMapsView(
+                                initlattitude,
+                                initlongitude,
+                                isNewProject,
+                              ),
+                        ),
+                      ).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            _addressController.text = value["address"];
+                            lattitude = value["latitude"];
+                            longitude = value["longitude"];
+                          });
+                        }
+                      });
+                    },
+                    icon: const Icon(
+                      Icons.location_pin,
+                      color: Colors.blueAccent,
+                    ),
+                    label: Text(
+                      isNewProject ? 'Add location' : 'Update location',
+                      style: const TextStyle(color: Colors.blueAccent),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+                  if (isNewProject)
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        if (isNewProject)
-                          const Text(
-                            'Is Project Single Level',
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        if (isNewProject)
-                          Switch(
-                            onChanged: (value) {
-                              toggleSwitch(value);
-                            },
-                            value: isProjectSingleLevel,
-                          ),
+                        const Text(
+                          'Location form type',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        DropdownButton(
+                          value: selectedValue,
+                          hint: const Text('E3 form'),
+                          items: dropdownItems,
+                          onChanged: (value) {
+                            formId = value?.id;
+                            setState(() {
+                              selectedValue = value;
+                            });
+                          },
+                        ),
                       ],
                     ),
-                    const Text('Project name'),
-                    const SizedBox(
-                      height: 8,
+
+                  // Center(
+                  //     child: TextField(
+                  //   controller: dateInput,
+                  //   //editing controller of this TextField
+                  //   decoration: const InputDecoration(
+                  //       icon: Icon(Icons.calendar_today), //icon of text field
+                  //       labelText:
+                  //           "Project inspection/edit date" //label text of field
+                  //       ),
+                  //   readOnly: true,
+                  //   //set it true, so that user will not able to edit text
+                  //   onTap: () async {
+                  //     DateTime? pickedDate = await showDatePicker(
+                  //         context: context,
+                  //         initialDate: dateInput.text == ''
+                  //             ? DateTime.now()
+                  //             : DateTime.parse(
+                  //                 currentProject.editedat as String),
+                  //         firstDate: DateTime(2000),
+                  //         //DateTime.now() - not to allow to choose before today.
+                  //         lastDate: DateTime(2100));
+
+                  //     if (pickedDate != null) {
+                  //       String formattedDate =
+                  //           DateFormat('MM-dd-yyyy').format(pickedDate);
+
+                  //       setState(() {
+                  //         dateInput.text =
+                  //             formattedDate;
+
+                  //         //set output date to TextField value.
+                  //       });
+                  //     } else {}
+                  //   },
+                  // )),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide.none,
+                      // the height is 50, the width is full
+                      minimumSize: const Size.fromHeight(40),
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 1,
                     ),
-                    inputWidgetwithValidation('Project name',
-                        'Please enter project name', _nameController),
-                    const SizedBox(
-                      height: 16,
+                    onPressed: () async {
+                      showAssetPic = false;
+                      //add logic to open camera.
+                      var xfile = await captureImage(context);
+                      if (xfile != null) {
+                        setState(() {
+                          imageURL = xfile.path;
+                        });
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.camera_outlined,
+                      color: Colors.blueAccent,
                     ),
-                    const Text('Description'),
-                    const SizedBox(
-                      height: 8,
+                    label: const Text(
+                      'Add Image',
+                      style: TextStyle(color: Colors.blueAccent),
                     ),
-                    inputWidgetNoValidation(
-                        'Description', 3, _descriptionController),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    const Text('Address'),
-
-                    inputWidgetNoValidation('Address', 2, _addressController),
-                    OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                            side: BorderSide.none,
-                            // the height is 50, the width is full
-                            minimumSize: const Size.fromHeight(40),
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            elevation: 1),
-                        onPressed: () {
-                          var initlattitude = currentProject.latitude ?? 28.7;
-                          var initlongitude = currentProject.longitude ?? 70.7;
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => GoogleMapsView(
-                                      initlattitude,
-                                      initlongitude,
-                                      isNewProject))).then(
-                            (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _addressController.text = value["address"];
-                                  lattitude = value["latitude"];
-                                  longitude = value["longitude"];
-                                });
-                              }
-                            },
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.location_pin,
-                          color: Colors.blueAccent,
-                        ),
-                        label: Text(
-                          isNewProject ? 'Add location' : 'Update location',
-                          style: const TextStyle(color: Colors.blueAccent),
-                        )),
-
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    if (isNewProject)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          const Text(
-                            'Location form type',
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          DropdownButton(
-                            value: selectedValue,
-                            hint: const Text('E3 form'),
-                            items: dropdownItems,
-                            onChanged: (value) {
-                              formId = value?.id;
-                              setState(() {
-                                selectedValue = value;
-                              });
-                            },
-                          )
-                        ],
-                      ),
-
-                    // Center(
-                    //     child: TextField(
-                    //   controller: dateInput,
-                    //   //editing controller of this TextField
-                    //   decoration: const InputDecoration(
-                    //       icon: Icon(Icons.calendar_today), //icon of text field
-                    //       labelText:
-                    //           "Project inspection/edit date" //label text of field
-                    //       ),
-                    //   readOnly: true,
-                    //   //set it true, so that user will not able to edit text
-                    //   onTap: () async {
-                    //     DateTime? pickedDate = await showDatePicker(
-                    //         context: context,
-                    //         initialDate: dateInput.text == ''
-                    //             ? DateTime.now()
-                    //             : DateTime.parse(
-                    //                 currentProject.editedat as String),
-                    //         firstDate: DateTime(2000),
-                    //         //DateTime.now() - not to allow to choose before today.
-                    //         lastDate: DateTime(2100));
-
-                    //     if (pickedDate != null) {
-                    //       String formattedDate =
-                    //           DateFormat('MM-dd-yyyy').format(pickedDate);
-
-                    //       setState(() {
-                    //         dateInput.text =
-                    //             formattedDate;
-
-                    //         //set output date to TextField value.
-                    //       });
-                    //     } else {}
-                    //   },
-                    // )),
-
-                    OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                            side: BorderSide.none,
-                            // the height is 50, the width is full
-                            minimumSize: const Size.fromHeight(40),
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            elevation: 1),
-                        onPressed: () async {
+                  ),
+                  SizedBox(
+                    height: 220,
+                    child: Card(
+                      borderOnForeground: false,
+                      elevation: 8,
+                      child: GestureDetector(
+                        onTap: () async {
                           showAssetPic = false;
                           //add logic to open camera.
                           var xfile = await captureImage(context);
@@ -453,129 +496,115 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                             });
                           }
                         },
-                        icon: const Icon(
-                          Icons.camera_outlined,
-                          color: Colors.blueAccent,
-                        ),
-                        label: const Text(
-                          'Add Image',
-                          style: TextStyle(color: Colors.blueAccent),
-                        )),
-                    SizedBox(
-                        height: 220,
-                        child: Card(
-                          borderOnForeground: false,
-                          elevation: 8,
-                          child: GestureDetector(
-                            onTap: () async {
-                              showAssetPic = false;
-                              //add logic to open camera.
-                              var xfile = await captureImage(context);
-                              if (xfile != null) {
-                                setState(() {
-                                  imageURL = xfile.path;
-                                });
-                              }
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                  color: Colors.blue,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8.0)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 1.0, color: Colors.blue)
-                                  ]),
-                              child: showAssetPic
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(8.0),
+                            ),
+                            boxShadow: [
+                              BoxShadow(blurRadius: 1.0, color: Colors.blue),
+                            ],
+                          ),
+                          child:
+                              showAssetPic
                                   ? currentProject.url == ""
                                       ? Image.asset(
-                                          "assets/images/icon.png",
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
+                                        "assets/images/icon.png",
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 250,
+                                      )
                                       : Image.file(
-                                          File(imageURL),
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
+                                        File(imageURL),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 250,
+                                      )
                                   : cachedNetworkImage(imageURL),
-                            ),
-                          ),
-                        )),
-                    if (!isNewProject)
-                      OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                              side: BorderSide.none,
-                              // the height is 50, the width is full
-                              minimumSize: const Size.fromHeight(40),
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              elevation: 1),
-                          onPressed: () {
-                            deleteProject();
-                          },
-                          icon: const Icon(
-                            Icons.delete_outline_outlined,
-                            color: Colors.redAccent,
-                          ),
-                          label: const Text(
-                            'Delete Project',
-                            style: TextStyle(color: Colors.red),
-                          )),
-                    const SizedBox(
-                      height: 30,
-                    )
-                  ],
-                ),
-              )),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!isNewProject)
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide.none,
+                        // the height is 50, the width is full
+                        minimumSize: const Size.fromHeight(40),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 1,
+                      ),
+                      onPressed: () {
+                        deleteProject();
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline_outlined,
+                        color: Colors.redAccent,
+                      ),
+                      label: const Text(
+                        'Delete Project',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget inputWidgetwithValidation(
-      String hint, String message, TextEditingController controller) {
+    String hint,
+    String message,
+    TextEditingController controller,
+  ) {
     return TextFormField(
-        controller: controller,
-        // The validator receives the text that the user has entered.
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return message;
-          }
-          return null;
-        },
-        maxLines: 1,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              fontSize: 14.0,
-              color: Color(0xFFABB3BB),
-              height: 1.0,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            )));
+      controller: controller,
+      // The validator receives the text that the user has entered.
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return message;
+        }
+        return null;
+      },
+      maxLines: 1,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 14.0,
+          color: Color(0xFFABB3BB),
+          height: 1.0,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   Widget inputWidgetNoValidation(
-      String hint, int? lines, TextEditingController controller) {
+    String hint,
+    int? lines,
+    TextEditingController controller,
+  ) {
     return TextField(
-        controller: controller,
+      controller: controller,
 
-        // The validator receives the text that the user has entered.
-        maxLines: lines,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              fontSize: 14.0,
-              color: Color(0xFFABB3BB),
-              height: 1.0,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            )));
+      // The validator receives the text that the user has entered.
+      maxLines: lines,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 14.0,
+          color: Color(0xFFABB3BB),
+          height: 1.0,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   void deleteProject() async {
@@ -587,17 +616,19 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
     var result = realmProjServices.deleteProject(currentProject);
     if (result == 'success') {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Project deleted successfully.')));
+        const SnackBar(content: Text('Project deleted successfully.')),
+      );
       Navigator.pop(context);
       Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const HomePage(
-                    key: Key('Home'),
-                  )));
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomePage(key: Key('Home')),
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to deleted project.')));
+        const SnackBar(content: Text('Failed to deleted project.')),
+      );
     }
   }
 }

@@ -7,8 +7,6 @@ import 'package:provider/provider.dart';
 import '../bloc/images_bloc.dart';
 import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
-import '../resources/realm/realm_services.dart';
-//import 'breadcrumb_navigation.dart';
 import '../services/realm_local_services.dart';
 import 'capture_image.dart';
 
@@ -20,8 +18,7 @@ class AddEditLocationPage extends StatefulWidget {
   // final Object currentBuilding;
   const AddEditLocationPage(this.currentLocation, this.isNewLocation,
       this.fullUserName, this.prevPageName,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   State<AddEditLocationPage> createState() => _AddEditLocationPageState();

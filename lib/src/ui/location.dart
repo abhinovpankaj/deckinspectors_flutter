@@ -8,8 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
 
 import '../models/realm/realm_schemas.dart';
-import '../resources/realm/realm_services.dart';
-//import 'breadcrumb_navigation.dart';
 import '../services/realm_local_services.dart';
 import 'cachedimage_widget.dart';
 import 'dynamic_section.dart';

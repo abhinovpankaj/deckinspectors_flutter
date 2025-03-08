@@ -12,8 +12,7 @@ class HTMLViewerPage extends StatefulWidget {
   final String projectType;
   final String filePath;
   const HTMLViewerPage(this.htmlText, this.projectType, this.filePath,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   State<HTMLViewerPage> createState() => _HTMLViewerPageState();
