@@ -89,7 +89,7 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
 
       // send iceCandidate generated to remote peer over signalling
       for (RTCIceCandidate candidate in rtcIceCadidates) {
-        socket!.emit("IceCandidate", {
+        socket.emit("IceCandidate", {
           "calleeId": calleeId,
           "iceCandidate": {
             "id": candidate.sdpMid,

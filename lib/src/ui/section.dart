@@ -14,7 +14,7 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
-import 'package:udp/udp.dart';
+// import 'package:udp/udp.dart';
 import '../bloc/users_bloc.dart';
 import '../models/exteriorelements.dart';
 import '../models/realm/realm_schemas.dart';
@@ -267,31 +267,31 @@ class _SectionPageState extends State<SectionPage> {
     super.initState();
   }
 
-  Future<void> _listenForPiIpAddress() async {
-    var receiver = await UDP.bind(Endpoint.any(port: const Port(5005)));
-    //receiver.send([1, 2, 3, 4], Endpoint.any(port: const Port(5005)));
-    receiver.asStream().listen((datagram) {
-      if (datagram != null) {
-        String message = String.fromCharCodes(datagram.data).split(' ')[0];
+  // Future<void> _listenForPiIpAddress() async {
+  //   var receiver = await UDP.bind(Endpoint.any(port: const Port(5005)));
+  //   //receiver.send([1, 2, 3, 4], Endpoint.any(port: const Port(5005)));
+  //   receiver.asStream().listen((datagram) {
+  //     if (datagram != null) {
+  //       String message = String.fromCharCodes(datagram.data).split(' ')[0];
 
-        final websocket = SignallingService.instance.socket;
-        websocketUrl = "http://$message:8090";
+  //       final websocket = SignallingService.instance.socket;
+  //       websocketUrl = "http://$message:8090";
 
-        if (websocket == null) {
-          SignallingService.instance.init(
-            websocketUrl: websocketUrl,
-            selfCallerID: selfCallerID,
-          );
-        }
+  //       if (websocket == null) {
+  //         SignallingService.instance.init(
+  //           websocketUrl: websocketUrl,
+  //           selfCallerID: selfCallerID,
+  //         );
+  //       }
 
-        receiver.close();
-      }
-    });
+  //       receiver.close();
+  //     }
+  //   });
 
-    // Keep the receiver open for 60 seconds
-    await Future.delayed(const Duration(seconds: 60));
-    receiver.close();
-  }
+  //   // Keep the receiver open for 60 seconds
+  //   await Future.delayed(const Duration(seconds: 60));
+  //   receiver.close();
+  // }
 
   String websocketUrl = ""; // = "ws://192.168.1.2:8090";
 

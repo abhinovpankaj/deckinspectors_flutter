@@ -11,8 +11,12 @@ class HTMLViewerPage extends StatefulWidget {
   final String htmlText;
   final String projectType;
   final String filePath;
-  const HTMLViewerPage(this.htmlText, this.projectType, this.filePath,
-      {super.key});
+  const HTMLViewerPage(
+    this.htmlText,
+    this.projectType,
+    this.filePath, {
+    super.key,
+  });
 
   @override
   State<HTMLViewerPage> createState() => _HTMLViewerPageState();
@@ -77,9 +81,9 @@ Page resource error:
       ..addJavaScriptChannel(
         'Toaster',
         onMessageReceived: (JavaScriptMessage message) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message.message)));
         },
       );
     // ..loadRequest(Uri.parse('https://flutter.dev'));
@@ -100,73 +104,71 @@ Page resource error:
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Project $projectType Report'),
-        ),
-        floatingActionButton: PopupMenuButton(
-          child: const Chip(
-            avatar: Icon(
-              Icons.save_as,
-              color: Colors.blue,
-            ),
-            labelPadding: EdgeInsets.all(8),
-            label: Text(
-              'Save As',
-              style: TextStyle(color: Colors.blue, fontSize: 15),
-            ),
-            shadowColor: Colors.transparent,
-            backgroundColor: Colors.transparent,
-            elevation: 10,
-            autofocus: true,
+      appBar: AppBar(title: Text('Project $projectType Report')),
+      floatingActionButton: PopupMenuButton(
+        child: const Chip(
+          avatar: Icon(Icons.save_as, color: Colors.blue),
+          labelPadding: EdgeInsets.all(8),
+          label: Text(
+            'Save As',
+            style: TextStyle(color: Colors.blue, fontSize: 15),
           ),
-          onSelected: (value) {
-            _onMenuItemSelected(value as int);
-          },
-          itemBuilder: (ctx) => [
-            _buildPopupMenuItem('PDF', Icons.picture_as_pdf_outlined, 1),
-            _buildPopupMenuItem('DOCX', Icons.document_scanner_outlined, 2),
-          ],
+          shadowColor: Colors.transparent,
+          backgroundColor: Colors.transparent,
+          elevation: 10,
+          autofocus: true,
         ),
-        body: isLoading
-            ? const Center(
+        onSelected: (value) {
+          _onMenuItemSelected(value as int);
+        },
+        itemBuilder:
+            (ctx) => [
+              _buildPopupMenuItem('PDF', Icons.picture_as_pdf_outlined, 1),
+              _buildPopupMenuItem('DOCX', Icons.document_scanner_outlined, 2),
+            ],
+      ),
+      body:
+          isLoading
+              ? const Center(
                 child: CircularProgressIndicator(
-                backgroundColor: Colors.blue,
-                color: Colors.green,
-                //valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-              ))
-            : WebViewWidget(controller: _webViewController));
+                  backgroundColor: Colors.blue,
+                  color: Colors.green,
+                  //valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+              )
+              : WebViewWidget(controller: _webViewController),
+    );
   }
 
   _onMenuItemSelected(int value) async {
     if (value == 1) {
       //var savedPath = filePath.replaceAll('.html', '.pdf');
       await Printing.layoutPdf(
-          onLayout: (PdfPageFormat format) async => await Printing.convertHtml(
-                format: format,
-                html: htmlText,
-              ));
+        onLayout:
+            (PdfPageFormat format) async =>
+                await Printing.convertHtml(format: format, html: htmlText),
+      );
       if (!mounted) {
         return;
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('DOCX under development.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('DOCX under development.')));
     }
   }
 
   PopupMenuItem _buildPopupMenuItem(
-      String title, IconData iconData, int position) {
+    String title,
+    IconData iconData,
+    int position,
+  ) {
     return PopupMenuItem(
       value: position,
       child: Row(
         children: [
-          Icon(
-            iconData,
-            color: Colors.blue,
-          ),
-          const SizedBox(
-            width: 15,
-          ),
+          Icon(iconData, color: Colors.blue),
+          const SizedBox(width: 15),
           Text(title),
         ],
       ),
