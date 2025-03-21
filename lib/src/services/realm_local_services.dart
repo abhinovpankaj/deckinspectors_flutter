@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:realm/realm.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+//import 'package:wakelock_plus/wakelock_plus.dart';
 import '../bloc/images_bloc.dart';
 import '../bloc/notificationcontroller.dart';
 import '../bloc/settings_bloc.dart';
@@ -18,7 +18,7 @@ import '../ui/section.dart';
 class RealmLocalServices with ChangeNotifier {
   late Realm realm;
   bool showAll = true;
-  static late bool offlineModeOn;
+  static bool offlineModeOn = false;
   bool isWaiting = false;
   String loggedInUser;
   String company;
@@ -1063,7 +1063,7 @@ class RealmLocalServices with ChangeNotifier {
           NotificationController.createNewNotification();
         }
         //set device lock
-        WakelockPlus.enable();
+        //WakelockPlus.enable();
         for (var image in images) {
           if (!appSettings.activeConnection) {
             appSettings.isImageUploading = false;
@@ -1229,7 +1229,7 @@ class RealmLocalServices with ChangeNotifier {
     } finally {
       NotificationController.cancelNotifications();
       appSettings.isImageUploading = false;
-      WakelockPlus.disable();
+      //WakelockPlus.disable();
     }
   }
 

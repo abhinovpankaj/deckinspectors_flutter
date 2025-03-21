@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+//import 'package:http/http.dart' as http;
 import 'package:realm/realm.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -14,21 +14,33 @@ class SyncService {
   SyncService(this.realmServices);
 
   void initSocket() {
-    socket = io(
-      'http://your-server-ip:4000',
-      OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
-    );
+    debugPrint("Initializing WebSocket connection...");
 
-    socket.onConnect((_) {
-      debugPrint("Connected to WebSocket Server");
-      syncUnsyncedData(); // Sync unsynced data when connected
-    });
+    try {
+      socket = io(
+        'http://localhost:3000',
+        OptionBuilder()
+            .setTransports(['websocket'])
+            .disableAutoConnect()
+            .build(),
+      );
 
-    socket.on("projectUpdated", (data) {
-      updateLocalRealm(data);
-    });
+      socket.onConnect((_) {
+        debugPrint("Connected to WebSocket Server");
+        syncUnsyncedData(); // Sync unsynced data when connected
+      });
 
-    socket.onDisconnect((_) => debugPrint("Disconnected from WebSocket"));
+      socket.on("projectUpdated", (data) {
+        updateLocalRealm(data);
+      });
+
+      socket.onConnectError((error) {
+        debugPrint("Connect Error: $error");
+      });
+      socket.onDisconnect((_) => debugPrint("Disconnected from WebSocket"));
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
   }
 
   void sendUpdate(Map<String, dynamic> project) {
@@ -36,6 +48,7 @@ class SyncService {
     markAsSynced(project['id']);
   }
 
+  //downlaod data from server
   void updateLocalRealm(dynamic data) {
     final project = realmServices.realm.write(() {
       return realmServices.realm.add<Project>(
@@ -110,16 +123,6 @@ class SyncService {
         syncData.dynamicVisualSections.isEmpty &&
         syncData.locationForms.isEmpty) {
       return;
-    }
-
-    final response = await http.post(
-      Uri.parse('https://your-server.com/api/sync'),
-      headers: {'Content-Type': 'application/json'},
-      body: syncData.toJson(),
-    );
-
-    if (response.statusCode == 200) {
-      realmServices.markDataAsSynced(syncData);
     }
   }
 

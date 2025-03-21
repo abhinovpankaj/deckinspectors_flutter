@@ -21,23 +21,32 @@ void main() async {
     // Force Hybrid Composition mode.
     mapsImplementation.useAndroidViewSurface = true;
   }
-  return runApp(MultiProvider(providers: [
-    ChangeNotifierProvider<AppSettings>(
-      create: (_) => AppSettings(),
-    ),
-    ChangeNotifierProxyProvider<AppSettings, RealmLocalServices?>(
-        create: (context) => null,
-        update: (BuildContext context, AppSettings appSettings,
-            RealmLocalServices? realmServices) {
-          if (usersBloc.userDetails.username != null) {
-            realmServices = RealmLocalServices(
+  return runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppSettings>(create: (_) => AppSettings()),
+        ChangeNotifierProxyProvider<AppSettings, RealmLocalServices?>(
+          create: (context) => null,
+          update: (
+            BuildContext context,
+            AppSettings appSettings,
+            RealmLocalServices? realmServices,
+          ) {
+            if (usersBloc.userDetails.username != null) {
+              realmServices = RealmLocalServices(
                 usersBloc.userDetails.username as String,
-                usersBloc.userDetails.companyidentifer as String);
-            realmServices.uploadLocalImages();
-            final syncService = SyncService(realmServices);
-            syncService.startSync();
-          }
-          return realmServices;
-        }),
-  ], child: const App()));
+                usersBloc.userDetails.companyidentifer as String,
+              );
+              realmServices.uploadLocalImages();
+              final syncService = SyncService(realmServices);
+              syncService.initSocket();
+              //syncService.startSync();
+            }
+            return realmServices;
+          },
+        ),
+      ],
+      child: const App(),
+    ),
+  );
 }
