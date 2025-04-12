@@ -5,7 +5,7 @@ import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:provider/provider.dart';
 import 'src/app.dart';
-import 'src/bloc/notificationcontroller.dart';
+//import 'src/bloc/notificationcontroller.dart';
 import 'src/services/realm_local_services.dart';
 import 'src/services/sync_service.dart';
 
@@ -13,8 +13,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Always initialize Awesome Notifications
-  await NotificationController.initializeLocalNotifications();
-  await NotificationController.initializeIsolateReceivePort();
+  //await NotificationController.initializeLocalNotifications();
+  //await NotificationController.initializeIsolateReceivePort();
   final GoogleMapsFlutterPlatform mapsImplementation =
       GoogleMapsFlutterPlatform.instance;
   if (mapsImplementation is GoogleMapsFlutterAndroid) {
@@ -33,14 +33,15 @@ void main() async {
             RealmLocalServices? realmServices,
           ) {
             if (usersBloc.userDetails.username != null) {
+              final syncService = SyncService();
               realmServices = RealmLocalServices(
                 usersBloc.userDetails.username as String,
                 usersBloc.userDetails.companyidentifer as String,
+                syncService,
               );
               realmServices.uploadLocalImages();
-              final syncService = SyncService(realmServices);
-              syncService.initSocket();
-              //syncService.startSync();
+              syncService.initSocketAsync();
+              realmServices.listenForRealmChanges();
             }
             return realmServices;
           },

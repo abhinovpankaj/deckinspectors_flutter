@@ -6,6 +6,7 @@ allprojects {
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
@@ -17,6 +18,8 @@ subprojects {
                 compileSdkVersion 34
                 buildToolsVersion "34.0.0"
             }
+        }else{
+             println "Warning: Android plugin not applied to ${project.name}"
         }
     }
 }

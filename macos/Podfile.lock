@@ -1,57 +1,147 @@
 PODS:
+  - connectivity_plus (0.0.1):
+    - FlutterMacOS
+  - device_info_plus (0.0.1):
+    - FlutterMacOS
+  - file_picker (0.0.1):
+    - FlutterMacOS
+  - file_selector_macos (0.0.1):
+    - FlutterMacOS
+  - flutter_webrtc (0.12.6):
+    - FlutterMacOS
+    - WebRTC-SDK (= 125.6422.06)
   - FlutterMacOS (1.0.0)
-  - FMDB (2.7.5):
-    - FMDB/standard (= 2.7.5)
-  - FMDB/standard (2.7.5)
+  - geolocator_apple (1.2.0):
+    - Flutter
+    - FlutterMacOS
+  - maps_launcher (0.0.1):
+    - FlutterMacOS
+  - package_info_plus (0.0.1):
+    - FlutterMacOS
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - realm (1.0.3):
+  - pdfx (1.0.0):
+    - FlutterMacOS
+  - printing (1.0.0):
+    - FlutterMacOS
+  - realm (20.0.1):
+    - FlutterMacOS
+  - share_plus (0.0.1):
     - FlutterMacOS
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - speech_to_text_macos (0.0.1):
+  - speech_to_text (0.0.1):
+    - Flutter
     - FlutterMacOS
-  - sqflite (0.0.2):
+    - Try
+  - sqflite_darwin (0.0.4):
+    - Flutter
     - FlutterMacOS
-    - FMDB (>= 2.7.5)
+  - syncfusion_pdfviewer_macos (0.0.1):
+    - FlutterMacOS
+  - Try (2.1.1)
+  - url_launcher_macos (0.0.1):
+    - FlutterMacOS
+  - WebRTC-SDK (125.6422.06)
+  - webview_flutter_wkwebview (0.0.1):
+    - Flutter
+    - FlutterMacOS
 
 DEPENDENCIES:
+  - connectivity_plus (from `Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos`)
+  - device_info_plus (from `Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos`)
+  - file_picker (from `Flutter/ephemeral/.symlinks/plugins/file_picker/macos`)
+  - file_selector_macos (from `Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos`)
+  - flutter_webrtc (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/macos`)
+  - geolocator_apple (from `Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin`)
+  - maps_launcher (from `Flutter/ephemeral/.symlinks/plugins/maps_launcher/macos`)
+  - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
+  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - pdfx (from `Flutter/ephemeral/.symlinks/plugins/pdfx/macos`)
+  - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - realm (from `Flutter/ephemeral/.symlinks/plugins/realm/macos`)
-  - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/macos`)
-  - speech_to_text_macos (from `Flutter/ephemeral/.symlinks/plugins/speech_to_text_macos/macos`)
-  - sqflite (from `Flutter/ephemeral/.symlinks/plugins/sqflite/macos`)
+  - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
+  - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - speech_to_text (from `Flutter/ephemeral/.symlinks/plugins/speech_to_text/darwin`)
+  - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
+  - syncfusion_pdfviewer_macos (from `Flutter/ephemeral/.symlinks/plugins/syncfusion_pdfviewer_macos/macos`)
+  - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
+  - webview_flutter_wkwebview (from `Flutter/ephemeral/.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 SPEC REPOS:
   trunk:
-    - FMDB
+    - Try
+    - WebRTC-SDK
 
 EXTERNAL SOURCES:
+  connectivity_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos
+  device_info_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos
+  file_picker:
+    :path: Flutter/ephemeral/.symlinks/plugins/file_picker/macos
+  file_selector_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos
+  flutter_webrtc:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  geolocator_apple:
+    :path: Flutter/ephemeral/.symlinks/plugins/geolocator_apple/darwin
+  maps_launcher:
+    :path: Flutter/ephemeral/.symlinks/plugins/maps_launcher/macos
+  package_info_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   path_provider_foundation:
-    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/macos
+    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  pdfx:
+    :path: Flutter/ephemeral/.symlinks/plugins/pdfx/macos
+  printing:
+    :path: Flutter/ephemeral/.symlinks/plugins/printing/macos
   realm:
     :path: Flutter/ephemeral/.symlinks/plugins/realm/macos
+  share_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   shared_preferences_foundation:
-    :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/macos
-  speech_to_text_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/speech_to_text_macos/macos
-  sqflite:
-    :path: Flutter/ephemeral/.symlinks/plugins/sqflite/macos
+    :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
+  speech_to_text:
+    :path: Flutter/ephemeral/.symlinks/plugins/speech_to_text/darwin
+  sqflite_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin
+  syncfusion_pdfviewer_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/syncfusion_pdfviewer_macos/macos
+  url_launcher_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
+  webview_flutter_wkwebview:
+    :path: Flutter/ephemeral/.symlinks/plugins/webview_flutter_wkwebview/darwin
 
 SPEC CHECKSUMS:
+  connectivity_plus: 0a976dfd033b59192912fa3c6c7b54aab5093802
+  device_info_plus: ce1b7762849d3ec103d0e0517299f2db7ad60720
+  file_picker: e716a70a9fe5fd9e09ebc922d7541464289443af
+  file_selector_macos: cc3858c981fe6889f364731200d6232dac1d812d
+  flutter_webrtc: d55fd3f5c75b42940b6b4b2cf376a5797398d1f8
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
-  realm: b5846f6c4644a97e37f88ba0894854fabd39fab0
-  shared_preferences_foundation: 986fc17f3d3251412d18b0265f9c64113a8c2472
-  speech_to_text_macos: ae04291713998dede24b85d3b50bd8fedcbfb565
-  sqflite: a5789cceda41d54d23f31d6de539d65bb14100ea
+  geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
+  maps_launcher: f1a606d040d8938430ddb7ca836a0abd2c7a1d34
+  package_info_plus: 02d7a575e80f194102bef286361c6c326e4c29ce
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  pdfx: d1c406047b02acc54fe98495ae24b04fe9b4f024
+  printing: 1dd6a1fce2209ec240698e2439a4adbb9b427637
+  realm: 976f7773b9910110391c11b0a5d14f331b7a5ff0
+  share_plus: 1fa619de8392a4398bfaf176d441853922614e89
+  shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
+  speech_to_text: 627d3fd2194770b51abb324ba45c2d39398f24a8
+  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
+  syncfusion_pdfviewer_macos: e9194851581cad04b28b53913d0636d39a4ed4b2
+  Try: 5ef669ae832617b3cee58cb2c6f99fb767a4ff96
+  url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
+  WebRTC-SDK: 79942c006ea64f6fb48d7da8a4786dfc820bc1db
+  webview_flutter_wkwebview: a4af96a051138e28e29f60101d094683b9f82188
 
 PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.16.2

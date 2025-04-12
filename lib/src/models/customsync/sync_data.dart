@@ -23,18 +23,18 @@ class SyncData {
     required this.locationForms,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'projects': projects.map((e) => e.toJson()).toList(),
-      'subProjects': subProjects.map((e) => e.toJson()).toList(),
-      'locations': locations.map((e) => e.toJson()).toList(),
-      'visualSections': visualSections.map((e) => e.toJson()).toList(),
-      'invasiveSections': invasiveSections.map((e) => e.toJson()).toList(),
-      'conclusiveSections': conclusiveSections.map((e) => e.toJson()).toList(),
-      'deckImages': deckImages.map((e) => e.toJson()).toList(),
-      'dynamicVisualSections':
-          dynamicVisualSections.map((e) => e.toJson()).toList(),
-      'locationForms': locationForms.map((e) => e.toJson()).toList(),
-    };
-  }
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     'projects': projects.map((e) => e.toJson()).toList(),
+  //     'subProjects': subProjects.map((e) => e.toJson()).toList(),
+  //     'locations': locations.map((e) => e.toJson()).toList(),
+  //     'visualSections': visualSections.map((e) => e.toJson()).toList(),
+  //     'invasiveSections': invasiveSections.map((e) => e.toJson()).toList(),
+  //     'conclusiveSections': conclusiveSections.map((e) => e.toJson()).toList(),
+  //     'deckImages': deckImages.map((e) => e.toJson()).toList(),
+  //     'dynamicVisualSections':
+  //         dynamicVisualSections.map((e) => e.toJson()).toList(),
+  //     'locationForms': locationForms.map((e) => e.toJson()).toList(),
+  //   };
+  // }
 }

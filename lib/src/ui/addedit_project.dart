@@ -362,27 +362,27 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                       elevation: 1,
                     ),
                     onPressed: () {
-                      var initlattitude = currentProject.latitude ?? 28.7;
-                      var initlongitude = currentProject.longitude ?? 70.7;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => GoogleMapsView(
-                                initlattitude,
-                                initlongitude,
-                                isNewProject,
-                              ),
-                        ),
-                      ).then((value) {
-                        if (value != null) {
-                          setState(() {
-                            _addressController.text = value["address"];
-                            lattitude = value["latitude"];
-                            longitude = value["longitude"];
-                          });
-                        }
-                      });
+                      // var initlattitude = currentProject.latitude ?? 28.7;
+                      // var initlongitude = currentProject.longitude ?? 70.7;
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder:
+                      //         (context) => GoogleMapsView(
+                      //           initlattitude,
+                      //           initlongitude,
+                      //           isNewProject,
+                      //         ),
+                      //   ),
+                      // ).then((value) {
+                      //   if (value != null) {
+                      //     setState(() {
+                      //       _addressController.text = value["address"];
+                      //       lattitude = value["latitude"];
+                      //       longitude = value["longitude"];
+                      //     });
+                      //   }
+                      // });
                     },
                     icon: const Icon(
                       Icons.location_pin,

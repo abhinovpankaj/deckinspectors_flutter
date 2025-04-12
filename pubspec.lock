@@ -202,18 +202,18 @@ packages:
     dependency: transitive
     description:
       name: camera_avfoundation
-      sha256: "3057ada0b30402e3a9b6dffec365c9736a36edbf04abaecc67c4309eadc86b49"
+      sha256: ba48b65a3a97004276ede882e6b838d9667642ff462c95a8bb57ca8a82b6bd25
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.18+9"
+    version: "0.9.18+11"
   camera_platform_interface:
     dependency: transitive
     description:
       name: camera_platform_interface
-      sha256: "953e7baed3a7c8fae92f7200afeb2be503ff1a17c3b4e4ed7b76f008c2810a31"
+      sha256: "2f757024a48696ff4814a789b0bd90f5660c0fb25f393ab4564fb483327930e2"
       url: "https://pub.dev"
     source: hosted
-    version: "2.9.0"
+    version: "2.10.0"
   camera_web:
     dependency: transitive
     description:
@@ -346,10 +346,10 @@ packages:
     dependency: transitive
     description:
       name: dart_webrtc
-      sha256: b34e90bc82f33c1023cf98661369c37bccd648c8a4cf882a875d9f5d8bbef694
+      sha256: "8565f1f1f412b8a6fd862f3a157560811e61eeeac26741c735a5d2ff409a0202"
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.2+hotfix.1"
+    version: "1.5.3"
   dbus:
     dependency: transitive
     description:
@@ -650,26 +650,26 @@ packages:
     dependency: transitive
     description:
       name: geolocator_android
-      sha256: "7aefc530db47d90d0580b552df3242440a10fe60814496a979aa67aa98b1fd47"
+      sha256: fcb1760a50d7500deca37c9a666785c047139b5f9ee15aa5469fae7dbbe3170d
       url: "https://pub.dev"
     source: hosted
-    version: "4.6.1"
+    version: "4.6.2"
   geolocator_apple:
     dependency: transitive
     description:
       name: geolocator_apple
-      sha256: c4ecead17985ede9634f21500072edfcb3dba0ef7b97f8d7bc556d2d722b3ba3
+      sha256: dbdd8789d5aaf14cf69f74d4925ad1336b4433a6efdf2fce91e8955dc921bf22
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.9"
+    version: "2.3.13"
   geolocator_platform_interface:
     dependency: transitive
     description:
       name: geolocator_platform_interface
-      sha256: "386ce3d9cce47838355000070b1d0b13efb5bc430f8ecda7e9238c8409ace012"
+      sha256: "30cb64f0b9adcc0fb36f628b4ebf4f731a2961a0ebd849f4b56200205056fe67"
       url: "https://pub.dev"
     source: hosted
-    version: "4.2.4"
+    version: "4.2.6"
   geolocator_web:
     dependency: transitive
     description:
@@ -682,10 +682,10 @@ packages:
     dependency: transitive
     description:
       name: geolocator_windows
-      sha256: "53da08937d07c24b0d9952eb57a3b474e29aae2abf9dd717f7e1230995f13f0e"
+      sha256: "175435404d20278ffd220de83c2ca293b73db95eafbdc8131fe8609be1421eb6"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.3"
+    version: "0.2.5"
   get:
     dependency: "direct main"
     description:
@@ -730,26 +730,26 @@ packages:
     dependency: "direct main"
     description:
       name: google_maps_flutter
-      sha256: "621125e35e81ca39ef600e45243d2be93167e61def72bc7207b0c4a635c58506"
+      sha256: b42ff7f3875a5eedbe388d883100561b85c62beed1c39ad66dd60537c75bb424
       url: "https://pub.dev"
     source: hosted
-    version: "2.10.1"
+    version: "2.12.0"
   google_maps_flutter_android:
     dependency: "direct main"
     description:
       name: google_maps_flutter_android
-      sha256: "3b3f55d6b4f2bde6bbe80dca0bf8d228313005c9ce8a97a1d24257600d8c92e5"
+      sha256: "0ede4ae8326335c0c007c8c7a8c9737449263123385e2bdf49f3e71103b2dc2e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.14.14"
+    version: "2.16.0"
   google_maps_flutter_ios:
     dependency: "direct main"
     description:
       name: google_maps_flutter_ios
-      sha256: "6f798adb0aa1db5adf551f2e39e24bd06c8c0fbe4de912fb2d9b5b3f48147b02"
+      sha256: ef72c822930ce69515cb91c10cd88cfb8b26296f765808a43cbc9a10eaffacfe
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.2"
+    version: "2.15.0"
   google_maps_flutter_platform_interface:
     dependency: "direct main"
     description:
@@ -762,10 +762,10 @@ packages:
     dependency: transitive
     description:
       name: google_maps_flutter_web
-      sha256: bbeb93807a34bfeebdb7ace506bd2bc400a3915dc96736254fea721eb264caa0
+      sha256: a45786ea6691cc7cdbe2cf3ce2c2daf4f82a885745666b4a36baada3a4e12897
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.11"
+    version: "0.5.12"
   google_maps_place_picker_mb:
     dependency: "direct main"
     description:
@@ -890,10 +890,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker_linux
-      sha256: "4ed1d9bb36f7cd60aa6e6cd479779cc56a4cb4e4de8f49d487b1aaad831300fa"
+      sha256: "34a65f6740df08bbbeb0a1abd8e6d32107941fd4868f67a507b25601651022c9"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1+1"
+    version: "0.2.1+2"
   image_picker_macos:
     dependency: transitive
     description:
@@ -1687,18 +1687,18 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "59b6d2a7deacade6129d2f15615ca49ed56278fea055cd2e52cace78a343dd5e"
+      sha256: f1d2b52697543e13bdefdc62d15868124a265987577f53224a7dbe176c8448f0
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_flutter_pdf:
     dependency: transitive
     description:
       name: syncfusion_flutter_pdf
-      sha256: f5a17ac2322d3e11140b2f5d2f4994b553d06c1e2287895897fa573c094bdee9
+      sha256: f5e02ac4264bc69eeffa3ec54c9c0ad6e8a9f9161b105451b4a83dd1a317eaf9
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_flutter_pdfviewer:
     dependency: "direct main"
     description:
@@ -1711,42 +1711,42 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_signaturepad
-      sha256: "7574f7156b49c432fb323149175ff1ada80398ed6c90cd009b94f71b5bdf0cca"
+      sha256: "30de4c9f77d1b75850697262bf9ce30b46a8d4401cec91dae95c4ee4e589d857"
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_pdfviewer_macos:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_macos
-      sha256: "7bd238ef0b0dae3684abfc99dcf53a92fddbe3c8dd47644de80edb0040235109"
+      sha256: c76af8dc3e8df38be3f5d7a78f4bae5ff9f5d73706da997d8428e087af418102
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_pdfviewer_platform_interface:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_platform_interface
-      sha256: "0fdb60613771952982b31d74165707f47532d19d0b7139a664d1ec4c32c9bd13"
+      sha256: a9c102d1edd68fbe449e37021f5b82a8e32339023112807a828fb4e585e077cc
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_pdfviewer_web:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_web
-      sha256: fb15b01e9c1de4d6d3aef4f962475aa4d159aea19abe9ab59a8015e69922bd84
+      sha256: "6f2bf5c385e003e8f7312c445240c8648045400de9d7050df9d9a4b191c02568"
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   syncfusion_pdfviewer_windows:
     dependency: transitive
     description:
       name: syncfusion_pdfviewer_windows
-      sha256: a9f4070011b192385118c3d4c527234ff52c658583a5124706a54bef85b100ed
+      sha256: cf638a7d64bdd4120a8e27d944cb966a05a409ee3d0c24fa63e83341a535d6fb
       url: "https://pub.dev"
     source: hosted
-    version: "28.2.11"
+    version: "28.2.12"
   synchronized:
     dependency: transitive
     description:
@@ -1931,6 +1931,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.3.1"
+  wakelock_plus:
+    dependency: "direct main"
+    description:
+      name: wakelock_plus
+      sha256: "26ebc8b5e0037c15e2a1b661dcec8a475cb7205befcce8a33f545ae8c86b367c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.6"
+  wakelock_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: wakelock_plus_platform_interface
+      sha256: "70e780bc99796e1db82fe764b1e7dcb89a86f1e5b3afb1db354de50f2e41eb7a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
   watcher:
     dependency: transitive
     description:
@@ -1967,10 +1983,10 @@ packages:
     dependency: transitive
     description:
       name: webrtc_interface
-      sha256: e05f00091c9c70a15bab4ccb1b6c46d9a16a6075002f02cfac3641eccb05e25d
+      sha256: e92afec11152a9ccb5c9f35482754edd99696e886ab6acaf90c06dd2d09f09eb
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.1+hotfix.1"
+    version: "1.2.2+hotfix.1"
   webview_flutter:
     dependency: "direct main"
     description:
@@ -1983,10 +1999,10 @@ packages:
     dependency: "direct main"
     description:
       name: webview_flutter_android
-      sha256: "631093a7fbd93e9690ac61d8c8f3e857efbc189fc33f712b9ad6c01a623517ef"
+      sha256: e09150b28a07933839adef0e4a088bb43e8c8d9e6b93025b01882d4067a58ab0
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.3"
+    version: "4.3.4"
   webview_flutter_platform_interface:
     dependency: transitive
     description:

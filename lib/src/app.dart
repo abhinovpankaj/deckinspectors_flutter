@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'bloc/notificationcontroller.dart';
+//import 'bloc/notificationcontroller.dart';
 import 'ui/login.dart';
 import 'ui/navigation_observer.dart';
 
@@ -19,7 +19,6 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   void initState() {
-    NotificationController.startListeningNotificationEvents();
     super.initState();
   }
 
@@ -29,23 +28,27 @@ class _AppState extends State<App> {
     //     Provider.of<RealmProjectServices?>(context, listen: false)?.currentUser;
 
     return GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: MaterialApp(
-          navigatorObservers: [NavigationObserver()],
-          debugShowCheckedModeBanner: false,
-          title: 'E3 Inspections',
-          builder: (context, child) {
-            final MediaQueryData data = MediaQuery.of(context);
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: MaterialApp(
+        navigatorObservers: [NavigationObserver()],
+        debugShowCheckedModeBanner: false,
+        title: 'E3 Inspections',
+        builder: (context, child) {
+          final MediaQueryData data = MediaQuery.of(context);
 
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                  boldText: false,
-                  textScaler: data.textScaler
-                      .clamp(minScaleFactor: 1, maxScaleFactor: 1.2)),
-              child: child!,
-            );
-          },
-          home: const SafeArea(child: LoginPage()),
-        ));
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              boldText: false,
+              textScaler: data.textScaler.clamp(
+                minScaleFactor: 1,
+                maxScaleFactor: 1.2,
+              ),
+            ),
+            child: child!,
+          );
+        },
+        home: const SafeArea(child: LoginPage()),
+      ),
+    );
   }
 }

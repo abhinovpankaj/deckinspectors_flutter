@@ -1,139 +1,108 @@
-import 'dart:async';
-import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
-import 'package:realm/realm.dart';
+//import 'package:realm/realm.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
-import '../models/realm/realm_schemas.dart';
-import 'realm_local_services.dart';
+// import '../models/realm/realm_schemas.dart';
+// import 'realm_local_services.dart';
+
+// import 'package:web_socket_channel/status.dart' as status;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class SyncService {
-  final RealmLocalServices realmServices;
   late Socket socket;
-  SyncService(this.realmServices);
+  late WebSocketChannel channel;
+
+  final Map<String, String> pendingMessages = {};
+
+  bool pushToWebSocket(Map<String, Object> socketData, String messageId) {
+    try {
+      // Map<String, Object> socketData = {};
+      // final messageId = ObjectId().hexString;
+      // if (isDelete) {
+      //   socketData = {
+      //     "messageId": messageId,
+      //     "collectionName": collectionName,
+      //     "action": "delete",
+      //     "data": jsonEncode({"id": data['id']}),
+      //   };
+      // } else {
+      //   socketData = {
+      //     "messageId": messageId,
+      //     "collectionName": collectionName,
+      //     "action": eventName,
+      //     "data": jsonEncode(data),
+      //   };
+      // }
+      //if (socket.connected) {
+      if (isWebSocketConnected) {
+        debugPrint("Pushing to WebSocket: $socketData");
+        pendingMessages[messageId] = jsonEncode(socketData);
+        //final response = await socket.emitWithAckAsync("message", socketData);
+        channel.sink.add(jsonEncode(socketData));
+        return true;
+      } else {
+        // Handle the case when the socket is not connected
+        debugPrint("WebSocket is not connected");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Error pushing to WebSocket: $e");
+      return false;
+    }
+  }
 
   void initSocket() {
     debugPrint("Initializing WebSocket connection...");
 
     try {
       socket = io(
-        'http://localhost:3000',
+        'ws://192.168.1.8:3000',
         OptionBuilder()
             .setTransports(['websocket'])
-            .disableAutoConnect()
+            .enableAutoConnect()
+            .enableReconnection()
             .build(),
       );
+      //socket = io("http://192.168.1.4:3000");
 
-      socket.onConnect((_) {
+      socket.onConnect((data) {
         debugPrint("Connected to WebSocket Server");
-        syncUnsyncedData(); // Sync unsynced data when connected
+        //syncUnsyncedData(); // Sync unsynced data when connected
       });
-
-      socket.on("projectUpdated", (data) {
-        updateLocalRealm(data);
-      });
-
       socket.onConnectError((error) {
         debugPrint("Connect Error: $error");
       });
       socket.onDisconnect((_) => debugPrint("Disconnected from WebSocket"));
+      socket.connect();
     } catch (e) {
       debugPrint("Error: $e");
     }
   }
 
-  void sendUpdate(Map<String, dynamic> project) {
-    socket.emit("updateProject", project);
-    markAsSynced(project['id']);
-  }
+  bool isWebSocketConnected = false;
+  void initSocketAsync() async {
+    final wsUrl = Uri.parse('ws://192.168.1.9:3000');
+    channel = WebSocketChannel.connect(wsUrl);
 
-  //downlaod data from server
-  void updateLocalRealm(dynamic data) {
-    final project = realmServices.realm.write(() {
-      return realmServices.realm.add<Project>(
-        Project(
-          ObjectId.fromHexString(data['_id']),
-          data['companyIdentifier'],
-          name: data['name'],
-          projecttype: data['projecttype'],
-          description: data['description'],
-          address: data['address'],
-          createdby: data['createdby'],
-          createdat: data['createdat'],
-          url: data['url'],
-          editedat: data['editedat'],
-          lasteditedby: data['lasteditedby'],
-          assignedto: Set<String>.from(data['assignedto']),
-          children: [], // Parse children if needed
-          sections: [], // Parse sections if needed
-          latitude: data['latitude'],
-          longitude: data['longitude'],
-          formId: ObjectId.fromHexString(data['formId']),
-          isSynced: true,
-        ),
-        update: true,
-      );
-    });
-
-    debugPrint("Updated Realm with new data: ${project.name}");
-  }
-
-  void markAsSynced(ObjectId id) {
-    realmServices.realm.write(() {
-      final project = realmServices.realm.find<Project>(id);
-      if (project != null) {
-        project.isSynced = true;
-      }
-    });
-  }
-
-  void syncUnsyncedData() {
-    final unsyncedProjects =
-        realmServices.realm.all<Project>().where((p) => !p.isSynced).toList();
-
-    for (var project in unsyncedProjects) {
-      sendUpdate({
-        "id": project.id.hexString,
-        "name": project.name,
-        "editedat": project.editedat,
-        "isSynced": true,
-      });
+    try {
+      await channel.ready;
+      isWebSocketConnected = true;
+      debugPrint("Connected to WebSocket Server");
+    } on SocketException catch (e) {
+      // Handle the exception.
+      debugPrint("Connect Error: $e");
+    } on WebSocketChannelException catch (e) {
+      // Handle the exception.
+      debugPrint("Connect Error: $e");
     }
   }
 
-  void connect() {
-    socket.connect();
-  }
-
-  void disconnect() {
-    socket.disconnect();
-  }
-
-  Future<void> syncData() async {
-    final syncData = realmServices.getUnsyncedData();
-
-    if (syncData.projects.isEmpty &&
-        syncData.subProjects.isEmpty &&
-        syncData.locations.isEmpty &&
-        syncData.visualSections.isEmpty &&
-        syncData.invasiveSections.isEmpty &&
-        syncData.conclusiveSections.isEmpty &&
-        syncData.deckImages.isEmpty &&
-        syncData.dynamicVisualSections.isEmpty &&
-        syncData.locationForms.isEmpty) {
-      return;
-    }
-  }
-
-  void startSync() {
-    Connectivity().onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
-    ) {
-      if (results.isNotEmpty &&
-          results.any((result) => result != ConnectivityResult.none)) {
-        syncData();
-      }
-    });
+  void closeWebSocketChannel() {
+    channel.sink.close();
+    debugPrint("WebSocket channel closed");
   }
 }

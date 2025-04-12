@@ -50,7 +50,7 @@ android {
         applicationId "com.e3inspections.multitenant"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -71,6 +71,9 @@ android {
        // Fixes duplicate libraries build issue, 
        // when your project uses more than one plugin that depend on C++ libs.
         pickFirst 'lib/**/libc++_shared.so'
+        jniLibs {
+                useLegacyPackaging = true
+            }
     }
     buildTypes {
         release {
@@ -78,12 +81,14 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             //signingConfig signingConfigs.debug
             signingConfig signingConfigs.release
-            minifyEnabled true
+            minifyEnabled false // this
+            shrinkResources false // this
             proguardFiles getDefaultProguardFile(
                  'proguard-android-optimize.txt'),
                  'proguard-rules.pro'
         }
     }
+    namespace 'com.e3inspections.multitenant'
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8

@@ -1,12 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:E3InspectionsMultiTenant/src/services/sync_service.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:realm/realm.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 //import 'package:wakelock_plus/wakelock_plus.dart';
 import '../bloc/images_bloc.dart';
-import '../bloc/notificationcontroller.dart';
+//import '../bloc/notificationcontroller.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../models/exteriorelements.dart';
@@ -22,7 +25,8 @@ class RealmLocalServices with ChangeNotifier {
   bool isWaiting = false;
   String loggedInUser;
   String company;
-  RealmLocalServices(this.loggedInUser, this.company) {
+  SyncService syncService;
+  RealmLocalServices(this.loggedInUser, this.company, this.syncService) {
     SharedPreferences.getInstance().then((value) {
       var configValue = value.getString('appSync') ?? 'true';
       if (configValue == 'false') {
@@ -46,9 +50,183 @@ class RealmLocalServices with ChangeNotifier {
         LocationForm.schema,
         DynamicVisualSection.schema,
         Question.schema,
+        UnsyncedData.schema,
       ]),
     );
   }
+  void registerToChannelStream(WebSocketChannel channel) {
+    channel.stream.listen(
+      (message) {
+        debugPrint("Received message: $message");
+        final response = jsonDecode(message);
+        final messageId = response['messageId'];
+
+        if (response != null && response['status'] == 'success') {
+          // final objectId = ObjectId.fromHexString(data['id']);
+          // markAsSynced(objectId);
+          // debugPrint("Object marked as synced: ${data['id']}");
+        } else {
+          debugPrint("Failed to sync object: ${response?['message']}");
+          //add this to unsynced data
+          final failedData = syncService.pendingMessages[messageId];
+          if (failedData != null) {
+            saveUnsyncedData(jsonDecode(failedData));
+          }
+        }
+        syncService.pendingMessages.remove(messageId);
+      },
+      onError: (error) {
+        // If needed, retry everything in pendingMessages
+        for (final data in syncService.pendingMessages.values) {
+          saveUnsyncedData(jsonDecode(data));
+        }
+        syncService.pendingMessages.clear();
+      },
+      onDone: () {
+        debugPrint("WebSocket connection closed");
+        syncService.isWebSocketConnected = false;
+      },
+    );
+  }
+
+  void listenForRealmChanges() {
+    final projects = realm.all<Project>();
+    projects.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final project = projects[inserted];
+        pushToWebSocket('create', 'project', _toJson(project));
+      }
+
+      for (var modified in changes.modified) {
+        final project = projects[modified];
+        pushToWebSocket('update', 'project', _toJson(project));
+      }
+    });
+
+    final subProjects = realm.all<SubProject>();
+    subProjects.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final subProject = subProjects[inserted];
+        pushToWebSocket('create', 'subProject', _toJson(subProject));
+      }
+
+      for (var modified in changes.modified) {
+        final subProject = subProjects[modified];
+        pushToWebSocket('update', 'subProject', _toJson(subProject));
+      }
+    });
+    final locations = realm.all<Location>();
+    locations.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final location = locations[inserted];
+        pushToWebSocket('create', 'location', _toJson(location));
+      }
+
+      for (var modified in changes.modified) {
+        final location = locations[modified];
+        pushToWebSocket('update', 'location', _toJson(location));
+      }
+    });
+    final visualSections = realm.all<VisualSection>();
+    visualSections.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final visualSection = visualSections[inserted];
+        pushToWebSocket('create', 'visualSection', _toJson(visualSection));
+      }
+
+      for (var modified in changes.modified) {
+        final visualSection = visualSections[modified];
+        pushToWebSocket('update', 'visualSection', _toJson(visualSection));
+      }
+    });
+    final invasiveSections = realm.all<InvasiveSection>();
+    invasiveSections.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final invasiveSection = invasiveSections[inserted];
+        pushToWebSocket('create', 'invasiveSection', _toJson(invasiveSection));
+      }
+
+      for (var modified in changes.modified) {
+        final invasiveSection = invasiveSections[modified];
+        pushToWebSocket('update', 'invasiveSection', _toJson(invasiveSection));
+      }
+    });
+    final conclusiveSections = realm.all<ConclusiveSection>();
+    conclusiveSections.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final conclusiveSection = conclusiveSections[inserted];
+        pushToWebSocket(
+          'create',
+          'conclusiveSection',
+          _toJson(conclusiveSection),
+        );
+      }
+
+      for (var modified in changes.modified) {
+        final conclusiveSection = conclusiveSections[modified];
+        pushToWebSocket(
+          'update',
+          'conclusiveSection',
+          _toJson(conclusiveSection),
+        );
+      }
+    });
+    // final deckImages = realmServices.realm.all<DeckImage>();
+    // deckImages.changes.listen((changes) {
+    //   for (var inserted in changes.inserted) {
+    //     final deckImage = deckImages[inserted];
+    //     pushToWebSocket('insert', 'deckImage', deckImage.toJson());
+    //   }
+
+    //   for (var modified in changes.modified) {
+    //     final deckImage = deckImages[modified];
+    //     pushToWebSocket('update', 'deckImage', deckImage.toJson());
+    //   }
+
+    //   for (var deleted in changes.deleted) {
+    //     pushToWebSocket('delete', 'deckImage', {
+    //       'id': deckImages[deleted].id.hexString,
+    //     }, isDelete: true);
+    //   }
+    // });
+    final dynamicVisualSections = realm.all<DynamicVisualSection>();
+    dynamicVisualSections.changes.listen((changes) {
+      for (var inserted in changes.inserted) {
+        final dynamicVisualSection = dynamicVisualSections[inserted];
+        pushToWebSocket(
+          'create',
+          'dynamicVisualSection',
+          _toJson(dynamicVisualSection),
+        );
+      }
+
+      for (var modified in changes.modified) {
+        final dynamicVisualSection = dynamicVisualSections[modified];
+        pushToWebSocket(
+          'update',
+          'dynamicVisualSection',
+          _toJson(dynamicVisualSection),
+        );
+      }
+    });
+  }
+
+  // Helper method to convert objects to JSON
+  Map<String, dynamic> _toJson(dynamic object) {
+    if (object is Project ||
+        object is SubProject ||
+        object is Location ||
+        object is VisualSection ||
+        object is InvasiveSection ||
+        object is ConclusiveSection ||
+        object is DeckImage ||
+        object is DynamicVisualSection ||
+        object is LocationForm) {
+      return object.toJson();
+    }
+    throw UnsupportedError('Unsupported object type: ${object.runtimeType}');
+  }
+
   SyncData getUnsyncedData() {
     final unsyncedProjects =
         realm.all<Project>().where((project) => !project.isSynced).toList();
@@ -144,6 +322,7 @@ class RealmLocalServices with ChangeNotifier {
     try {
       realm.write(() => realm.delete(project));
       notifyListeners();
+      pushToWebSocket('delete', 'project', project.toJson(), isDelete: true);
       return 'success';
     } catch (e) {
       return 'failed';
@@ -415,6 +594,12 @@ class RealmLocalServices with ChangeNotifier {
         realm.delete(subProject);
       });
       notifyListeners();
+      pushToWebSocket(
+        'delete',
+        'subProject',
+        subProject.toJson(),
+        isDelete: true,
+      );
       return 'success';
     } catch (e) {
       return 'failed';
@@ -552,6 +737,12 @@ class RealmLocalServices with ChangeNotifier {
         }
 
         realm.delete(location);
+        pushToWebSocket(
+          'delete',
+          'location',
+          location.toJson(),
+          isDelete: true,
+        );
       });
       //notifyListeners();
       return 'success';
@@ -655,6 +846,12 @@ class RealmLocalServices with ChangeNotifier {
         realm.delete(section);
       });
       notifyListeners();
+      pushToWebSocket(
+        'delete',
+        'visualSection',
+        section.toJson(),
+        isDelete: true,
+      );
       return 'success';
     } catch (e) {
       return 'failed';
@@ -673,6 +870,12 @@ class RealmLocalServices with ChangeNotifier {
         realm.delete(section);
       });
       notifyListeners();
+      pushToWebSocket(
+        'delete',
+        'dynamicSection',
+        section.toJson(),
+        isDelete: true,
+      );
       return 'success';
     } catch (e) {
       return 'failed';
@@ -1060,7 +1263,7 @@ class RealmLocalServices with ChangeNotifier {
         final images = realm.query<DeckImage>("isUploaded == false");
         //just removing the notifications part, perhaps failing the whole method.
         if (images.isNotEmpty && !offlineModeOn) {
-          NotificationController.createNewNotification();
+          //NotificationController.createNewNotification();
         }
         //set device lock
         //WakelockPlus.enable();
@@ -1227,7 +1430,7 @@ class RealmLocalServices with ChangeNotifier {
       debugPrint("Error message: $e");
       appSettings.isImageUploading = false;
     } finally {
-      NotificationController.cancelNotifications();
+      //NotificationController.cancelNotifications();
       appSettings.isImageUploading = false;
       //WakelockPlus.disable();
     }
@@ -1716,5 +1919,57 @@ class RealmLocalServices with ChangeNotifier {
       debugPrint(e.toString());
     }
     return offlineImages.toList();
+  }
+
+  void saveUnsyncedData(Map<String, Object> socketData) {
+    try {
+      realm.write(() {
+        realm.add<UnsyncedData>(
+          UnsyncedData(
+            ObjectId(),
+            socketData['action'] as String,
+            socketData['collectionName'] as String,
+            jsonEncode(socketData['jsonData']),
+            DateTime.now().toString(),
+          ),
+          update: true,
+        );
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  void pushToWebSocket(
+    String eventName,
+    String collectionName,
+    Map<String, dynamic> data, {
+    bool isDelete = false,
+  }) {
+    try {
+      Map<String, Object> socketData = {};
+      final messageId = ObjectId().hexString;
+      if (isDelete) {
+        socketData = {
+          "messageId": messageId,
+          "collectionName": collectionName,
+          "action": "delete",
+          "data": jsonEncode({"id": data['id']}),
+        };
+      } else {
+        socketData = {
+          "messageId": messageId,
+          "collectionName": collectionName,
+          "action": eventName,
+          "data": jsonEncode(data),
+        };
+      }
+      if (!syncService.pushToWebSocket(socketData, messageId)) {
+        saveUnsyncedData(socketData);
+      }
+    } catch (e) {
+      debugPrint("Error pushing to WebSocket: $e");
+      //saveUnsyncedData(sock);
+    }
   }
 }
