@@ -41,7 +41,8 @@ void main() async {
               );
               realmServices.uploadLocalImages();
               syncService.initSocketAsync();
-              realmServices.listenForRealmChanges();
+              //realmServices.listenForRealmChanges();
+              realmServices.registerToChannelStream(syncService.channel);
             }
             return realmServices;
           },
