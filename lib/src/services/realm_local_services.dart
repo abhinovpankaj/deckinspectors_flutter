@@ -59,14 +59,14 @@ class RealmLocalServices with ChangeNotifier {
       (message) {
         debugPrint("Received message: $message");
         final response = jsonDecode(message);
-        final messageId = response['messageId'];
+        final messageId = response['messageId'] as String;
 
-        if (response != null && response['status'] == 'success') {
+        if (response['status'] == 'success') {
           // final objectId = ObjectId.fromHexString(data['id']);
           // markAsSynced(objectId);
           // debugPrint("Object marked as synced: ${data['id']}");
         } else {
-          debugPrint("Failed to sync object: ${response?['message']}");
+          debugPrint("Failed to sync object: ${response['message']}");
           //add this to unsynced data
           final failedData = syncService.pendingMessages[messageId];
           if (failedData != null) {
@@ -471,25 +471,34 @@ class RealmLocalServices with ChangeNotifier {
             url: "",
           ),
         );
+        // pushToWebSocket('addupdateChild', 'project', {
+        //   "id": parentId.hexString,
+        //   "childId": childId.hexString,
+
+        //   "childData": {
+        //     "isInvasive": isInvasive,
+        //     "name": name,
+        //     "type": type,
+        //     "description": description,
+        //     "url": "",
+        //   },
+        // });
       } else {
         var foundChild = found.first;
         foundChild.name = name;
         foundChild.description = description;
         foundChild.isInvasive = isInvasive;
+        // pushToWebSocket('addupdateChild', 'project', {
+        //   "id": parentId.hexString,
+        //   "childId": childId.hexString,
+
+        //   "childData": {
+        //     "isInvasive": isInvasive,
+        //     "name": name,
+        //     "description": description,
+        //   },
+        // });
       }
-      pushToWebSocket('updateChild', 'project', {
-        "id": childId.hexString,
-        "changedFields": {
-          "children": {
-            "id": childId,
-            "isInvasive": isInvasive,
-            "name": name,
-            "type": type,
-            "description": description,
-            "url": "",
-          },
-        },
-      });
     }
   }
 
@@ -500,12 +509,6 @@ class RealmLocalServices with ChangeNotifier {
         (element) => element.id == childId,
       );
       parentProject.children.remove(foundChild);
-      pushToWebSocket('deleteChild', 'project', {
-        "id": parentId.hexString,
-        "changedFields": {
-          "children": {"id": childId.hexString},
-        },
-      });
     }
   }
 
@@ -585,19 +588,6 @@ class RealmLocalServices with ChangeNotifier {
         foundChild.name = name;
         foundChild.description = description;
       }
-      pushToWebSocket('updateChild', 'subProject', {
-        "id": childId.hexString,
-        "changedFields": {
-          "children": {
-            "id": childId,
-            "isInvasive": isInvasive,
-            "name": name,
-            "type": type,
-            "description": description,
-            "url": "",
-          },
-        },
-      });
     }
   }
 
@@ -741,24 +731,13 @@ class RealmLocalServices with ChangeNotifier {
         } else {
           pushToWebSocket('update', 'subProject', {
             "id": subProject.id.hexString,
-            "changedFields": {
-              "name": name,
-              "description": description,
-              "lasteditedby": fullUserName,
-              "editedat": DateTime.now().toString(),
-            },
-          });
-        }
-        pushToWebSocket('update', 'subProject', {
-          "id": subProject.id.hexString,
-          "changedFields": {
+
             "name": name,
             "description": description,
             "lasteditedby": fullUserName,
-
             "editedat": DateTime.now().toString(),
-          },
-        });
+          });
+        }
       });
       notifyListeners();
       return true;
@@ -891,12 +870,11 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'location', {
           "id": location.id.hexString,
-          "changedFields": {
-            "name": name,
-            "description": description,
-            "lasteditedby": fullUserName,
-            "editedat": DateTime.now().toString(),
-          },
+
+          "name": name,
+          "description": description,
+          "lasteditedby": fullUserName,
+          "editedat": DateTime.now().toString(),
         });
       }
       notifyListeners();
@@ -2149,7 +2127,7 @@ class RealmLocalServices with ChangeNotifier {
     return offlineImages.toList();
   }
 
-  void saveUnsyncedData(Map<String, Object> socketData) {
+  void saveUnsyncedData(Map<String, dynamic> socketData) {
     try {
       realm.write(() {
         realm.add<UnsyncedData>(
