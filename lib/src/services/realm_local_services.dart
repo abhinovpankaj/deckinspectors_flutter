@@ -427,15 +427,14 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'project', {
           "id": project.id.hexString,
-          "changedFields": {
-            "name": name,
-            "address": address,
-            "description": description,
-            "latitude": lattitude,
-            "longitude": longitude,
-            "lasteditedby": userName,
-            "editedat": DateTime.now().toString(),
-          },
+
+          "name": name,
+          "address": address,
+          "description": description,
+          "latitude": lattitude,
+          "longitude": longitude,
+          "lasteditedby": userName,
+          "editedat": DateTime.now().toString(),
         });
       }
       return true;
@@ -471,33 +470,11 @@ class RealmLocalServices with ChangeNotifier {
             url: "",
           ),
         );
-        // pushToWebSocket('addupdateChild', 'project', {
-        //   "id": parentId.hexString,
-        //   "childId": childId.hexString,
-
-        //   "childData": {
-        //     "isInvasive": isInvasive,
-        //     "name": name,
-        //     "type": type,
-        //     "description": description,
-        //     "url": "",
-        //   },
-        // });
       } else {
         var foundChild = found.first;
         foundChild.name = name;
         foundChild.description = description;
         foundChild.isInvasive = isInvasive;
-        // pushToWebSocket('addupdateChild', 'project', {
-        //   "id": parentId.hexString,
-        //   "childId": childId.hexString,
-
-        //   "childData": {
-        //     "isInvasive": isInvasive,
-        //     "name": name,
-        //     "description": description,
-        //   },
-        // });
       }
     }
   }
@@ -523,12 +500,12 @@ class RealmLocalServices with ChangeNotifier {
         var foundChild = found.first;
 
         foundChild.url = url;
-        pushToWebSocket('updateChild', 'project', {
-          "id": parentId.hexString,
-          "changedFields": {
-            "children": {"id": childId.hexString, "url": url},
-          },
-        });
+        // pushToWebSocket('updateChild', 'project', {
+        //   "id": parentId.hexString,
+        //   "changedFields": {
+        //     "children": {"id": childId.hexString, "url": url},
+        //   },
+        // });
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -546,7 +523,7 @@ class RealmLocalServices with ChangeNotifier {
 
         pushToWebSocket('update', 'project', {
           "id": projectId.hexString,
-          "changedFields": {"assignedto": assignees},
+          "assignedto": assignees,
         });
         return true;
       } else {
@@ -598,12 +575,6 @@ class RealmLocalServices with ChangeNotifier {
         (element) => element.id == childId,
       );
       parentProject.children.remove(foundChild);
-      pushToWebSocket('deleteChild', 'subProject', {
-        "id": parentId.hexString,
-        "changedFields": {
-          "children": {"id": childId.hexString},
-        },
-      });
     }
   }
 
@@ -870,7 +841,6 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'location', {
           "id": location.id.hexString,
-
           "name": name,
           "description": description,
           "lasteditedby": fullUserName,
@@ -1030,22 +1000,21 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'visualSection', {
           "id": visualSection.id.hexString,
-          "changedFields": {
-            "name": name,
-            "unitunavailable": unitUnavailable,
-            "visualsignsofleak": hasSignsOfLeak,
-            "furtherinvasivereviewrequired": invasiveReviewRequired,
-            "additionalconsiderations": visualSection.additionalconsiderations,
-            "exteriorelements": visualSection.exteriorelements,
-            "waterproofingelements": visualSection.waterproofingelements,
-            "visualreview": visualSection.visualreview,
-            "conditionalassessment": visualSection.conditionalassessment,
-            "eee": visualSection.eee,
-            "lbc": visualSection.lbc,
-            "awe": visualSection.awe,
-            "lasteditedby": userFullName,
-            "editedat": DateTime.now().toString(),
-          },
+
+          "name": name,
+          "unitunavailable": unitUnavailable,
+          "visualsignsofleak": hasSignsOfLeak,
+          "furtherinvasivereviewrequired": invasiveReviewRequired,
+          "additionalconsiderations": visualSection.additionalconsiderations,
+          "exteriorelements": visualSection.exteriorelements,
+          "waterproofingelements": visualSection.waterproofingelements,
+          "visualreview": visualSection.visualreview,
+          "conditionalassessment": visualSection.conditionalassessment,
+          "eee": visualSection.eee,
+          "lbc": visualSection.lbc,
+          "awe": visualSection.awe,
+          "lasteditedby": userFullName,
+          "editedat": DateTime.now().toString(),
         });
       }
       notifyListeners();
@@ -1104,15 +1073,14 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'dynamicSection', {
           "id": visualSection.id.hexString,
-          "changedFields": {
-            "name": name,
-            "unitunavailable": unitUnavailable,
-            "furtherinvasivereviewrequired": invasiveReviewRequired,
-            "additionalconsiderations": visualSection.additionalconsiderations,
-            "questions": visualSection.questions,
-            "lasteditedby": userFullName,
-            "editedat": DateTime.now().toString(),
-          },
+
+          "name": name,
+          "unitunavailable": unitUnavailable,
+          "furtherinvasivereviewrequired": invasiveReviewRequired,
+          "additionalconsiderations": visualSection.additionalconsiderations,
+          "questions": visualSection.questions,
+          "lasteditedby": userFullName,
+          "editedat": DateTime.now().toString(),
         });
       }
       notifyListeners();
@@ -1135,9 +1103,9 @@ class RealmLocalServices with ChangeNotifier {
           localVisualSection.images.last,
         );
       });
-      pushToWebSocket('removeUrl', 'visualSection', {
+      pushToWebSocket('update', 'visualSection', {
         "id": localVisualSection.id.hexString,
-        "changedFields": {"images": localVisualSection.images},
+        "images": localVisualSection.images,
       });
       notifyListeners();
       return true;
@@ -1162,9 +1130,9 @@ class RealmLocalServices with ChangeNotifier {
           localVisualSection.images.last,
         );
       });
-      pushToWebSocket('removeUrl', 'dynamicSection', {
+      pushToWebSocket('update', 'dynamicSection', {
         "id": localVisualSection.id.hexString,
-        "changedFields": {"images": localVisualSection.images},
+        "images": localVisualSection.images,
       });
       notifyListeners();
       return true;
@@ -1263,7 +1231,7 @@ class RealmLocalServices with ChangeNotifier {
       notifyListeners();
       pushToWebSocket('update', 'visualSection', {
         "id": localVisualSection.id.hexString,
-        "changedFields": {"images": localVisualSection.images},
+        "images": localVisualSection.images,
       });
       return true;
     } catch (e) {
@@ -1348,7 +1316,7 @@ class RealmLocalServices with ChangeNotifier {
       });
       pushToWebSocket('update', 'dynamicSection', {
         "id": localVisualSection.id.hexString,
-        "changedFields": {"images": localVisualSection.images},
+        "images": localVisualSection.images,
       });
       notifyListeners();
       return true;
@@ -1441,7 +1409,7 @@ class RealmLocalServices with ChangeNotifier {
                     project?.url = result.url;
                     pushToWebSocket('update', 'project', {
                       "id": parentId.hexString,
-                      "changedFields": {"url": result.url},
+                      "url": result.url,
                     });
                     break;
 
@@ -1450,7 +1418,7 @@ class RealmLocalServices with ChangeNotifier {
                     subproject?.url = result.url;
                     pushToWebSocket('update', 'subProject', {
                       "id": parentId.hexString,
-                      "changedFields": {"url": result.url},
+                      "url": result.url,
                     });
                     updateChildUrl(
                       parentId,
@@ -1461,6 +1429,10 @@ class RealmLocalServices with ChangeNotifier {
                   case 'location':
                     var location = realm.find<Location>(parentId);
                     location?.url = result.url;
+                    pushToWebSocket('update', 'location', {
+                      "id": parentId.hexString,
+                      "url": result.url,
+                    });
                     updateSubChildUrl(
                       parentId,
                       location?.parentid as ObjectId,
@@ -1576,12 +1548,6 @@ class RealmLocalServices with ChangeNotifier {
             );
 
             parentProject.sections.remove(foundChild);
-            pushToWebSocket('removeSection', 'project', {
-              "id": parentid.hexString,
-              "changedFields": {
-                "sections": {"id": id},
-              },
-            });
           }
         }
       } catch (e) {
@@ -1625,12 +1591,12 @@ class RealmLocalServices with ChangeNotifier {
               (element) => element.id == id,
             );
             parentLocation.sections.remove(foundChild);
-            pushToWebSocket('removeSection', 'location', {
-              "id": parentid.hexString,
-              "changedFields": {
-                "sections": {"id": id},
-              },
-            });
+            // pushToWebSocket('removeSection', 'location', {
+            //   "id": parentid.hexString,
+            //   "changedFields": {
+            //     "sections": {"id": id},
+            //   },
+            // });
           }
         } catch (e) {
           debugPrint(e.toString());
@@ -1680,21 +1646,6 @@ class RealmLocalServices with ChangeNotifier {
           foundChild.count = length;
           foundChild.isInvasive = furtherinvasivereviewrequired;
         }
-        pushToWebSocket('update', 'project', {
-          "id": parentid.hexString,
-          "changedFields": {
-            "sections": {
-              "id": id,
-              "name": name,
-              "count": length,
-              "visualreview": visualreview,
-              "visualsignsofleak": visualsignsofleak,
-              "furtherinvasivereviewrequired": furtherinvasivereviewrequired,
-              "conditionalassessment": conditionalassessment,
-              "isInvasive": furtherinvasivereviewrequired,
-            },
-          },
-        });
       }
     } else {
       var parentLocation = realm.find<Location>(parentid);
@@ -1727,29 +1678,11 @@ class RealmLocalServices with ChangeNotifier {
           foundChild.count = length;
           foundChild.isInvasive = furtherinvasivereviewrequired;
         }
-        pushToWebSocket('update', 'location', {
-          "id": parentid.hexString,
-          "changedFields": {
-            "sections": {
-              "id": id,
-              "name": name,
-              "count": length,
-              "visualreview": visualreview,
-              "visualsignsofleak": visualsignsofleak,
-              "furtherinvasivereviewrequired": furtherinvasivereviewrequired,
-              "conditionalassessment": conditionalassessment,
-              "isInvasive": furtherinvasivereviewrequired,
-            },
-          },
-        });
+
         //set invasive property of location.
         parentLocation.isInvasive = parentLocation.sections.any(
           (element) => element.furtherinvasivereviewrequired == true,
         );
-        pushToWebSocket('update', 'location', {
-          "id": parentLocation.id.hexString,
-          "changedFields": {"isInvasive": parentLocation.isInvasive},
-        });
         //update parents
         if (parentLocation.parenttype == 'project') {
           var parentProject = realm.find<Project>(parentLocation.parentid);
@@ -1761,10 +1694,6 @@ class RealmLocalServices with ChangeNotifier {
             parentProject.isInvasive = parentProject.children.any(
               (element) => element.isInvasive == true,
             );
-            pushToWebSocket('update', 'project', {
-              "id": parentProject.id.hexString,
-              "changedFields": {"isInvasive": parentProject.isInvasive},
-            });
           }
         }
         if (parentLocation.parenttype == 'subproject') {
@@ -1779,10 +1708,6 @@ class RealmLocalServices with ChangeNotifier {
             parentSubProject.isInvasive = parentSubProject.children.any(
               (element) => element.isInvasive == true,
             );
-            pushToWebSocket('update', 'subproject', {
-              "id": parentSubProject.id.hexString,
-              "changedFields": {"isInvasive": parentSubProject.isInvasive},
-            });
             var parentProject = realm.find<Project>(parentSubProject.parentid);
             if (parentProject != null) {
               var childLocation = parentProject.children.where(
@@ -1792,10 +1717,6 @@ class RealmLocalServices with ChangeNotifier {
               parentProject.isInvasive = parentProject.children.any(
                 (element) => element.isInvasive == true,
               );
-              pushToWebSocket('update', 'project', {
-                "id": parentProject.id.hexString,
-                "changedFields": {"isInvasive": parentProject.isInvasive},
-              });
             }
           }
         }
@@ -1823,11 +1744,11 @@ class RealmLocalServices with ChangeNotifier {
           if (url != '') {
             foundChild.coverUrl = url;
           }
-          pushToWebSocket('update', 'project', {
+          pushToWebSocket('updateImageCount', 'project', {
             "id": parentProject.id.hexString,
-            "changedFields": {
-              "sections": {"id": id, "count": length, "coverUrl": url},
-            },
+            "childId": id,
+            "count": length,
+            "coverUrl": url,
           });
         }
       } else {
@@ -1843,11 +1764,9 @@ class RealmLocalServices with ChangeNotifier {
             foundChild.coverUrl = url;
           }
 
-          pushToWebSocket('update', 'location', {
+          pushToWebSocket('updateImageCount', 'location', {
             "id": parentLocation.id.hexString,
-            "changedFields": {
-              "sections": {"id": id, "count": length, "coverUrl": url},
-            },
+            "sections": {"id": id, "count": length, "coverUrl": url},
           });
         }
       }
@@ -2000,10 +1919,9 @@ class RealmLocalServices with ChangeNotifier {
 
       pushToWebSocket('update', 'invasiveSection', {
         "id": currentInvasiveSection.id.hexString,
-        "changedFields": {
-          "postinvasiverepairsrequired": postInvasiveRepairsRequired,
-          "invasiveDescription": description,
-        },
+
+        "postinvasiverepairsrequired": postInvasiveRepairsRequired,
+        "invasiveDescription": description,
       });
 
       notifyListeners();
@@ -2036,14 +1954,13 @@ class RealmLocalServices with ChangeNotifier {
       notifyListeners();
       pushToWebSocket('update', 'conclusiveSection', {
         "id": currentConclusiveSection.id.hexString,
-        "changedFields": {
-          "propowneragreed": propOwnerAgreed,
-          "invasiverepairsinspectedandcompleted": invasiveRepairsCompleted,
-          "aweconclusive": aweConclusive,
-          "eeeconclusive": eeeConclusive,
-          "lbcconclusive": lbcConclusive,
-          "conclusiveconsiderations": description,
-        },
+
+        "propowneragreed": propOwnerAgreed,
+        "invasiverepairsinspectedandcompleted": invasiveRepairsCompleted,
+        "aweconclusive": aweConclusive,
+        "eeeconclusive": eeeConclusive,
+        "lbcconclusive": lbcConclusive,
+        "conclusiveconsiderations": description,
       });
       return true;
     } catch (e) {
@@ -2063,7 +1980,7 @@ class RealmLocalServices with ChangeNotifier {
       });
       pushToWebSocket('removeUrl', 'conclusiveSection', {
         "id": localConclusiveSection.id.hexString,
-        "changedFields": {"conclusiveimages": url},
+        "conclusiveimages": localConclusiveSection.conclusiveimages,
       });
       notifyListeners();
       return true;
@@ -2084,7 +2001,7 @@ class RealmLocalServices with ChangeNotifier {
       });
       pushToWebSocket('removeUrl', 'invasiveSection', {
         "id": localInvasiveSection.id.hexString,
-        "changedFields": {"invasiveimages": url},
+        "invasiveimages": localInvasiveSection.invasiveimages,
       });
       notifyListeners();
       return true;
