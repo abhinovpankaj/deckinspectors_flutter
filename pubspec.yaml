@@ -72,8 +72,6 @@ dependencies:
   google_maps_flutter_platform_interface: ^2.4.3
   google_maps_flutter_android: ^2.6.2
   google_maps_flutter_ios: ^2.3.6
-  maps_launcher: ^2.2.1
-  
   string_validator: ^1.1.0
   flutter_serial_communication: ^0.2.5
   serial_communication: ^0.0.2
@@ -88,6 +86,7 @@ dependencies:
   get: ^4.6.6
   socket_io_client: ^3.0.2
   flutter_webrtc: ^0.12.1+hotfix.1
+  map_launcher: ^3.5.0
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

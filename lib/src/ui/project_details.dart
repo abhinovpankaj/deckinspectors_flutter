@@ -13,7 +13,8 @@ import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:flutter_material_pickers/helpers/show_checkbox_picker.dart';
 import 'package:flutter_material_pickers/models/select_all_config.dart';
-import 'package:maps_launcher/maps_launcher.dart';
+import 'package:map_launcher/map_launcher.dart';
+//import 'package:maps_launcher/maps_launcher.dart';
 
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
@@ -409,7 +410,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                           backgroundColor: Colors.lightBlue,
                           shadowColor: Colors.transparent,
                           elevation: 1),
-                      onPressed: () {
+                      onPressed: () async {
                         // var initlattitude = currentProject.latitude ?? 28.7;
                         // var initlongitude = currentProject.longitude ?? 70.7;
                         // Navigator.push(
@@ -424,8 +425,26 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                                     'Address is empty, please add address to navigate.')),
                           );
                         } else {
-                          MapsLauncher.launchQuery(
-                              currentProject.address as String);
+                          // MapsLauncher.launchQuery(
+                          //     currentProject.address as String);
+                          //check platform is iOS or Android
+                          var coords = Coords(
+                            currentProject.latitude ?? 0.0,
+                            currentProject.longitude ?? 0.0,
+                          );
+                          var title = currentProject.name ?? '';
+                          if (Platform.isIOS) {
+                            final isAvailable =
+                                await MapLauncher.isMapAvailable(MapType.apple);
+                            if (isAvailable != null && isAvailable) {
+                              await MapLauncher.showMarker(
+                                mapType: MapType.apple,
+                                coords: coords,
+                                title: title,
+                                description: description,
+                              );
+                            }
+                          }
                         }
                       },
                       icon: const Icon(
