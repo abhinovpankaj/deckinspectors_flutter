@@ -39,10 +39,11 @@ void main() async {
                 usersBloc.userDetails.companyidentifer as String,
                 syncService,
               );
-              realmServices.uploadLocalImages();
-              syncService.initSocketAsync();
-              //realmServices.listenForRealmChanges();
-              realmServices.registerToChannelStream(syncService.channel);
+              if (!appSettings.isAppOfflineMode) {
+                syncService.initSocketAsync();
+                realmServices.registerToChannelStream(syncService.channel);
+                realmServices.uploadLocalImages();
+              }
             }
             return realmServices;
           },

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/services/sync_service.dart';
@@ -26,6 +27,9 @@ class RealmLocalServices with ChangeNotifier {
   String loggedInUser;
   String company;
   SyncService syncService;
+  StreamSubscription? _channelSubscription;
+  WebSocketChannel? _currentChannel;
+
   RealmLocalServices(this.loggedInUser, this.company, this.syncService) {
     SharedPreferences.getInstance().then((value) {
       var configValue = value.getString('appSync') ?? 'true';
@@ -53,9 +57,19 @@ class RealmLocalServices with ChangeNotifier {
         UnsyncedData.schema,
       ]),
     );
+    debugPrint("Realm database path: ${realm.config.path}");
   }
   void registerToChannelStream(WebSocketChannel channel) {
-    channel.stream.listen(
+    // Only listen if this is a new channel
+    if (_currentChannel == channel && _channelSubscription != null) {
+      debugPrint("Already listening to this channel stream.");
+      return;
+    }
+    // Cancel previous subscription if exists
+    _channelSubscription?.cancel();
+    _currentChannel = channel;
+
+    _channelSubscription = channel.stream.listen(
       (message) {
         debugPrint("Received message: $message");
         final response = jsonDecode(message);
@@ -86,6 +100,7 @@ class RealmLocalServices with ChangeNotifier {
         debugPrint("WebSocket connection closed");
         syncService.isWebSocketConnected = false;
       },
+      cancelOnError: true, // Ensure subscription is cancelled on error
     );
   }
 
@@ -1327,6 +1342,8 @@ class RealmLocalServices with ChangeNotifier {
 
   @override
   void dispose() {
+    _channelSubscription?.cancel();
+    _currentChannel = null;
     realm.close();
     super.dispose();
   }

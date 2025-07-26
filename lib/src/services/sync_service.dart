@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 //import 'package:http/http.dart' as http;
 //import 'package:realm/realm.dart';
-import 'package:socket_io_client/socket_io_client.dart';
+// import 'package:socket_io_client/socket_io_client.dart';
 
 // import '../models/realm/realm_schemas.dart';
 // import 'realm_local_services.dart';
@@ -13,7 +13,6 @@ import 'package:socket_io_client/socket_io_client.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class SyncService {
-  late Socket socket;
   late WebSocketChannel channel;
 
   final Map<String, String> pendingMessages = {};
@@ -55,37 +54,9 @@ class SyncService {
     }
   }
 
-  void initSocket() {
-    debugPrint("Initializing WebSocket connection...");
-
-    try {
-      socket = io(
-        'ws://192.168.1.8:3000',
-        OptionBuilder()
-            .setTransports(['websocket'])
-            .enableAutoConnect()
-            .enableReconnection()
-            .build(),
-      );
-      //socket = io("http://192.168.1.4:3000");
-
-      socket.onConnect((data) {
-        debugPrint("Connected to WebSocket Server");
-        //syncUnsyncedData(); // Sync unsynced data when connected
-      });
-      socket.onConnectError((error) {
-        debugPrint("Connect Error: $error");
-      });
-      socket.onDisconnect((_) => debugPrint("Disconnected from WebSocket"));
-      socket.connect();
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-  }
-
   bool isWebSocketConnected = false;
   void initSocketAsync() async {
-    final wsUrl = Uri.parse('ws://192.168.1.4:3000');
+    final wsUrl = Uri.parse('ws://192.168.1.7:3000');
     channel = WebSocketChannel.connect(wsUrl);
 
     try {
@@ -104,5 +75,17 @@ class SyncService {
   void closeWebSocketChannel() {
     channel.sink.close();
     debugPrint("WebSocket channel closed");
+  }
+
+  void disconnectWebSocketAndClean() {
+    try {
+      channel.sink.close();
+      debugPrint("WebSocket channel closed");
+    } catch (e) {
+      debugPrint("Error closing WebSocket channel: $e");
+    }
+    pendingMessages.clear();
+    isWebSocketConnected = false;
+    debugPrint("Pending messages cleared and connection flags reset");
   }
 }
