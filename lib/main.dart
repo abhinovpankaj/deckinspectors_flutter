@@ -41,9 +41,12 @@ void main() async {
               );
               if (!appSettings.isAppOfflineMode) {
                 syncService.initSocketAsync();
+
                 realmServices.registerToChannelStream(syncService.channel);
-                realmServices.syncUnsyncedData();
-                realmServices.uploadLocalImages();
+                Future.delayed(Duration(seconds: 1), () {
+                  print('🔁 Reconnecting...');
+                  realmServices!.uploadLocalImages();
+                });
               }
             }
             return realmServices;

@@ -31,6 +31,8 @@ class _LoginPageState extends State<LoginPage> {
       _passwordController.text = prefs.getString('password') ?? '';
       _isChecked = prefs.getBool('isChecked') ?? false;
     });
+    appSettings.isAppOfflineMode =
+        prefs.getString('appSync') == 'false' ? true : false;
   }
 
   bool activeConnection = false;

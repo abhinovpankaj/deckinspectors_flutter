@@ -76,6 +76,7 @@ class RealmLocalServices with ChangeNotifier {
         final messageId = response['messageId'] as String;
 
         if (response['status'] == 'success') {
+          //remove from the unsynced data
         } else {
           debugPrint("Failed to sync object: ${response['message']}");
           //add this to unsynced data
@@ -123,22 +124,30 @@ class RealmLocalServices with ChangeNotifier {
         debugPrint('✅ No unsynced data to sync.');
         return;
       }
+      //TODO for batch procesing
+      // final List<Map<String, dynamic>> payload =
+      //     unsyncedList.map((entry) {
+      //       return {
+      //         'id': entry.id.toString(),
+      //         'action': entry.action,
+      //         'collectionName': entry.collectionName,
+      //         'jsonData': jsonDecode(entry.jsonData), // Convert back to Map
+      //         'updatedAt': entry.updatedAt,
+      //       };
+      //     }).toList();
 
-      final List<Map<String, dynamic>> payload =
-          unsyncedList.map((entry) {
-            return {
-              'id': entry.id.toString(),
-              'action': entry.action,
-              'collectionName': entry.collectionName,
-              'jsonData': jsonDecode(entry.jsonData), // Convert back to Map
-              'updatedAt': entry.updatedAt,
-            };
-          }).toList();
-
-      final message = {'action': 'batch_sync', 'payload': payload};
-
-      _currentChannel?.sink.add(jsonEncode(message));
-      debugPrint('📤 Sent ${payload.length} unsynced records over socket.');
+      // final message = {'action': 'batch_sync', 'payload': payload};
+      //_currentChannel?.sink.add(jsonEncode(message));
+      for (var item in unsyncedList) {
+        debugPrint('📤 Sent ${item.id} unsynced record over socket.');
+        final dataMap = jsonDecode(item.jsonData);
+        pushToWebSocket(
+          item.action,
+          item.collectionName,
+          jsonDecode(dataMap),
+          addToDb: false,
+        );
+      }
     } catch (e) {
       debugPrint('❌ Error syncing unsynced data: $e');
     }
@@ -1390,6 +1399,7 @@ class RealmLocalServices with ChangeNotifier {
 
   void uploadLocalImages() async {
     try {
+      syncUnsyncedData();
       if (offlineModeOn) return;
       //List<DeckImage> imagesTobeDelete = [];
 
@@ -2109,7 +2119,7 @@ class RealmLocalServices with ChangeNotifier {
             ObjectId.fromHexString(socketData['id']),
             socketData['action'] as String,
             socketData['collectionName'] as String,
-            jsonEncode(socketData['jsonData']),
+            jsonDecode(socketData['data']),
             DateTime.now().toString(),
           ),
           update: true,
@@ -2125,6 +2135,7 @@ class RealmLocalServices with ChangeNotifier {
     String collectionName,
     Map<String, dynamic> data, {
     bool isDelete = false,
+    bool addToDb = true,
   }) {
     try {
       Map<String, Object> socketData = {};
@@ -2147,7 +2158,9 @@ class RealmLocalServices with ChangeNotifier {
         };
       }
       if (!syncService.pushToWebSocket(socketData, messageId)) {
-        saveUnsyncedData(socketData);
+        if (addToDb) {
+          saveUnsyncedData(socketData);
+        }
       }
     } catch (e) {
       debugPrint("Error pushing to WebSocket: $e");

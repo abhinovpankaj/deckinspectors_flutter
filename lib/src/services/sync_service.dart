@@ -30,6 +30,7 @@ class SyncService {
       //   };
       // }
       //if (socket.connected) {
+
       if (isWebSocketConnected) {
         //add client Id
         if (usersBloc.userDetails.username != null) {
@@ -62,7 +63,6 @@ class SyncService {
       var clientData = jsonEncode({"clientId": usersBloc.userDetails.username});
       channel.sink.add(clientData);
       debugPrint("Connected to WebSocket Server and registered client.");
-      //fetch all unsyncedData
     } on SocketException catch (e) {
       // Handle the exception.
       debugPrint("Connect Error: $e");

@@ -5,6 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppSettings extends ChangeNotifier {
+  static AppSettings? _instance;
+
+  AppSettings._internal();
+
+  factory AppSettings() {
+    _instance ??= AppSettings._internal();
+    return _instance!;
+  }
   ImageQuality currentQuality = ImageQuality.high;
   bool isAppOfflineMode = false;
   bool isInvasiveMode = false;
