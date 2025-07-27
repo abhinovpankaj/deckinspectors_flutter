@@ -432,17 +432,16 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                             currentProject.latitude ?? 0.0,
                             currentProject.longitude ?? 0.0,
                           );
-                          var title = currentProject.name ?? '';
+                          var address = currentProject.address ?? '';
                           if (Platform.isIOS) {
                             final isAvailable =
                                 await MapLauncher.isMapAvailable(MapType.apple);
                             if (isAvailable != null && isAvailable) {
-                              await MapLauncher.showMarker(
-                                mapType: MapType.apple,
-                                coords: coords,
-                                title: title,
-                                description: description,
-                              );
+                              await MapLauncher.showDirections(
+                                  mapType: MapType.apple,
+                                  destinationTitle: address,
+                                  destination: coords,
+                                  originTitle: 'My Location');
                             }
                           }
                         }
