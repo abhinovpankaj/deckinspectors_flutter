@@ -1,15 +1,8 @@
 // import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:flutter/material.dart';
-//import 'package:http/http.dart' as http;
-//import 'package:realm/realm.dart';
-// import 'package:socket_io_client/socket_io_client.dart';
-
-// import '../models/realm/realm_schemas.dart';
-// import 'realm_local_services.dart';
-
-// import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class SyncService {
@@ -38,6 +31,10 @@ class SyncService {
       // }
       //if (socket.connected) {
       if (isWebSocketConnected) {
+        //add client Id
+        if (usersBloc.userDetails.username != null) {
+          socketData['clientId'] = usersBloc.userDetails.username!;
+        }
         debugPrint("Pushing to WebSocket: $socketData");
         pendingMessages[messageId] = jsonEncode(socketData);
         //final response = await socket.emitWithAckAsync("message", socketData);
@@ -62,7 +59,10 @@ class SyncService {
     try {
       await channel.ready;
       isWebSocketConnected = true;
-      debugPrint("Connected to WebSocket Server");
+      var clientData = jsonEncode({"clientId": usersBloc.userDetails.username});
+      channel.sink.add(clientData);
+      debugPrint("Connected to WebSocket Server and registered client.");
+      //fetch all unsyncedData
     } on SocketException catch (e) {
       // Handle the exception.
       debugPrint("Connect Error: $e");
@@ -75,6 +75,7 @@ class SyncService {
   void closeWebSocketChannel() {
     channel.sink.close();
     debugPrint("WebSocket channel closed");
+    isWebSocketConnected = false;
   }
 
   void disconnectWebSocketAndClean() {

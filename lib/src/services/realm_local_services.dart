@@ -76,9 +76,6 @@ class RealmLocalServices with ChangeNotifier {
         final messageId = response['messageId'] as String;
 
         if (response['status'] == 'success') {
-          // final objectId = ObjectId.fromHexString(data['id']);
-          // markAsSynced(objectId);
-          // debugPrint("Object marked as synced: ${data['id']}");
         } else {
           debugPrint("Failed to sync object: ${response['message']}");
           //add this to unsynced data
@@ -88,6 +85,20 @@ class RealmLocalServices with ChangeNotifier {
           }
         }
         syncService.pendingMessages.remove(messageId);
+
+        //special handling for batch processing
+        if (response['action'] == 'sync_ack') {
+          final List syncedIds = response['syncedIds'];
+          realm.write(() {
+            for (final id in syncedIds) {
+              final entry = realm.find<UnsyncedData>(
+                ObjectId.fromHexString(id),
+              );
+              if (entry != null) realm.delete(entry);
+            }
+          });
+          debugPrint('🗑️ Deleted synced entries from Realm.');
+        }
       },
       onError: (error) {
         // If needed, retry everything in pendingMessages
@@ -102,6 +113,35 @@ class RealmLocalServices with ChangeNotifier {
       },
       cancelOnError: true, // Ensure subscription is cancelled on error
     );
+  }
+
+  void syncUnsyncedData() async {
+    try {
+      final unsyncedList = realm.all<UnsyncedData>().toList();
+
+      if (unsyncedList.isEmpty) {
+        debugPrint('✅ No unsynced data to sync.');
+        return;
+      }
+
+      final List<Map<String, dynamic>> payload =
+          unsyncedList.map((entry) {
+            return {
+              'id': entry.id.toString(),
+              'action': entry.action,
+              'collectionName': entry.collectionName,
+              'jsonData': jsonDecode(entry.jsonData), // Convert back to Map
+              'updatedAt': entry.updatedAt,
+            };
+          }).toList();
+
+      final message = {'action': 'batch_sync', 'payload': payload};
+
+      _currentChannel?.sink.add(jsonEncode(message));
+      debugPrint('📤 Sent ${payload.length} unsynced records over socket.');
+    } catch (e) {
+      debugPrint('❌ Error syncing unsynced data: $e');
+    }
   }
 
   void listenForRealmChanges() {
@@ -2066,7 +2106,7 @@ class RealmLocalServices with ChangeNotifier {
       realm.write(() {
         realm.add<UnsyncedData>(
           UnsyncedData(
-            ObjectId(),
+            ObjectId.fromHexString(socketData['id']),
             socketData['action'] as String,
             socketData['collectionName'] as String,
             jsonEncode(socketData['jsonData']),
@@ -2091,6 +2131,7 @@ class RealmLocalServices with ChangeNotifier {
       final messageId = ObjectId().hexString;
       if (isDelete) {
         socketData = {
+          "id": data['id'],
           "messageId": messageId,
           "collectionName": collectionName,
           "action": "delete",
@@ -2098,6 +2139,7 @@ class RealmLocalServices with ChangeNotifier {
         };
       } else {
         socketData = {
+          "id": data['id'],
           "messageId": messageId,
           "collectionName": collectionName,
           "action": eventName,

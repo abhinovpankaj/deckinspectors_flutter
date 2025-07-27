@@ -389,6 +389,7 @@ class _SettingsPageState extends State<SettingsPage> {
         realmLocalServices.registerToChannelStream(
           realmLocalServices.syncService.channel,
         );
+        realmLocalServices.syncUnsyncedData();
       });
     } else {
       setState(() {
