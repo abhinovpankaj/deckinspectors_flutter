@@ -1,5 +1,5 @@
 import 'package:realm/realm.dart';
-import 'package:realm_common/realm_common.dart';
+//import 'package:realm_common/realm_common.dart';
 part 'realm_schemas.realm.dart';
 
 @RealmModel()
@@ -52,6 +52,48 @@ class _Project {
       'isSynced': isSynced,
     };
   }
+
+  static _Project fromJson(Map<String, dynamic> json) {
+    final project =
+        _Project()
+          ..id = ObjectId.fromHexString(json['id'] as String)
+          ..name = json['name'] as String?
+          ..projecttype = json['projecttype'] as String?
+          ..description = json['description'] as String?
+          ..address = json['address'] as String?
+          ..createdby = json['createdby'] as String?
+          ..createdat = json['createdat'] as String?
+          ..url = json['url'] as String?
+          ..editedat = json['editedat'] as String?
+          ..companyIdentifier = json['companyIdentifier'] as String
+          ..lasteditedby = json['lasteditedby'] as String?
+          ..assignedto = Set<String>.from(json['assignedto'] ?? [])
+          ..iscomplete = json['iscomplete'] ?? false
+          ..isInvasive = json['isInvasive'] ?? false
+          ..latitude = (json['latitude'] as num?)?.toDouble()
+          ..longitude = (json['longitude'] as num?)?.toDouble()
+          ..formId =
+              json['formId'] != null && (json['formId'] as String).isNotEmpty
+                  ? ObjectId.fromHexString(json['formId'] as String)
+                  : null
+          ..isSynced = json['isSynced'] ?? false;
+
+    if (json['children'] != null) {
+      project.children =
+          (json['children'] as List)
+              .map((e) => _Child.fromJson(e as Map<String, dynamic>))
+              .toList();
+    }
+
+    if (json['sections'] != null) {
+      project.sections =
+          (json['sections'] as List)
+              .map((e) => _Section.fromJson(e as Map<String, dynamic>))
+              .toList();
+    }
+
+    return project;
+  }
 }
 
 @RealmModel(ObjectType.embeddedObject)
@@ -75,6 +117,17 @@ class _Child {
       'isInvasive': isInvasive,
       'sequenceNo': sequenceNo,
     };
+  }
+
+  static _Child fromJson(Map<String, dynamic> json) {
+    return _Child()
+      ..id = ObjectId.fromHexString(json['id'] as String)
+      ..name = json['name'] as String?
+      ..type = json['type'] as String?
+      ..description = json['description'] as String?
+      ..url = json['url'] as String?
+      ..isInvasive = json['isInvasive'] ?? false
+      ..sequenceNo = json['sequenceNo'] as String?;
   }
 }
 
@@ -193,6 +246,22 @@ class _Section {
       'isuploading': isuploading,
       'sequenceNo': sequenceNo,
     };
+  }
+
+  static _Section fromJson(Map<String, dynamic> json) {
+    return _Section()
+      ..id = ObjectId.fromHexString(json['id'] as String)
+      ..name = json['name'] as String?
+      ..isInvasive = json['isInvasive'] ?? false
+      ..visualsignsofleak = json['visualsignsofleak'] ?? false
+      ..furtherinvasivereviewrequired =
+          json['furtherinvasivereviewrequired'] ?? false
+      ..conditionalassessment = json['conditionalassessment'] as String?
+      ..visualreview = json['visualreview'] as String?
+      ..coverUrl = json['coverUrl'] as String?
+      ..count = (json['count'] as num?)?.toInt() ?? 0
+      ..isuploading = json['isuploading'] ?? false
+      ..sequenceNo = json['sequenceNo'] as String?;
   }
 }
 

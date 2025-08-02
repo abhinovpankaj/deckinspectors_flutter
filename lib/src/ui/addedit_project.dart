@@ -18,7 +18,7 @@ import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
 import '../services/realm_local_services.dart';
 import 'capture_image.dart';
-import 'googlemaps_view.dart';
+//import 'googlemaps_view.dart';
 
 class AddEditProjectPage extends StatefulWidget {
   final Project newProject;

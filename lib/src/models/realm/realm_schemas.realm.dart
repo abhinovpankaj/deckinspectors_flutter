@@ -51,13 +51,22 @@ class Project extends _Project with RealmEntity, RealmObjectBase, RealmObject {
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
     RealmObjectBase.set(this, 'lasteditedby', lasteditedby);
     RealmObjectBase.set<RealmSet<String>>(
-        this, 'assignedto', RealmSet<String>(assignedto));
+      this,
+      'assignedto',
+      RealmSet<String>(assignedto),
+    );
     RealmObjectBase.set<RealmList<Child>>(
-        this, 'children', RealmList<Child>(children));
+      this,
+      'children',
+      RealmList<Child>(children),
+    );
     RealmObjectBase.set(this, 'iscomplete', iscomplete);
     RealmObjectBase.set(this, 'isInvasive', isInvasive);
     RealmObjectBase.set<RealmList<Section>>(
-        this, 'sections', RealmList<Section>(sections));
+      this,
+      'sections',
+      RealmList<Section>(sections),
+    );
     RealmObjectBase.set(this, 'latitude', latitude);
     RealmObjectBase.set(this, 'longitude', longitude);
     RealmObjectBase.set(this, 'formId', formId);
@@ -261,8 +270,12 @@ class Project extends _Project with RealmEntity, RealmObjectBase, RealmObject {
     RealmObjectBase.registerFactory(Project._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(ObjectType.realmObject, Project, 'Project', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
+      SchemaProperty(
+        'id',
+        RealmPropertyType.objectid,
+        mapTo: '_id',
+        primaryKey: true,
+      ),
       SchemaProperty('name', RealmPropertyType.string, optional: true),
       SchemaProperty('projecttype', RealmPropertyType.string, optional: true),
       SchemaProperty('description', RealmPropertyType.string, optional: true),
@@ -273,14 +286,25 @@ class Project extends _Project with RealmEntity, RealmObjectBase, RealmObject {
       SchemaProperty('editedat', RealmPropertyType.string, optional: true),
       SchemaProperty('companyIdentifier', RealmPropertyType.string),
       SchemaProperty('lasteditedby', RealmPropertyType.string, optional: true),
-      SchemaProperty('assignedto', RealmPropertyType.string,
-          collectionType: RealmCollectionType.set),
-      SchemaProperty('children', RealmPropertyType.object,
-          linkTarget: 'Child', collectionType: RealmCollectionType.list),
+      SchemaProperty(
+        'assignedto',
+        RealmPropertyType.string,
+        collectionType: RealmCollectionType.set,
+      ),
+      SchemaProperty(
+        'children',
+        RealmPropertyType.object,
+        linkTarget: 'Child',
+        collectionType: RealmCollectionType.list,
+      ),
       SchemaProperty('iscomplete', RealmPropertyType.bool),
       SchemaProperty('isInvasive', RealmPropertyType.bool),
-      SchemaProperty('sections', RealmPropertyType.object,
-          linkTarget: 'Section', collectionType: RealmCollectionType.list),
+      SchemaProperty(
+        'sections',
+        RealmPropertyType.object,
+        linkTarget: 'Section',
+        collectionType: RealmCollectionType.list,
+      ),
       SchemaProperty('latitude', RealmPropertyType.double, optional: true),
       SchemaProperty('longitude', RealmPropertyType.double, optional: true),
       SchemaProperty('formId', RealmPropertyType.objectid, optional: true),
@@ -379,19 +403,15 @@ class Child extends _Child with RealmEntity, RealmObjectBase, EmbeddedObject {
   static Child _fromEJson(EJsonValue ejson) {
     if (ejson is! Map<String, dynamic>) return raiseInvalidEJson(ejson);
     return switch (ejson) {
-      {
-        '_id': EJsonValue id,
-        'isInvasive': EJsonValue isInvasive,
-      } =>
-        Child(
-          fromEJson(id),
-          fromEJson(isInvasive),
-          name: fromEJson(ejson['name']),
-          type: fromEJson(ejson['type']),
-          description: fromEJson(ejson['description']),
-          url: fromEJson(ejson['url']),
-          sequenceNo: fromEJson(ejson['sequenceNo']),
-        ),
+      {'_id': EJsonValue id, 'isInvasive': EJsonValue isInvasive} => Child(
+        fromEJson(id),
+        fromEJson(isInvasive),
+        name: fromEJson(ejson['name']),
+        type: fromEJson(ejson['type']),
+        description: fromEJson(ejson['description']),
+        url: fromEJson(ejson['url']),
+        sequenceNo: fromEJson(ejson['sequenceNo']),
+      ),
       _ => raiseInvalidEJson(ejson),
     };
   }
@@ -451,12 +471,18 @@ class SubProject extends _SubProject
     RealmObjectBase.set(this, 'createdat', createdat);
     RealmObjectBase.set(this, 'url', url);
     RealmObjectBase.set<RealmSet<String>>(
-        this, 'assignedto', RealmSet<String>(assignedto));
+      this,
+      'assignedto',
+      RealmSet<String>(assignedto),
+    );
     RealmObjectBase.set(this, 'editedat', editedat);
     RealmObjectBase.set(this, 'lasteditedby', lasteditedby);
     RealmObjectBase.set(this, 'isInvasive', isInvasive);
     RealmObjectBase.set<RealmList<Child>>(
-        this, 'children', RealmList<Child>(children));
+      this,
+      'children',
+      RealmList<Child>(children),
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
   }
@@ -627,27 +653,46 @@ class SubProject extends _SubProject
     RealmObjectBase.registerFactory(SubProject._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, SubProject, 'SubProject', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('name', RealmPropertyType.string, optional: true),
-      SchemaProperty('type', RealmPropertyType.string, optional: true),
-      SchemaProperty('description', RealmPropertyType.string, optional: true),
-      SchemaProperty('parentid', RealmPropertyType.objectid),
-      SchemaProperty('parenttype', RealmPropertyType.string, optional: true),
-      SchemaProperty('createdby', RealmPropertyType.string, optional: true),
-      SchemaProperty('createdat', RealmPropertyType.string, optional: true),
-      SchemaProperty('url', RealmPropertyType.string, optional: true),
-      SchemaProperty('assignedto', RealmPropertyType.string,
-          collectionType: RealmCollectionType.set),
-      SchemaProperty('editedat', RealmPropertyType.string, optional: true),
-      SchemaProperty('lasteditedby', RealmPropertyType.string, optional: true),
-      SchemaProperty('isInvasive', RealmPropertyType.bool),
-      SchemaProperty('children', RealmPropertyType.object,
-          linkTarget: 'Child', collectionType: RealmCollectionType.list),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string),
-    ]);
+      ObjectType.realmObject,
+      SubProject,
+      'SubProject',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('name', RealmPropertyType.string, optional: true),
+        SchemaProperty('type', RealmPropertyType.string, optional: true),
+        SchemaProperty('description', RealmPropertyType.string, optional: true),
+        SchemaProperty('parentid', RealmPropertyType.objectid),
+        SchemaProperty('parenttype', RealmPropertyType.string, optional: true),
+        SchemaProperty('createdby', RealmPropertyType.string, optional: true),
+        SchemaProperty('createdat', RealmPropertyType.string, optional: true),
+        SchemaProperty('url', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'assignedto',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.set,
+        ),
+        SchemaProperty('editedat', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'lasteditedby',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('isInvasive', RealmPropertyType.bool),
+        SchemaProperty(
+          'children',
+          RealmPropertyType.object,
+          linkTarget: 'Child',
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+        SchemaProperty('companyIdentifier', RealmPropertyType.string),
+      ],
+    );
   }();
 
   @override
@@ -676,9 +721,7 @@ class Location extends _Location
     bool isSynced = false,
   }) {
     if (!_defaultsSet) {
-      _defaultsSet = RealmObjectBase.setDefaults<Location>({
-        'isSynced': false,
-      });
+      _defaultsSet = RealmObjectBase.setDefaults<Location>({'isSynced': false});
     }
     RealmObjectBase.set(this, '_id', id);
     RealmObjectBase.set(this, 'name', name);
@@ -693,7 +736,10 @@ class Location extends _Location
     RealmObjectBase.set(this, 'lasteditedby', lasteditedby);
     RealmObjectBase.set(this, 'isInvasive', isInvasive);
     RealmObjectBase.set<RealmList<Section>>(
-        this, 'sections', RealmList<Section>(sections));
+      this,
+      'sections',
+      RealmList<Section>(sections),
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
   }
@@ -855,8 +901,12 @@ class Location extends _Location
     RealmObjectBase.registerFactory(Location._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(ObjectType.realmObject, Location, 'Location', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
+      SchemaProperty(
+        'id',
+        RealmPropertyType.objectid,
+        mapTo: '_id',
+        primaryKey: true,
+      ),
       SchemaProperty('name', RealmPropertyType.string, optional: true),
       SchemaProperty('type', RealmPropertyType.string, optional: true),
       SchemaProperty('description', RealmPropertyType.string, optional: true),
@@ -868,8 +918,12 @@ class Location extends _Location
       SchemaProperty('editedat', RealmPropertyType.string, optional: true),
       SchemaProperty('lasteditedby', RealmPropertyType.string, optional: true),
       SchemaProperty('isInvasive', RealmPropertyType.bool),
-      SchemaProperty('sections', RealmPropertyType.object,
-          linkTarget: 'Section', collectionType: RealmCollectionType.list),
+      SchemaProperty(
+        'sections',
+        RealmPropertyType.object,
+        linkTarget: 'Section',
+        collectionType: RealmCollectionType.list,
+      ),
       SchemaProperty('isSynced', RealmPropertyType.bool),
       SchemaProperty('companyIdentifier', RealmPropertyType.string),
     ]);
@@ -909,7 +963,10 @@ class Section extends _Section
     RealmObjectBase.set(this, 'isInvasive', isInvasive);
     RealmObjectBase.set(this, 'visualsignsofleak', visualsignsofleak);
     RealmObjectBase.set(
-        this, 'furtherinvasivereviewrequired', furtherinvasivereviewrequired);
+      this,
+      'furtherinvasivereviewrequired',
+      furtherinvasivereviewrequired,
+    );
     RealmObjectBase.set(this, 'conditionalassessment', conditionalassessment);
     RealmObjectBase.set(this, 'visualreview', visualreview);
     RealmObjectBase.set(this, 'coverUrl', coverUrl);
@@ -1019,26 +1076,25 @@ class Section extends _Section
   static Section _fromEJson(EJsonValue ejson) {
     if (ejson is! Map<String, dynamic>) return raiseInvalidEJson(ejson);
     return switch (ejson) {
-      {
-        '_id': EJsonValue id,
-        'isInvasive': EJsonValue isInvasive,
-      } =>
-        Section(
-          fromEJson(id),
-          fromEJson(isInvasive),
-          name: fromEJson(ejson['name']),
-          visualsignsofleak:
-              fromEJson(ejson['visualsignsofleak'], defaultValue: false),
-          furtherinvasivereviewrequired: fromEJson(
-              ejson['furtherinvasivereviewrequired'],
-              defaultValue: false),
-          conditionalassessment: fromEJson(ejson['conditionalassessment']),
-          visualreview: fromEJson(ejson['visualreview']),
-          coverUrl: fromEJson(ejson['coverUrl']),
-          count: fromEJson(ejson['count'], defaultValue: 0),
-          isuploading: fromEJson(ejson['isuploading'], defaultValue: false),
-          sequenceNo: fromEJson(ejson['sequenceNo']),
+      {'_id': EJsonValue id, 'isInvasive': EJsonValue isInvasive} => Section(
+        fromEJson(id),
+        fromEJson(isInvasive),
+        name: fromEJson(ejson['name']),
+        visualsignsofleak: fromEJson(
+          ejson['visualsignsofleak'],
+          defaultValue: false,
         ),
+        furtherinvasivereviewrequired: fromEJson(
+          ejson['furtherinvasivereviewrequired'],
+          defaultValue: false,
+        ),
+        conditionalassessment: fromEJson(ejson['conditionalassessment']),
+        visualreview: fromEJson(ejson['visualreview']),
+        coverUrl: fromEJson(ejson['coverUrl']),
+        count: fromEJson(ejson['count'], defaultValue: 0),
+        isuploading: fromEJson(ejson['isuploading'], defaultValue: false),
+        sequenceNo: fromEJson(ejson['sequenceNo']),
+      ),
       _ => raiseInvalidEJson(ejson),
     };
   }
@@ -1052,8 +1108,11 @@ class Section extends _Section
       SchemaProperty('isInvasive', RealmPropertyType.bool),
       SchemaProperty('visualsignsofleak', RealmPropertyType.bool),
       SchemaProperty('furtherinvasivereviewrequired', RealmPropertyType.bool),
-      SchemaProperty('conditionalassessment', RealmPropertyType.string,
-          optional: true),
+      SchemaProperty(
+        'conditionalassessment',
+        RealmPropertyType.string,
+        optional: true,
+      ),
       SchemaProperty('visualreview', RealmPropertyType.string, optional: true),
       SchemaProperty('coverUrl', RealmPropertyType.string, optional: true),
       SchemaProperty('count', RealmPropertyType.int),
@@ -1105,17 +1164,32 @@ class VisualSection extends _VisualSection
     RealmObjectBase.set(this, '_id', id);
     RealmObjectBase.set(this, 'name', name);
     RealmObjectBase.set<RealmList<String>>(
-        this, 'images', RealmList<String>(images));
+      this,
+      'images',
+      RealmList<String>(images),
+    );
     RealmObjectBase.set<RealmList<String>>(
-        this, 'exteriorelements', RealmList<String>(exteriorelements));
-    RealmObjectBase.set<RealmList<String>>(this, 'waterproofingelements',
-        RealmList<String>(waterproofingelements));
+      this,
+      'exteriorelements',
+      RealmList<String>(exteriorelements),
+    );
+    RealmObjectBase.set<RealmList<String>>(
+      this,
+      'waterproofingelements',
+      RealmList<String>(waterproofingelements),
+    );
     RealmObjectBase.set(
-        this, 'additionalconsiderations', additionalconsiderations);
+      this,
+      'additionalconsiderations',
+      additionalconsiderations,
+    );
     RealmObjectBase.set(this, 'visualreview', visualreview);
     RealmObjectBase.set(this, 'visualsignsofleak', visualsignsofleak);
     RealmObjectBase.set(
-        this, 'furtherinvasivereviewrequired', furtherinvasivereviewrequired);
+      this,
+      'furtherinvasivereviewrequired',
+      furtherinvasivereviewrequired,
+    );
     RealmObjectBase.set(this, 'conditionalassessment', conditionalassessment);
     RealmObjectBase.set(this, 'eee', eee);
     RealmObjectBase.set(this, 'lbc', lbc);
@@ -1278,9 +1352,9 @@ class VisualSection extends _VisualSection
       RealmObjectBase.getChanges<VisualSection>(this);
 
   @override
-  Stream<RealmObjectChanges<VisualSection>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<VisualSection>(this, keyPaths);
+  Stream<RealmObjectChanges<VisualSection>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<VisualSection>(this, keyPaths);
 
   @override
   VisualSection freeze() => RealmObjectBase.freezeObject<VisualSection>(this);
@@ -1337,14 +1411,18 @@ class VisualSection extends _VisualSection
           images: fromEJson(ejson['images']),
           exteriorelements: fromEJson(ejson['exteriorelements']),
           waterproofingelements: fromEJson(ejson['waterproofingelements']),
-          additionalconsiderations:
-              fromEJson(ejson['additionalconsiderations']),
+          additionalconsiderations: fromEJson(
+            ejson['additionalconsiderations'],
+          ),
           visualreview: fromEJson(ejson['visualreview']),
-          visualsignsofleak:
-              fromEJson(ejson['visualsignsofleak'], defaultValue: false),
+          visualsignsofleak: fromEJson(
+            ejson['visualsignsofleak'],
+            defaultValue: false,
+          ),
           furtherinvasivereviewrequired: fromEJson(
-              ejson['furtherinvasivereviewrequired'],
-              defaultValue: true),
+            ejson['furtherinvasivereviewrequired'],
+            defaultValue: true,
+          ),
           conditionalassessment: fromEJson(ejson['conditionalassessment']),
           createdby: fromEJson(ejson['createdby']),
           createdat: fromEJson(ejson['createdat']),
@@ -1361,36 +1439,67 @@ class VisualSection extends _VisualSection
     RealmObjectBase.registerFactory(VisualSection._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, VisualSection, 'VisualSection', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('name', RealmPropertyType.string, optional: true),
-      SchemaProperty('images', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('exteriorelements', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('waterproofingelements', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('additionalconsiderations', RealmPropertyType.string,
-          optional: true),
-      SchemaProperty('visualreview', RealmPropertyType.string, optional: true),
-      SchemaProperty('visualsignsofleak', RealmPropertyType.bool),
-      SchemaProperty('furtherinvasivereviewrequired', RealmPropertyType.bool),
-      SchemaProperty('conditionalassessment', RealmPropertyType.string,
-          optional: true),
-      SchemaProperty('eee', RealmPropertyType.string),
-      SchemaProperty('lbc', RealmPropertyType.string),
-      SchemaProperty('awe', RealmPropertyType.string),
-      SchemaProperty('parentid', RealmPropertyType.objectid),
-      SchemaProperty('createdby', RealmPropertyType.string, optional: true),
-      SchemaProperty('createdat', RealmPropertyType.string, optional: true),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-      SchemaProperty('parenttype', RealmPropertyType.string),
-      SchemaProperty('unitUnavailable', RealmPropertyType.bool),
-      SchemaProperty('editedat', RealmPropertyType.string, optional: true),
-      SchemaProperty('lasteditedby', RealmPropertyType.string, optional: true),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string),
-    ]);
+      ObjectType.realmObject,
+      VisualSection,
+      'VisualSection',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('name', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'images',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty(
+          'exteriorelements',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty(
+          'waterproofingelements',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty(
+          'additionalconsiderations',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty(
+          'visualreview',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('visualsignsofleak', RealmPropertyType.bool),
+        SchemaProperty('furtherinvasivereviewrequired', RealmPropertyType.bool),
+        SchemaProperty(
+          'conditionalassessment',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('eee', RealmPropertyType.string),
+        SchemaProperty('lbc', RealmPropertyType.string),
+        SchemaProperty('awe', RealmPropertyType.string),
+        SchemaProperty('parentid', RealmPropertyType.objectid),
+        SchemaProperty('createdby', RealmPropertyType.string, optional: true),
+        SchemaProperty('createdat', RealmPropertyType.string, optional: true),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+        SchemaProperty('parenttype', RealmPropertyType.string),
+        SchemaProperty('unitUnavailable', RealmPropertyType.bool),
+        SchemaProperty('editedat', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'lasteditedby',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('companyIdentifier', RealmPropertyType.string),
+      ],
+    );
   }();
 
   @override
@@ -1419,10 +1528,16 @@ class InvasiveSection extends _InvasiveSection
     RealmObjectBase.set(this, '_id', id);
     RealmObjectBase.set(this, 'parentid', parentid);
     RealmObjectBase.set(
-        this, 'postinvasiverepairsrequired', postinvasiverepairsrequired);
+      this,
+      'postinvasiverepairsrequired',
+      postinvasiverepairsrequired,
+    );
     RealmObjectBase.set(this, 'invasiveDescription', invasiveDescription);
     RealmObjectBase.set<RealmList<String>>(
-        this, 'invasiveimages', RealmList<String>(invasiveimages));
+      this,
+      'invasiveimages',
+      RealmList<String>(invasiveimages),
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
   }
@@ -1478,9 +1593,9 @@ class InvasiveSection extends _InvasiveSection
       RealmObjectBase.getChanges<InvasiveSection>(this);
 
   @override
-  Stream<RealmObjectChanges<InvasiveSection>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<InvasiveSection>(this, keyPaths);
+  Stream<RealmObjectChanges<InvasiveSection>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<InvasiveSection>(this, keyPaths);
 
   @override
   InvasiveSection freeze() =>
@@ -1514,8 +1629,9 @@ class InvasiveSection extends _InvasiveSection
           fromEJson(invasiveDescription),
           fromEJson(companyIdentifier),
           postinvasiverepairsrequired: fromEJson(
-              ejson['postinvasiverepairsrequired'],
-              defaultValue: false),
+            ejson['postinvasiverepairsrequired'],
+            defaultValue: false,
+          ),
           invasiveimages: fromEJson(ejson['invasiveimages']),
           isSynced: fromEJson(ejson['isSynced'], defaultValue: false),
         ),
@@ -1527,17 +1643,28 @@ class InvasiveSection extends _InvasiveSection
     RealmObjectBase.registerFactory(InvasiveSection._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, InvasiveSection, 'InvasiveSection', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('parentid', RealmPropertyType.objectid),
-      SchemaProperty('postinvasiverepairsrequired', RealmPropertyType.bool),
-      SchemaProperty('invasiveDescription', RealmPropertyType.string),
-      SchemaProperty('invasiveimages', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string),
-    ]);
+      ObjectType.realmObject,
+      InvasiveSection,
+      'InvasiveSection',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('parentid', RealmPropertyType.objectid),
+        SchemaProperty('postinvasiverepairsrequired', RealmPropertyType.bool),
+        SchemaProperty('invasiveDescription', RealmPropertyType.string),
+        SchemaProperty(
+          'invasiveimages',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+        SchemaProperty('companyIdentifier', RealmPropertyType.string),
+      ],
+    );
   }();
 
   @override
@@ -1571,15 +1698,24 @@ class ConclusiveSection extends _ConclusiveSection
     RealmObjectBase.set(this, '_id', id);
     RealmObjectBase.set(this, 'parentid', parentid);
     RealmObjectBase.set(this, 'propowneragreed', propowneragreed);
-    RealmObjectBase.set(this, 'invasiverepairsinspectedandcompleted',
-        invasiverepairsinspectedandcompleted);
     RealmObjectBase.set(
-        this, 'conclusiveconsiderations', conclusiveconsiderations);
+      this,
+      'invasiverepairsinspectedandcompleted',
+      invasiverepairsinspectedandcompleted,
+    );
+    RealmObjectBase.set(
+      this,
+      'conclusiveconsiderations',
+      conclusiveconsiderations,
+    );
     RealmObjectBase.set(this, 'eeeconclusive', eeeconclusive);
     RealmObjectBase.set(this, 'lbcconclusive', lbcconclusive);
     RealmObjectBase.set(this, 'aweconclusive', aweconclusive);
     RealmObjectBase.set<RealmList<String>>(
-        this, 'conclusiveimages', RealmList<String>(conclusiveimages));
+      this,
+      'conclusiveimages',
+      RealmList<String>(conclusiveimages),
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
   }
@@ -1665,9 +1801,9 @@ class ConclusiveSection extends _ConclusiveSection
       RealmObjectBase.getChanges<ConclusiveSection>(this);
 
   @override
-  Stream<RealmObjectChanges<ConclusiveSection>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<ConclusiveSection>(this, keyPaths);
+  Stream<RealmObjectChanges<ConclusiveSection>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<ConclusiveSection>(this, keyPaths);
 
   @override
   ConclusiveSection freeze() =>
@@ -1711,11 +1847,14 @@ class ConclusiveSection extends _ConclusiveSection
           fromEJson(lbcconclusive),
           fromEJson(aweconclusive),
           fromEJson(companyIdentifier),
-          propowneragreed:
-              fromEJson(ejson['propowneragreed'], defaultValue: false),
+          propowneragreed: fromEJson(
+            ejson['propowneragreed'],
+            defaultValue: false,
+          ),
           invasiverepairsinspectedandcompleted: fromEJson(
-              ejson['invasiverepairsinspectedandcompleted'],
-              defaultValue: false),
+            ejson['invasiverepairsinspectedandcompleted'],
+            defaultValue: false,
+          ),
           conclusiveimages: fromEJson(ejson['conclusiveimages']),
           isSynced: fromEJson(ejson['isSynced'], defaultValue: false),
         ),
@@ -1727,22 +1866,35 @@ class ConclusiveSection extends _ConclusiveSection
     RealmObjectBase.registerFactory(ConclusiveSection._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, ConclusiveSection, 'ConclusiveSection', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('parentid', RealmPropertyType.objectid),
-      SchemaProperty('propowneragreed', RealmPropertyType.bool),
-      SchemaProperty(
-          'invasiverepairsinspectedandcompleted', RealmPropertyType.bool),
-      SchemaProperty('conclusiveconsiderations', RealmPropertyType.string),
-      SchemaProperty('eeeconclusive', RealmPropertyType.string),
-      SchemaProperty('lbcconclusive', RealmPropertyType.string),
-      SchemaProperty('aweconclusive', RealmPropertyType.string),
-      SchemaProperty('conclusiveimages', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string),
-    ]);
+      ObjectType.realmObject,
+      ConclusiveSection,
+      'ConclusiveSection',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('parentid', RealmPropertyType.objectid),
+        SchemaProperty('propowneragreed', RealmPropertyType.bool),
+        SchemaProperty(
+          'invasiverepairsinspectedandcompleted',
+          RealmPropertyType.bool,
+        ),
+        SchemaProperty('conclusiveconsiderations', RealmPropertyType.string),
+        SchemaProperty('eeeconclusive', RealmPropertyType.string),
+        SchemaProperty('lbcconclusive', RealmPropertyType.string),
+        SchemaProperty('aweconclusive', RealmPropertyType.string),
+        SchemaProperty(
+          'conclusiveimages',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+        SchemaProperty('companyIdentifier', RealmPropertyType.string),
+      ],
+    );
   }();
 
   @override
@@ -1920,8 +2072,12 @@ class DeckImage extends _DeckImage
     RealmObjectBase.registerFactory(DeckImage._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(ObjectType.realmObject, DeckImage, 'DeckImage', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
+      SchemaProperty(
+        'id',
+        RealmPropertyType.objectid,
+        mapTo: '_id',
+        primaryKey: true,
+      ),
       SchemaProperty('imageLocalPath', RealmPropertyType.string),
       SchemaProperty('onlinePath', RealmPropertyType.string),
       SchemaProperty('isUploaded', RealmPropertyType.bool),
@@ -1962,9 +2118,15 @@ class Question extends _Question
     RealmObjectBase.set(this, 'name', name);
     RealmObjectBase.set(this, 'answer', answer);
     RealmObjectBase.set<RealmList<String>>(
-        this, 'multipleAnswers', RealmList<String>(multipleAnswers));
+      this,
+      'multipleAnswers',
+      RealmList<String>(multipleAnswers),
+    );
     RealmObjectBase.set<RealmList<String>>(
-        this, 'allowedValues', RealmList<String>(allowedValues));
+      this,
+      'allowedValues',
+      RealmList<String>(allowedValues),
+    );
     RealmObjectBase.set(this, 'isMandatory', isMandatory);
   }
 
@@ -2065,10 +2227,16 @@ class Question extends _Question
       SchemaProperty('type', RealmPropertyType.string),
       SchemaProperty('name', RealmPropertyType.string),
       SchemaProperty('answer', RealmPropertyType.string),
-      SchemaProperty('multipleAnswers', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('allowedValues', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
+      SchemaProperty(
+        'multipleAnswers',
+        RealmPropertyType.string,
+        collectionType: RealmCollectionType.list,
+      ),
+      SchemaProperty(
+        'allowedValues',
+        RealmPropertyType.string,
+        collectionType: RealmCollectionType.list,
+      ),
       SchemaProperty('isMandatory', RealmPropertyType.bool),
     ]);
   }();
@@ -2109,11 +2277,20 @@ class DynamicVisualSection extends _DynamicVisualSection
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
     RealmObjectBase.set(this, 'name', name);
     RealmObjectBase.set<RealmList<String>>(
-        this, 'images', RealmList<String>(images));
+      this,
+      'images',
+      RealmList<String>(images),
+    );
     RealmObjectBase.set<RealmList<Question>>(
-        this, 'questions', RealmList<Question>(questions));
+      this,
+      'questions',
+      RealmList<Question>(questions),
+    );
     RealmObjectBase.set(
-        this, 'furtherinvasivereviewrequired', furtherinvasivereviewrequired);
+      this,
+      'furtherinvasivereviewrequired',
+      furtherinvasivereviewrequired,
+    );
     RealmObjectBase.set(this, 'parentid', parentid);
     RealmObjectBase.set(this, 'createdby', createdby);
     RealmObjectBase.set(this, 'createdat', createdat);
@@ -2122,7 +2299,10 @@ class DynamicVisualSection extends _DynamicVisualSection
     RealmObjectBase.set(this, 'editedat', editedat);
     RealmObjectBase.set(this, 'lasteditedby', lasteditedby);
     RealmObjectBase.set(
-        this, 'additionalconsiderations', additionalconsiderations);
+      this,
+      'additionalconsiderations',
+      additionalconsiderations,
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
   }
 
@@ -2228,9 +2408,9 @@ class DynamicVisualSection extends _DynamicVisualSection
       RealmObjectBase.getChanges<DynamicVisualSection>(this);
 
   @override
-  Stream<RealmObjectChanges<DynamicVisualSection>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<DynamicVisualSection>(this, keyPaths);
+  Stream<RealmObjectChanges<DynamicVisualSection>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<DynamicVisualSection>(this, keyPaths);
 
   @override
   DynamicVisualSection freeze() =>
@@ -2274,15 +2454,17 @@ class DynamicVisualSection extends _DynamicVisualSection
           images: fromEJson(ejson['images']),
           questions: fromEJson(ejson['questions']),
           furtherinvasivereviewrequired: fromEJson(
-              ejson['furtherinvasivereviewrequired'],
-              defaultValue: true),
+            ejson['furtherinvasivereviewrequired'],
+            defaultValue: true,
+          ),
           createdby: fromEJson(ejson['createdby']),
           createdat: fromEJson(ejson['createdat']),
           parenttype: fromEJson(ejson['parenttype'], defaultValue: ''),
           editedat: fromEJson(ejson['editedat']),
           lasteditedby: fromEJson(ejson['lasteditedby']),
-          additionalconsiderations:
-              fromEJson(ejson['additionalconsiderations']),
+          additionalconsiderations: fromEJson(
+            ejson['additionalconsiderations'],
+          ),
           isSynced: fromEJson(ejson['isSynced'], defaultValue: false),
         ),
       _ => raiseInvalidEJson(ejson),
@@ -2293,28 +2475,53 @@ class DynamicVisualSection extends _DynamicVisualSection
     RealmObjectBase.registerFactory(DynamicVisualSection._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, DynamicVisualSection, 'DynamicVisualSection', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string,
-          optional: true),
-      SchemaProperty('name', RealmPropertyType.string, optional: true),
-      SchemaProperty('images', RealmPropertyType.string,
-          collectionType: RealmCollectionType.list),
-      SchemaProperty('questions', RealmPropertyType.object,
-          linkTarget: 'Question', collectionType: RealmCollectionType.list),
-      SchemaProperty('furtherinvasivereviewrequired', RealmPropertyType.bool),
-      SchemaProperty('parentid', RealmPropertyType.objectid),
-      SchemaProperty('createdby', RealmPropertyType.string, optional: true),
-      SchemaProperty('createdat', RealmPropertyType.string, optional: true),
-      SchemaProperty('parenttype', RealmPropertyType.string),
-      SchemaProperty('unitUnavailable', RealmPropertyType.bool),
-      SchemaProperty('editedat', RealmPropertyType.string, optional: true),
-      SchemaProperty('lasteditedby', RealmPropertyType.string, optional: true),
-      SchemaProperty('additionalconsiderations', RealmPropertyType.string,
-          optional: true),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-    ]);
+      ObjectType.realmObject,
+      DynamicVisualSection,
+      'DynamicVisualSection',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty(
+          'companyIdentifier',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('name', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'images',
+          RealmPropertyType.string,
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty(
+          'questions',
+          RealmPropertyType.object,
+          linkTarget: 'Question',
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty('furtherinvasivereviewrequired', RealmPropertyType.bool),
+        SchemaProperty('parentid', RealmPropertyType.objectid),
+        SchemaProperty('createdby', RealmPropertyType.string, optional: true),
+        SchemaProperty('createdat', RealmPropertyType.string, optional: true),
+        SchemaProperty('parenttype', RealmPropertyType.string),
+        SchemaProperty('unitUnavailable', RealmPropertyType.bool),
+        SchemaProperty('editedat', RealmPropertyType.string, optional: true),
+        SchemaProperty(
+          'lasteditedby',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty(
+          'additionalconsiderations',
+          RealmPropertyType.string,
+          optional: true,
+        ),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+      ],
+    );
   }();
 
   @override
@@ -2341,7 +2548,10 @@ class LocationForm extends _LocationForm
     RealmObjectBase.set(this, 'name', name);
     RealmObjectBase.set(this, 'companyIdentifier', companyIdentifier);
     RealmObjectBase.set<RealmList<Question>>(
-        this, 'questions', RealmList<Question>(questions));
+      this,
+      'questions',
+      RealmList<Question>(questions),
+    );
     RealmObjectBase.set(this, 'isSynced', isSynced);
   }
 
@@ -2381,9 +2591,9 @@ class LocationForm extends _LocationForm
       RealmObjectBase.getChanges<LocationForm>(this);
 
   @override
-  Stream<RealmObjectChanges<LocationForm>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<LocationForm>(this, keyPaths);
+  Stream<RealmObjectChanges<LocationForm>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<LocationForm>(this, keyPaths);
 
   @override
   LocationForm freeze() => RealmObjectBase.freezeObject<LocationForm>(this);
@@ -2422,15 +2632,27 @@ class LocationForm extends _LocationForm
     RealmObjectBase.registerFactory(LocationForm._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, LocationForm, 'LocationForm', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('name', RealmPropertyType.string),
-      SchemaProperty('companyIdentifier', RealmPropertyType.string),
-      SchemaProperty('questions', RealmPropertyType.object,
-          linkTarget: 'Question', collectionType: RealmCollectionType.list),
-      SchemaProperty('isSynced', RealmPropertyType.bool),
-    ]);
+      ObjectType.realmObject,
+      LocationForm,
+      'LocationForm',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('name', RealmPropertyType.string),
+        SchemaProperty('companyIdentifier', RealmPropertyType.string),
+        SchemaProperty(
+          'questions',
+          RealmPropertyType.object,
+          linkTarget: 'Question',
+          collectionType: RealmCollectionType.list,
+        ),
+        SchemaProperty('isSynced', RealmPropertyType.bool),
+      ],
+    );
   }();
 
   @override
@@ -2489,9 +2711,9 @@ class UnsyncedData extends _UnsyncedData
       RealmObjectBase.getChanges<UnsyncedData>(this);
 
   @override
-  Stream<RealmObjectChanges<UnsyncedData>> changesFor(
-          [List<String>? keyPaths]) =>
-      RealmObjectBase.getChangesFor<UnsyncedData>(this, keyPaths);
+  Stream<RealmObjectChanges<UnsyncedData>> changesFor([
+    List<String>? keyPaths,
+  ]) => RealmObjectBase.getChangesFor<UnsyncedData>(this, keyPaths);
 
   @override
   UnsyncedData freeze() => RealmObjectBase.freezeObject<UnsyncedData>(this);
@@ -2532,14 +2754,22 @@ class UnsyncedData extends _UnsyncedData
     RealmObjectBase.registerFactory(UnsyncedData._);
     register(_toEJson, _fromEJson);
     return const SchemaObject(
-        ObjectType.realmObject, UnsyncedData, 'UnsyncedData', [
-      SchemaProperty('id', RealmPropertyType.objectid,
-          mapTo: '_id', primaryKey: true),
-      SchemaProperty('action', RealmPropertyType.string),
-      SchemaProperty('collectionName', RealmPropertyType.string),
-      SchemaProperty('jsonData', RealmPropertyType.string),
-      SchemaProperty('updatedAt', RealmPropertyType.string),
-    ]);
+      ObjectType.realmObject,
+      UnsyncedData,
+      'UnsyncedData',
+      [
+        SchemaProperty(
+          'id',
+          RealmPropertyType.objectid,
+          mapTo: '_id',
+          primaryKey: true,
+        ),
+        SchemaProperty('action', RealmPropertyType.string),
+        SchemaProperty('collectionName', RealmPropertyType.string),
+        SchemaProperty('jsonData', RealmPropertyType.string),
+        SchemaProperty('updatedAt', RealmPropertyType.string),
+      ],
+    );
   }();
 
   @override

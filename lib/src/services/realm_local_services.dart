@@ -77,6 +77,14 @@ class RealmLocalServices with ChangeNotifier {
 
         if (response['status'] == 'success') {
           //remove from the unsynced data
+          final existingData = realm.find<UnsyncedData>(
+            ObjectId.fromHexString(messageId),
+          );
+          if (existingData != null) {
+            realm.write(() {
+              realm.delete(existingData);
+            });
+          }
         } else {
           debugPrint("Failed to sync object: ${response['message']}");
           //add this to unsynced data
@@ -87,8 +95,8 @@ class RealmLocalServices with ChangeNotifier {
         }
         syncService.pendingMessages.remove(messageId);
 
-        //special handling for batch processing
-        if (response['action'] == 'sync_ack') {
+        //special handling for batch processing, currently not being used.
+        if (response['servermessage'] == 'sync_ack') {
           final List syncedIds = response['syncedIds'];
           realm.write(() {
             for (final id in syncedIds) {
@@ -99,6 +107,10 @@ class RealmLocalServices with ChangeNotifier {
             }
           });
           debugPrint('🗑️ Deleted synced entries from Realm.');
+        }
+        if (response['servermessage'] == 'sync_with_server') {
+          //check for the message, Encode it and then update the relevant realm collection
+          updateLocalDb(response);
         }
       },
       onError: (error) {
@@ -2113,18 +2125,24 @@ class RealmLocalServices with ChangeNotifier {
 
   void saveUnsyncedData(Map<String, dynamic> socketData) {
     try {
-      realm.write(() {
-        realm.add<UnsyncedData>(
-          UnsyncedData(
-            ObjectId.fromHexString(socketData['id']),
-            socketData['action'] as String,
-            socketData['collectionName'] as String,
-            jsonDecode(socketData['data']),
-            DateTime.now().toString(),
-          ),
-          update: true,
-        );
-      });
+      //check if the data already exists, using findAsync with _id
+      final existingData = realm.find<UnsyncedData>(
+        ObjectId.fromHexString(socketData['id']),
+      );
+      if (existingData == null) {
+        realm.write(() {
+          realm.add<UnsyncedData>(
+            UnsyncedData(
+              ObjectId.fromHexString(socketData['id']),
+              socketData['action'] as String,
+              socketData['collectionName'] as String,
+              jsonDecode(socketData['data']),
+              DateTime.now().toString(),
+            ),
+            update: true,
+          );
+        });
+      }
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -2139,11 +2157,11 @@ class RealmLocalServices with ChangeNotifier {
   }) {
     try {
       Map<String, Object> socketData = {};
-      final messageId = ObjectId().hexString;
+      final messageId = data['id'];
       if (isDelete) {
         socketData = {
           "id": data['id'],
-          "messageId": messageId,
+          "messageId": data['id'],
           "collectionName": collectionName,
           "action": "delete",
           "data": jsonEncode({"id": data['id']}),
@@ -2151,7 +2169,7 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         socketData = {
           "id": data['id'],
-          "messageId": messageId,
+          "messageId": data['id'],
           "collectionName": collectionName,
           "action": eventName,
           "data": jsonEncode(data),
@@ -2165,6 +2183,244 @@ class RealmLocalServices with ChangeNotifier {
     } catch (e) {
       debugPrint("Error pushing to WebSocket: $e");
       //saveUnsyncedData(sock);
+    }
+  }
+
+  void updateLocalDb(response) {
+    final parsedMessage = jsonDecode(response);
+    final collectionName = parsedMessage['collectionName'];
+    print("Collection Name: $collectionName");
+    final messageId = parsedMessage['messageId'];
+    print("Event Name: $messageId");
+    final action = parsedMessage['action'];
+    print("Action: $action");
+    //write a generic method to update the local db collections based on the collectionName and action
+
+    switch (action) {
+      case 'create':
+        realm.write(() {
+          final obj = _getRealmObjectFromCollectionName(
+            collectionName,
+            parsedMessage['data'],
+          );
+          if (obj != null) {
+            realm.add(obj, update: true);
+          }
+        });
+        break;
+      case 'update':
+        realm.write(() {
+          final obj = _getRealmObjectFromCollectionName(
+            collectionName,
+            parsedMessage['data'],
+          );
+          if (obj != null) {
+            realm.add(obj, update: true);
+          }
+        });
+        break;
+      case 'delete':
+        realm.write(() {
+          final obj = _findRealmObjectByCollectionName(
+            collectionName,
+            ObjectId.fromHexString(messageId),
+          );
+          if (obj != null) {
+            realm.delete(obj);
+          }
+        });
+        break;
+    }
+  }
+
+  // Add this method to resolve the error
+  // Helper to find an object by collection name and id
+  dynamic _findRealmObjectByCollectionName(String collectionName, ObjectId id) {
+    switch (collectionName) {
+      case 'project':
+        return realm.find<Project>(id);
+      case 'subProject':
+        return realm.find<SubProject>(id);
+      case 'location':
+        return realm.find<Location>(id);
+      case 'visualSection':
+        return realm.find<VisualSection>(id);
+      case 'dynamicVisualSection':
+        return realm.find<DynamicVisualSection>(id);
+      case 'invasiveSection':
+        return realm.find<InvasiveSection>(id);
+      case 'conclusiveSection':
+        return realm.find<ConclusiveSection>(id);
+      // Add other cases as needed
+      default:
+        return null;
+    }
+  }
+
+  // Add this method to resolve the error
+  dynamic _getRealmObjectFromCollectionName(
+    String collectionName,
+    dynamic data,
+  ) {
+    switch (collectionName) {
+      case 'project':
+        final project = Project(
+          ObjectId.fromHexString(data['id']),
+          data['companyIdentifier'] ?? '',
+          name: data['name'] ?? '',
+          url: data['url'] ?? '',
+          createdby: data['createdBy'] ?? '',
+          createdat: data['createdAt'] ?? '',
+          sections: List<Section>.from(data['sections'] ?? []),
+          children: List<Child>.from(data['children'] ?? []),
+          isInvasive: data['isInvasive'] ?? false,
+          projecttype: data['projecttype'] ?? '',
+          description: data['description'] ?? '',
+          address: data['address'] ?? '',
+          iscomplete: data['isDeleted'] ?? false,
+          isSynced: data['isSynced'] ?? true,
+          editedat: data['editedat'] ?? '',
+          lasteditedby: data['lasteditedby'] ?? '',
+          assignedto: Set<String>.from(data['assignedto'] ?? []),
+          latitude: data['latitude']?.toDouble(),
+          longitude: data['longitude']?.toDouble(),
+          formId:
+              data['formId'] != null
+                  ? ObjectId.fromHexString(data['formId'])
+                  : null,
+        );
+        return project;
+      case 'subProject':
+        return SubProject(
+          ObjectId.fromHexString(data['id']),
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['isInvasive'] ?? false,
+          data['companyIdentifier'] ?? '',
+          name: data['name'] ?? '',
+          url: data['url'] ?? '',
+          createdby: data['createdBy'] ?? '',
+          createdat: data['createdAt'] ?? '',
+          type: data['type'] ?? '',
+          description: data['description'] ?? '',
+          parenttype: data['parenttype'] ?? '',
+          children: List<Child>.from(data['children'] ?? []),
+          assignedto: Set<String>.from(data['assignedto'] ?? []),
+          isSynced: data['isSynced'] ?? true,
+          editedat: data['editedat'] ?? '',
+          lasteditedby: data['lasteditedby'] ?? '',
+        );
+      case 'location':
+        return Location(
+          ObjectId.fromHexString(data['id']),
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['isInvasive'] ?? false,
+          data['companyIdentifier'] ?? '',
+          name: data['name'] ?? '',
+          type: data['type'] ?? '',
+          description: data['description'] ?? '',
+          parenttype: data['parenttype'] ?? '',
+          createdby: data['createdBy'] ?? '',
+          createdat: data['createdAt'] ?? '',
+          url: data['url'] ?? '',
+          editedat: data['editedat'] ?? '',
+          lasteditedby: data['lasteditedby'] ?? '',
+          sections: List<Section>.from(data['sections'] ?? []),
+          isSynced: data['isSynced'] ?? true,
+        );
+
+      case 'visualSection':
+        return VisualSection(
+          ObjectId.fromHexString(data['id']),
+          data['eee'] ?? '',
+          data['lbc'] ?? '',
+          data['awe'] ?? '',
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['parenttype'] ?? '',
+          data['companyIdentifier'] ?? '',
+          name: data['name'] ?? '',
+          images: List<String>.from(data['images'] ?? []),
+          exteriorelements: List<String>.from(data['exteriorelements'] ?? []),
+          waterproofingelements: List<String>.from(
+            data['waterproofingelements'] ?? [],
+          ),
+          additionalconsiderations: data['additionalconsiderations'],
+          visualreview: data['visualreview'],
+          visualsignsofleak: data['visualsignsofleak'] ?? false,
+          furtherinvasivereviewrequired:
+              data['furtherinvasivereviewrequired'] ?? true,
+          conditionalassessment: data['conditionalassessment'],
+          createdby: data['createdby'],
+          createdat: data['createdat'],
+          isSynced: data['isSynced'] ?? true,
+          editedat: data['editedat'],
+          lasteditedby: data['lasteditedby'],
+        );
+      case 'dynamicVisualSection':
+        return DynamicVisualSection(
+          ObjectId.fromHexString(data['id']),
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['unitUnavailable'] ?? false,
+          companyIdentifier: data['companyIdentifier'] ?? '',
+          name: data['name'] ?? '',
+          images: List<String>.from(data['images'] ?? []),
+          questions: List<Question>.from(data['questions'] ?? []),
+          furtherinvasivereviewrequired:
+              data['furtherinvasivereviewrequired'] ?? true,
+          createdby: data['createdby'],
+          createdat: data['createdat'],
+          parenttype: data['parenttype'] ?? '',
+          isSynced: data['isSynced'] ?? true,
+          editedat: data['editedat'],
+          lasteditedby: data['lasteditedby'],
+          additionalconsiderations: data['additionalconsiderations'],
+        );
+      case 'invasiveSection':
+        return InvasiveSection(
+          ObjectId.fromHexString(data['id']),
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['invasiveDescription'] ?? '',
+          data['companyIdentifier'] ?? '',
+          postinvasiverepairsrequired:
+              data['postinvasiverepairsrequired'] ?? false,
+          invasiveimages: List<String>.from(data['invasiveimages'] ?? []),
+          isSynced: data['isSynced'] ?? true,
+        );
+      case 'conclusiveSection':
+        return ConclusiveSection(
+          ObjectId.fromHexString(data['id']),
+          data['parentid'] != null
+              ? ObjectId.fromHexString(data['parentid'])
+              : ObjectId(),
+          data['conclusiveconsiderations'] ?? '',
+          data['eeeconclusive'] ?? '',
+          data['lbcconclusive'] ?? '',
+          data['aweconclusive'] ?? '',
+          data['companyIdentifier'] ?? '',
+          propowneragreed: data['propowneragreed'] ?? false,
+          invasiverepairsinspectedandcompleted:
+              data['invasiverepairsinspectedandcompleted'] ?? false,
+          conclusiveimages: List<String>.from(data['conclusiveimages'] ?? []),
+          isSynced: data['isSynced'] ?? true,
+        );
+      // case 'deckImage':
+      //   return DeckImage._fromEJson(data);
+      // case 'locationForm':
+      //   return LocationForm._fromEJson(data);
+      // case 'question':
+      //   return Question._fromEJson(data);
+      default:
+        debugPrint('Unknown collection name: $collectionName');
+        return null;
     }
   }
 }

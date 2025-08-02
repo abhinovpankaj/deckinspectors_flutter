@@ -383,20 +383,20 @@ class _SettingsPageState extends State<SettingsPage> {
     if (isSyncOn == false) {
       setState(() {
         isSyncOn = true;
-        //realmServices.sessionSwitch(true);
-        appSettings.activeConnection = true;
-        realmLocalServices.syncService.initSocketAsync();
-        realmLocalServices.registerToChannelStream(
-          realmLocalServices.syncService.channel,
-        );
-        realmLocalServices.syncUnsyncedData();
       });
+      //realmServices.sessionSwitch(true);
+      appSettings.activeConnection = true;
+      await realmLocalServices.syncService.initSocketAsync();
+      realmLocalServices.registerToChannelStream(
+        realmLocalServices.syncService.channel,
+      );
+      realmLocalServices.syncUnsyncedData();
     } else {
       setState(() {
         isSyncOn = false;
-        realmLocalServices.syncService.disconnectWebSocketAndClean();
-        appSettings.activeConnection = false;
       });
+      realmLocalServices.syncService.disconnectWebSocketAndClean();
+      appSettings.activeConnection = false;
     }
     appSettings.isAppOfflineMode = !isSyncOn;
     await prefs.setString('appSync', isSyncOn.toString());

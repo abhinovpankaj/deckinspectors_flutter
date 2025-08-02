@@ -53,8 +53,8 @@ class SyncService {
   }
 
   bool isWebSocketConnected = false;
-  void initSocketAsync() async {
-    final wsUrl = Uri.parse('ws://192.168.1.7:3000');
+  Future<void> initSocketAsync() async {
+    final wsUrl = Uri.parse('ws://192.168.1.5:3000');
     channel = WebSocketChannel.connect(wsUrl);
 
     try {
