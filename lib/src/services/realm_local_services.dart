@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/services/sync_service.dart';
+import 'package:get/utils.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,6 +30,12 @@ class RealmLocalServices with ChangeNotifier {
   SyncService syncService;
   StreamSubscription? _channelSubscription;
   WebSocketChannel? _currentChannel;
+
+  // Message queue for handling multiple server messages
+  final List<Map<String, dynamic>> _messageQueue = [];
+  final List<Map<String, dynamic>> _failedMessages = [];
+  bool _isProcessingQueue = false;
+  int _maxRetries = 3;
 
   RealmLocalServices(this.loggedInUser, this.company, this.syncService) {
     SharedPreferences.getInstance().then((value) {
@@ -76,7 +83,7 @@ class RealmLocalServices with ChangeNotifier {
         final messageId = response['messageId'] as String;
 
         if (response['status'] == 'success') {
-          //remove from the unsynced data
+          //remove from the unsynced datas
           final existingData = realm.find<UnsyncedData>(
             ObjectId.fromHexString(messageId),
           );
@@ -85,6 +92,22 @@ class RealmLocalServices with ChangeNotifier {
               realm.delete(existingData);
             });
           }
+        } else if (response['servermessage'] == 'sync_ack') {
+          final List syncedIds = response['syncedIds'];
+          realm.write(() {
+            for (final id in syncedIds) {
+              final entry = realm.find<UnsyncedData>(
+                ObjectId.fromHexString(id),
+              );
+              if (entry != null) realm.delete(entry);
+            }
+          });
+          debugPrint('🗑️ Deleted synced entries from Realm.');
+        } else if (response['servermessage'] == 'sync_with_server') {
+          //check for the message, Encode it and then update the relevant realm collection
+
+          // Queue the message for processing instead of processing immediately
+          _queueServerMessage(response);
         } else {
           debugPrint("Failed to sync object: ${response['message']}");
           //add this to unsynced data
@@ -96,22 +119,6 @@ class RealmLocalServices with ChangeNotifier {
         syncService.pendingMessages.remove(messageId);
 
         //special handling for batch processing, currently not being used.
-        if (response['servermessage'] == 'sync_ack') {
-          final List syncedIds = response['syncedIds'];
-          realm.write(() {
-            for (final id in syncedIds) {
-              final entry = realm.find<UnsyncedData>(
-                ObjectId.fromHexString(id),
-              );
-              if (entry != null) realm.delete(entry);
-            }
-          });
-          debugPrint('🗑️ Deleted synced entries from Realm.');
-        }
-        if (response['servermessage'] == 'sync_with_server') {
-          //check for the message, Encode it and then update the relevant realm collection
-          updateLocalDb(response);
-        }
       },
       onError: (error) {
         // If needed, retry everything in pendingMessages
@@ -126,6 +133,97 @@ class RealmLocalServices with ChangeNotifier {
       },
       cancelOnError: true, // Ensure subscription is cancelled on error
     );
+  }
+
+  // Queue server messages for asynchronous processing
+  void _queueServerMessage(Map<String, dynamic> message) {
+    // Add timestamp for monitoring
+    message['timestamp'] = DateTime.now().millisecondsSinceEpoch;
+    message['queuedAt'] = DateTime.now().toIso8601String();
+
+    _messageQueue.add(message);
+    debugPrint(
+      "Queued message ${message['messageId']}, queue size: ${_messageQueue.length}",
+    );
+
+    // Start processing if not already processing
+    if (!_isProcessingQueue) {
+      _processMessageQueue();
+    }
+  }
+
+  // Process messages from queue asynchronously
+  Future<void> _processMessageQueue() async {
+    if (_isProcessingQueue) return;
+
+    _isProcessingQueue = true;
+    debugPrint("Started processing message queue");
+
+    try {
+      while (_messageQueue.isNotEmpty) {
+        final message = _messageQueue.removeAt(0);
+        debugPrint(
+          "Processing message ${message['messageId']}, remaining: ${_messageQueue.length}",
+        );
+
+        try {
+          // Process message asynchronously
+          await _processServerMessage(message);
+        } catch (e) {
+          debugPrint("Error processing message ${message['messageId']}: $e");
+          // Continue processing other messages even if one fails
+        }
+
+        // Small delay to prevent blocking the UI thread
+        await Future.delayed(const Duration(milliseconds: 1));
+      }
+    } finally {
+      _isProcessingQueue = false;
+      debugPrint("Finished processing message queue");
+    }
+  }
+
+  // Process individual server message asynchronously
+  Future<void> _processServerMessage(Map<String, dynamic> message) async {
+    final collectionName = message['collectionName'];
+    final messageId = message['messageId'];
+    final action = message['action'];
+    final fullDocument = message['fullDocument'];
+    final updateDescription = message['updateDescription'];
+
+    if (messageId == null) {
+      debugPrint("Message ID is null, skipping update");
+      return;
+    }
+
+    debugPrint(
+      "Processing: Collection=$collectionName, Action=$action, ID=$messageId",
+    );
+
+    try {
+      switch (action) {
+        case 'insert':
+          await _handleInsertAsync(collectionName, fullDocument);
+          break;
+        case 'update':
+        case 'replace':
+          await _handleUpdateAsync(
+            collectionName,
+            messageId,
+            updateDescription,
+            fullDocument,
+          );
+          break;
+        case 'delete':
+          await _handleDeleteAsync(collectionName, messageId);
+          break;
+        default:
+          debugPrint("Unknown action: $action");
+      }
+    } catch (e) {
+      debugPrint("Error processing server message: $e");
+      rethrow;
+    }
   }
 
   void syncUnsyncedData() async {
@@ -1402,9 +1500,16 @@ class RealmLocalServices with ChangeNotifier {
   }
 
   @override
+  @override
   void dispose() {
     _channelSubscription?.cancel();
     _currentChannel = null;
+
+    // Clear any pending messages
+    _messageQueue.clear();
+    _isProcessingQueue = false;
+    debugPrint("Cleared message queue and stopped processing");
+
     realm.close();
     super.dispose();
   }
@@ -2123,6 +2228,28 @@ class RealmLocalServices with ChangeNotifier {
     return offlineImages.toList();
   }
 
+  // Get queue status for monitoring
+  Map<String, dynamic> getMessageQueueStatus() {
+    return {
+      'queueSize': _messageQueue.length,
+      'isProcessing': _isProcessingQueue,
+      'oldestMessageAge':
+          _messageQueue.isNotEmpty
+              ? DateTime.now().millisecondsSinceEpoch -
+                  (_messageQueue.first['timestamp'] ??
+                      DateTime.now().millisecondsSinceEpoch)
+              : 0,
+    };
+  }
+
+  // Force process any remaining messages (useful for debugging)
+  Future<void> forceProcessQueue() async {
+    if (_messageQueue.isNotEmpty) {
+      debugPrint("Force processing ${_messageQueue.length} queued messages");
+      await _processMessageQueue();
+    }
+  }
+
   void saveUnsyncedData(Map<String, dynamic> socketData) {
     try {
       //check if the data already exists, using findAsync with _id
@@ -2186,40 +2313,105 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  void updateLocalDb(response) {
-    final parsedMessage = jsonDecode(response);
-    final collectionName = parsedMessage['collectionName'];
-    print("Collection Name: $collectionName");
-    final messageId = parsedMessage['messageId'];
-    print("Event Name: $messageId");
-    final action = parsedMessage['action'];
-    print("Action: $action");
-    //write a generic method to update the local db collections based on the collectionName and action
+  // Async versions of handlers for non-blocking message processing
+  Future<void> _handleInsertAsync(
+    String collectionName,
+    dynamic fullDocument,
+  ) async {
+    if (fullDocument == null) {
+      debugPrint("Full document is null for insert operation");
+      return;
+    }
 
-    switch (action) {
-      case 'create':
+    try {
+      // Use Future.microtask to make Realm write async
+      await Future.microtask(() {
         realm.write(() {
           final obj = _getRealmObjectFromCollectionName(
             collectionName,
-            parsedMessage['data'],
+            fullDocument,
           );
           if (obj != null) {
             realm.add(obj, update: true);
+            debugPrint("Async inserted/updated object in $collectionName");
           }
         });
-        break;
-      case 'update':
+      });
+    } catch (e) {
+      debugPrint("Error async inserting object: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> _handleUpdateAsync(
+    String collectionName,
+    String messageId,
+    dynamic updateDescription,
+    dynamic fullDocument,
+  ) async {
+    try {
+      final objectId = ObjectId.fromHexString(messageId);
+
+      await Future.microtask(() {
+        final existingObj = _findRealmObjectByCollectionName(
+          collectionName,
+          objectId,
+        );
+
+        if (existingObj == null) {
+          debugPrint(
+            "Object not found for update in $collectionName with id: $messageId",
+          );
+          // If object doesn't exist locally and we have fullDocument, create it
+          if (fullDocument != null) {
+            realm.write(() {
+              final obj = _getRealmObjectFromCollectionName(
+                collectionName,
+                fullDocument,
+              );
+              if (obj != null) {
+                realm.add(obj, update: true);
+                debugPrint("Async created missing object in $collectionName");
+              }
+            });
+          }
+          return;
+        }
+
         realm.write(() {
-          final obj = _getRealmObjectFromCollectionName(
-            collectionName,
-            parsedMessage['data'],
-          );
-          if (obj != null) {
-            realm.add(obj, update: true);
+          if (updateDescription != null &&
+              updateDescription['updatedFields'] != null) {
+            // Update only the changed fields
+            _updateSpecificFields(
+              existingObj,
+              updateDescription['updatedFields'],
+              collectionName,
+            );
+          } else if (fullDocument != null) {
+            // Fallback to full document update
+            final obj = _getRealmObjectFromCollectionName(
+              collectionName,
+              fullDocument,
+            );
+            if (obj != null) {
+              realm.add(obj, update: true);
+            }
           }
+          debugPrint("Async updated object in $collectionName");
         });
-        break;
-      case 'delete':
+      });
+    } catch (e) {
+      debugPrint("Error async updating object: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> _handleDeleteAsync(
+    String collectionName,
+    String messageId,
+  ) async {
+    try {
+      await Future.microtask(() {
         realm.write(() {
           final obj = _findRealmObjectByCollectionName(
             collectionName,
@@ -2227,10 +2419,512 @@ class RealmLocalServices with ChangeNotifier {
           );
           if (obj != null) {
             realm.delete(obj);
+            debugPrint("Async deleted object from $collectionName");
+          } else {
+            debugPrint(
+              "Object not found for deletion in $collectionName with id: $messageId",
+            );
           }
         });
-        break;
+      });
+    } catch (e) {
+      debugPrint("Error async deleting object: $e");
+      rethrow;
     }
+  }
+
+  void _updateSpecificFields(
+    dynamic obj,
+    Map<String, dynamic> updatedFields,
+    String collectionName,
+  ) {
+    switch (collectionName) {
+      case 'project':
+        _updateProjectFields(obj as Project, updatedFields);
+        break;
+      case 'subProject':
+        _updateSubProjectFields(obj as SubProject, updatedFields);
+        break;
+      case 'location':
+        _updateLocationFields(obj as Location, updatedFields);
+        break;
+      case 'visualSection':
+        _updateVisualSectionFields(obj as VisualSection, updatedFields);
+        break;
+      case 'dynamicVisualSection':
+        _updateDynamicVisualSectionFields(
+          obj as DynamicVisualSection,
+          updatedFields,
+        );
+        break;
+      case 'invasiveSection':
+        _updateInvasiveSectionFields(obj as InvasiveSection, updatedFields);
+        break;
+      case 'conclusiveSection':
+        _updateConclusiveSectionFields(obj as ConclusiveSection, updatedFields);
+        break;
+      default:
+        debugPrint("No field update handler for collection: $collectionName");
+    }
+  }
+
+  void _updateProjectFields(Project project, Map<String, dynamic> fields) {
+    fields.forEach((key, value) {
+      if (key.startsWith('children.')) {
+        // Handle children updates like children.0, children.1
+        // Match children.<index> but use _id to find the child
+        final match = RegExp(r'children\.(\d+)').firstMatch(key);
+        if (match != null && value is Map<String, dynamic>) {
+          final childIdStr = value['id'] ?? value['_id'];
+          if (childIdStr != null) {
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = project.children.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              value.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'type':
+                    existingChild.type = childValue?.toString() ?? '';
+                    break;
+                  case 'description':
+                    existingChild.description = childValue?.toString() ?? '';
+                    break;
+                  case 'url':
+                    existingChild.url = childValue?.toString() ?? '';
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              // Insert new child if not found
+              project.children.add(
+                Child(
+                  childId,
+                  value['isInvasive'] ?? false,
+                  name: value['name'] ?? '',
+                  type: value['type'] ?? '',
+                  description: value['description'] ?? '',
+                  url: value['url'] ?? '',
+                  sequenceNo: value['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        switch (key) {
+          case 'name':
+            project.name = value?.toString() ?? '';
+            break;
+          case 'url':
+            project.url = value?.toString() ?? '';
+            break;
+          case 'description':
+            project.description = value?.toString() ?? '';
+            break;
+          case 'address':
+            project.address = value?.toString() ?? '';
+            break;
+          case 'isInvasive':
+            project.isInvasive = value ?? false;
+            break;
+          case 'editedat':
+            project.editedat = value?.toString() ?? '';
+            break;
+          case 'lasteditedby':
+            project.lasteditedby = value?.toString() ?? '';
+            break;
+          case 'assignedto':
+            if (value is List) {
+              project.assignedto.clear();
+              project.assignedto.addAll(Set<String>.from(value));
+            }
+            break;
+          case 'latitude':
+            project.latitude = value?.toDouble();
+            break;
+          case 'longitude':
+            project.longitude = value?.toDouble();
+            break;
+          case 'isSynced':
+            project.isSynced = value ?? true;
+            break;
+        }
+      }
+    });
+  }
+
+  void _updateSubProjectFields(
+    SubProject subProject,
+    Map<String, dynamic> fields,
+  ) {
+    fields.forEach((key, value) {
+      if (key.startsWith('children.')) {
+        // Handle children updates like children.0, children.1
+        // Match children.<index> but use _id to find the child
+        final match = RegExp(r'children\.(\d+)').firstMatch(key);
+        if (match != null && value is Map<String, dynamic>) {
+          final childIdStr = value['id'] ?? value['_id'];
+          if (childIdStr != null) {
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = subProject.children.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              value.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'type':
+                    existingChild.type = childValue?.toString() ?? '';
+                    break;
+                  case 'description':
+                    existingChild.description = childValue?.toString() ?? '';
+                    break;
+                  case 'url':
+                    existingChild.url = childValue?.toString() ?? '';
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              // Insert new child if not found
+              subProject.children.add(
+                Child(
+                  childId,
+                  value['isInvasive'] ?? false,
+                  name: value['name'] ?? '',
+                  type: value['type'] ?? '',
+                  description: value['description'] ?? '',
+                  url: value['url'] ?? '',
+                  sequenceNo: value['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        switch (key) {
+          case 'name':
+            subProject.name = value?.toString() ?? '';
+            break;
+          case 'url':
+            subProject.url = value?.toString() ?? '';
+            break;
+          case 'description':
+            subProject.description = value?.toString() ?? '';
+            break;
+          case 'isInvasive':
+            subProject.isInvasive = value ?? false;
+            break;
+          case 'editedat':
+            subProject.editedat = value?.toString() ?? '';
+            break;
+          case 'lasteditedby':
+            subProject.lasteditedby = value?.toString() ?? '';
+            break;
+          case 'assignedto':
+            if (value is List) {
+              subProject.assignedto.clear();
+              subProject.assignedto.addAll(Set<String>.from(value));
+            }
+            break;
+          case 'isSynced':
+            subProject.isSynced = value ?? true;
+            break;
+        }
+      }
+    });
+  }
+
+  void _updateLocationFields(Location location, Map<String, dynamic> fields) {
+    fields.forEach((key, value) {
+      //apply the same logic as in project and subproject
+      if (key.startsWith('sections.')) {
+        // Handle children updates like sections.0, sections.1
+        // Match sections.<index> but use _id to find the child
+        final match = RegExp(r'sections\.(\d+)').firstMatch(key);
+        if (match != null && value is Map<String, dynamic>) {
+          final childIdStr = value['id'] ?? value['_id'];
+          if (childIdStr != null) {
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = location.sections.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              value.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'conditionalassessment':
+                    existingChild.conditionalassessment =
+                        childValue?.toString() ?? '';
+                    break;
+                  case 'visualreview':
+                    existingChild.visualreview = childValue?.toString() ?? '';
+                    break;
+                  case 'coverUrl':
+                    existingChild.coverUrl = childValue?.toString() ?? '';
+                    break;
+                  case 'furtherinvasivereviewrequired':
+                    existingChild.furtherinvasivereviewrequired =
+                        childValue ?? false;
+                    break;
+                  case 'visualsignsofleak':
+                    existingChild.visualsignsofleak = childValue ?? false;
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'count':
+                    existingChild.count = childValue ?? 0;
+                    break;
+                  case 'isuploading':
+                    existingChild.isuploading = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              // Insert new child if not found
+              location.sections.add(
+                Section(
+                  childId,
+                  value['isInvasive'] ?? false,
+                  name: value['name'] ?? '',
+                  coverUrl: value['coverUrl'] ?? '',
+                  visualreview: value['visualreview'] ?? '',
+                  conditionalassessment: value['conditionalassessment'] ?? '',
+                  visualsignsofleak: value['visualsignsofleak'] ?? false,
+                  furtherinvasivereviewrequired:
+                      value['furtherinvasivereviewrequired'] ?? false,
+                  count: value['count'] ?? 0,
+                  isuploading: value['isuploading'] ?? false,
+                  sequenceNo: value['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        switch (key) {
+          case 'name':
+            location.name = value?.toString() ?? '';
+            break;
+          case 'url':
+            location.url = value?.toString() ?? '';
+            break;
+          case 'description':
+            location.description = value?.toString() ?? '';
+            break;
+          case 'isInvasive':
+            location.isInvasive = value ?? false;
+            break;
+          case 'editedat':
+            location.editedat = value?.toString() ?? '';
+            break;
+          case 'lasteditedby':
+            location.lasteditedby = value?.toString() ?? '';
+            break;
+          case 'isSynced':
+            location.isSynced = value ?? true;
+            break;
+        }
+      }
+    });
+  }
+
+  void _updateVisualSectionFields(
+    VisualSection visualSection,
+    Map<String, dynamic> fields,
+  ) {
+    fields.forEach((key, value) {
+      switch (key) {
+        case 'name':
+          visualSection.name = value?.toString() ?? '';
+          break;
+        case 'unitUnavailable':
+          visualSection.unitUnavailable = value ?? false;
+          break;
+        case 'additionalconsiderations':
+          visualSection.additionalconsiderations = value?.toString();
+          break;
+        case 'visualreview':
+          visualSection.visualreview = value?.toString();
+          break;
+        case 'conditionalassessment':
+          visualSection.conditionalassessment = value?.toString();
+          break;
+        case 'eee':
+          visualSection.eee = value?.toString() ?? '';
+          break;
+        case 'lbc':
+          visualSection.lbc = value?.toString() ?? '';
+          break;
+        case 'awe':
+          visualSection.awe = value?.toString() ?? '';
+          break;
+        case 'visualsignsofleak':
+          visualSection.visualsignsofleak = value ?? false;
+          break;
+        case 'furtherinvasivereviewrequired':
+          visualSection.furtherinvasivereviewrequired = value ?? false;
+          break;
+        case 'images':
+          if (value is List) {
+            visualSection.images.clear();
+            visualSection.images.addAll(List<String>.from(value));
+          }
+          break;
+        case 'exteriorelements':
+          if (value is List) {
+            visualSection.exteriorelements.clear();
+            visualSection.exteriorelements.addAll(List<String>.from(value));
+          }
+          break;
+        case 'waterproofingelements':
+          if (value is List) {
+            visualSection.waterproofingelements.clear();
+            visualSection.waterproofingelements.addAll(
+              List<String>.from(value),
+            );
+          }
+          break;
+        case 'editedat':
+          visualSection.editedat = value?.toString();
+          break;
+        case 'lasteditedby':
+          visualSection.lasteditedby = value?.toString();
+          break;
+        case 'isSynced':
+          visualSection.isSynced = value ?? true;
+          break;
+      }
+    });
+  }
+
+  void _updateDynamicVisualSectionFields(
+    DynamicVisualSection dynamicSection,
+    Map<String, dynamic> fields,
+  ) {
+    fields.forEach((key, value) {
+      switch (key) {
+        case 'name':
+          dynamicSection.name = value?.toString() ?? '';
+          break;
+        case 'unitUnavailable':
+          dynamicSection.unitUnavailable = value ?? false;
+          break;
+        case 'additionalconsiderations':
+          dynamicSection.additionalconsiderations = value?.toString();
+          break;
+        case 'furtherinvasivereviewrequired':
+          dynamicSection.furtherinvasivereviewrequired = value ?? false;
+          break;
+        case 'images':
+          if (value is List) {
+            dynamicSection.images.clear();
+            dynamicSection.images.addAll(List<String>.from(value));
+          }
+          break;
+        case 'questions':
+          if (value is List) {
+            dynamicSection.questions.clear();
+            dynamicSection.questions.addAll(List<Question>.from(value));
+          }
+          break;
+        case 'editedat':
+          dynamicSection.editedat = value?.toString();
+          break;
+        case 'lasteditedby':
+          dynamicSection.lasteditedby = value?.toString();
+          break;
+        case 'isSynced':
+          dynamicSection.isSynced = value ?? true;
+          break;
+      }
+    });
+  }
+
+  void _updateInvasiveSectionFields(
+    InvasiveSection invasiveSection,
+    Map<String, dynamic> fields,
+  ) {
+    fields.forEach((key, value) {
+      switch (key) {
+        case 'invasiveDescription':
+          invasiveSection.invasiveDescription = value?.toString() ?? '';
+          break;
+        case 'postinvasiverepairsrequired':
+          invasiveSection.postinvasiverepairsrequired = value ?? false;
+          break;
+        case 'invasiveimages':
+          if (value is List) {
+            invasiveSection.invasiveimages.clear();
+            invasiveSection.invasiveimages.addAll(List<String>.from(value));
+          }
+          break;
+        case 'isSynced':
+          invasiveSection.isSynced = value ?? true;
+          break;
+      }
+    });
+  }
+
+  void _updateConclusiveSectionFields(
+    ConclusiveSection conclusiveSection,
+    Map<String, dynamic> fields,
+  ) {
+    fields.forEach((key, value) {
+      switch (key) {
+        case 'conclusiveconsiderations':
+          conclusiveSection.conclusiveconsiderations = value?.toString() ?? '';
+          break;
+        case 'eeeconclusive':
+          conclusiveSection.eeeconclusive = value?.toString() ?? '';
+          break;
+        case 'lbcconclusive':
+          conclusiveSection.lbcconclusive = value?.toString() ?? '';
+          break;
+        case 'aweconclusive':
+          conclusiveSection.aweconclusive = value?.toString() ?? '';
+          break;
+        case 'propowneragreed':
+          conclusiveSection.propowneragreed = value ?? false;
+          break;
+        case 'invasiverepairsinspectedandcompleted':
+          conclusiveSection.invasiverepairsinspectedandcompleted =
+              value ?? false;
+          break;
+        case 'conclusiveimages':
+          if (value is List) {
+            conclusiveSection.conclusiveimages.clear();
+            conclusiveSection.conclusiveimages.addAll(List<String>.from(value));
+          }
+          break;
+        case 'isSynced':
+          conclusiveSection.isSynced = value ?? true;
+          break;
+      }
+    });
   }
 
   // Add this method to resolve the error
@@ -2264,35 +2958,76 @@ class RealmLocalServices with ChangeNotifier {
   ) {
     switch (collectionName) {
       case 'project':
+        final sectionsData = data['sections'] as List? ?? [];
+        final sections =
+            sectionsData.map((sectionData) {
+              return Section(
+                ObjectId.fromHexString(sectionData['_id'] ?? sectionData['id']),
+                sectionData['isInvasive'] ?? false,
+                furtherinvasivereviewrequired:
+                    sectionData['furtherinvasivereviewrequired'] ?? false,
+                name: sectionData['name'] ?? '',
+                visualreview: sectionData['visualreview'] ?? '',
+                visualsignsofleak: sectionData['visualsignsofleak'] ?? false,
+                conditionalassessment:
+                    sectionData['conditionalassessment'] ?? '',
+                count: sectionData['count'] ?? 0,
+                coverUrl: sectionData['coverUrl'] ?? '',
+                sequenceNo: sectionData['sequenceNo'] ?? '',
+                isuploading: sectionData['isuploading'] ?? false,
+              );
+            }).toList();
+
+        final childrenData = data['children'] as List? ?? [];
+        final children =
+            childrenData.map((childData) {
+              return Child(
+                ObjectId.fromHexString(childData['_id'] ?? childData['id']),
+                childData['isInvasive'] ?? false,
+                name: childData['name'] ?? '',
+                type: childData['type'] ?? '',
+                description: childData['description'] ?? '',
+                url: childData['url'] ?? '',
+                sequenceNo: childData['sequenceNo'] ?? '',
+              );
+            }).toList();
+
         final project = Project(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['companyIdentifier'] ?? '',
           name: data['name'] ?? '',
-          url: data['url'] ?? '',
-          createdby: data['createdBy'] ?? '',
-          createdat: data['createdAt'] ?? '',
-          sections: List<Section>.from(data['sections'] ?? []),
-          children: List<Child>.from(data['children'] ?? []),
-          isInvasive: data['isInvasive'] ?? false,
           projecttype: data['projecttype'] ?? '',
           description: data['description'] ?? '',
           address: data['address'] ?? '',
-          iscomplete: data['isDeleted'] ?? false,
-          isSynced: data['isSynced'] ?? true,
+          createdby: data['createdby'] ?? '',
+          createdat: data['createdat'] ?? '',
+          url: data['url'] ?? '',
           editedat: data['editedat'] ?? '',
           lasteditedby: data['lasteditedby'] ?? '',
+          iscomplete: data['isDeleted'] ?? false,
+          isInvasive: data['isInvasive'] ?? false,
+          children: children,
+          sections: sections,
           assignedto: Set<String>.from(data['assignedto'] ?? []),
-          latitude: data['latitude']?.toDouble(),
-          longitude: data['longitude']?.toDouble(),
-          formId:
-              data['formId'] != null
-                  ? ObjectId.fromHexString(data['formId'])
-                  : null,
         );
         return project;
       case 'subProject':
+        final childrenData = data['children'] as List? ?? [];
+        final children =
+            childrenData.map((childData) {
+              return Child(
+                ObjectId.fromHexString(childData['_id'] ?? childData['id']),
+                childData['isInvasive'] ?? false,
+                name: childData['name'] ?? '',
+                type: childData['type'] ?? '',
+                description: childData['description'] ?? '',
+                url: childData['url'] ?? '',
+                sequenceNo: childData['sequenceNo'] ?? '',
+              );
+            }).toList();
+
         return SubProject(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
@@ -2305,15 +3040,35 @@ class RealmLocalServices with ChangeNotifier {
           type: data['type'] ?? '',
           description: data['description'] ?? '',
           parenttype: data['parenttype'] ?? '',
-          children: List<Child>.from(data['children'] ?? []),
+          children: children,
           assignedto: Set<String>.from(data['assignedto'] ?? []),
           isSynced: data['isSynced'] ?? true,
           editedat: data['editedat'] ?? '',
           lasteditedby: data['lasteditedby'] ?? '',
         );
       case 'location':
+        final sectionsData = data['sections'] as List? ?? [];
+        final sections =
+            sectionsData.map((sectionData) {
+              return Section(
+                ObjectId.fromHexString(sectionData['_id'] ?? sectionData['id']),
+                sectionData['isInvasive'] ?? false,
+                furtherinvasivereviewrequired:
+                    sectionData['furtherinvasivereviewrequired'] ?? false,
+                name: sectionData['name'] ?? '',
+                visualreview: sectionData['visualreview'] ?? '',
+                visualsignsofleak: sectionData['visualsignsofleak'] ?? false,
+                conditionalassessment:
+                    sectionData['conditionalassessment'] ?? '',
+                count: sectionData['count'] ?? 0,
+                coverUrl: sectionData['coverUrl'] ?? '',
+                sequenceNo: sectionData['sequenceNo'] ?? '',
+                isuploading: sectionData['isuploading'] ?? false,
+              );
+            }).toList();
+
         return Location(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
@@ -2328,22 +3083,23 @@ class RealmLocalServices with ChangeNotifier {
           url: data['url'] ?? '',
           editedat: data['editedat'] ?? '',
           lasteditedby: data['lasteditedby'] ?? '',
-          sections: List<Section>.from(data['sections'] ?? []),
+          sections: sections,
           isSynced: data['isSynced'] ?? true,
         );
 
       case 'visualSection':
         return VisualSection(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['eee'] ?? '',
           data['lbc'] ?? '',
           data['awe'] ?? '',
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
-          data['parenttype'] ?? '',
+          data['unitUnavailable'] ?? false,
           data['companyIdentifier'] ?? '',
           name: data['name'] ?? '',
+          parenttype: data['parenttype'] ?? '',
           images: List<String>.from(data['images'] ?? []),
           exteriorelements: List<String>.from(data['exteriorelements'] ?? []),
           waterproofingelements: List<String>.from(
@@ -2362,8 +3118,26 @@ class RealmLocalServices with ChangeNotifier {
           lasteditedby: data['lasteditedby'],
         );
       case 'dynamicVisualSection':
+        final questionsData = data['questions'] as List? ?? [];
+        final questions =
+            questionsData.map((questionData) {
+              // Assuming Question constructor takes these parameters
+              return Question(
+                questionData['id'] ?? '',
+                questionData['type'] ?? '',
+                questionData['name'] ?? '',
+                questionData['answer'],
+                multipleAnswers: List<String>.from(
+                  questionData['multipleAnswers'] ?? [],
+                ),
+                allowedValues: List<String>.from(
+                  questionData['allowedValues'] ?? [],
+                ),
+                isMandatory: questionData['isMandatory'] ?? false,
+              );
+            }).toList();
         return DynamicVisualSection(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
@@ -2371,7 +3145,7 @@ class RealmLocalServices with ChangeNotifier {
           companyIdentifier: data['companyIdentifier'] ?? '',
           name: data['name'] ?? '',
           images: List<String>.from(data['images'] ?? []),
-          questions: List<Question>.from(data['questions'] ?? []),
+          questions: questions,
           furtherinvasivereviewrequired:
               data['furtherinvasivereviewrequired'] ?? true,
           createdby: data['createdby'],
@@ -2384,7 +3158,7 @@ class RealmLocalServices with ChangeNotifier {
         );
       case 'invasiveSection':
         return InvasiveSection(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
@@ -2397,7 +3171,7 @@ class RealmLocalServices with ChangeNotifier {
         );
       case 'conclusiveSection':
         return ConclusiveSection(
-          ObjectId.fromHexString(data['id']),
+          ObjectId.fromHexString(data['_id']),
           data['parentid'] != null
               ? ObjectId.fromHexString(data['parentid'])
               : ObjectId(),
@@ -2412,12 +3186,6 @@ class RealmLocalServices with ChangeNotifier {
           conclusiveimages: List<String>.from(data['conclusiveimages'] ?? []),
           isSynced: data['isSynced'] ?? true,
         );
-      // case 'deckImage':
-      //   return DeckImage._fromEJson(data);
-      // case 'locationForm':
-      //   return LocationForm._fromEJson(data);
-      // case 'question':
-      //   return Question._fromEJson(data);
       default:
         debugPrint('Unknown collection name: $collectionName');
         return null;

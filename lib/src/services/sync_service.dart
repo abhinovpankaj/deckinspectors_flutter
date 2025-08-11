@@ -54,13 +54,16 @@ class SyncService {
 
   bool isWebSocketConnected = false;
   Future<void> initSocketAsync() async {
-    final wsUrl = Uri.parse('ws://192.168.1.5:3000');
+    final wsUrl = Uri.parse('ws://192.168.1.2:3000');
     channel = WebSocketChannel.connect(wsUrl);
 
     try {
       await channel.ready;
       isWebSocketConnected = true;
-      var clientData = jsonEncode({"clientId": usersBloc.userDetails.username});
+      var clientData = jsonEncode({
+        "clientId": usersBloc.userDetails.username,
+        "companyIdentifier": usersBloc.userDetails.companyidentifer,
+      });
       channel.sink.add(clientData);
       debugPrint("Connected to WebSocket Server and registered client.");
     } on SocketException catch (e) {
