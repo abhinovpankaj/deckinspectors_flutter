@@ -307,7 +307,7 @@ class RealmLocalServices with ChangeNotifier {
         pushToWebSocket(
           item.action,
           item.collectionName,
-          jsonDecode(dataMap),
+          dataMap,
           addToDb: false,
         );
       }
@@ -2316,7 +2316,7 @@ class RealmLocalServices with ChangeNotifier {
               ObjectId.fromHexString(socketData['id']),
               socketData['action'] as String,
               socketData['collectionName'] as String,
-              jsonDecode(socketData['data']),
+              socketData['data'],
               DateTime.now().toString(),
             ),
             update: true,
@@ -2921,25 +2921,29 @@ class RealmLocalServices with ChangeNotifier {
     InvasiveSection invasiveSection,
     Map<String, dynamic> fields,
   ) {
-    fields.forEach((key, value) {
-      switch (key) {
-        case 'invasiveDescription':
-          invasiveSection.invasiveDescription = value?.toString() ?? '';
-          break;
-        case 'postinvasiverepairsrequired':
-          invasiveSection.postinvasiverepairsrequired = value ?? false;
-          break;
-        case 'invasiveimages':
-          if (value is List) {
-            invasiveSection.invasiveimages.clear();
-            invasiveSection.invasiveimages.addAll(List<String>.from(value));
-          }
-          break;
-        case 'isSynced':
-          invasiveSection.isSynced = value ?? true;
-          break;
-      }
-    });
+    try {
+      fields.forEach((key, value) {
+        switch (key) {
+          case 'invasiveDescription':
+            invasiveSection.invasiveDescription = value?.toString() ?? '';
+            break;
+          case 'postinvasiverepairsrequired':
+            invasiveSection.postinvasiverepairsrequired = value ?? false;
+            break;
+          case 'invasiveimages':
+            if (value is List) {
+              invasiveSection.invasiveimages.clear();
+              invasiveSection.invasiveimages.addAll(List<String>.from(value));
+            }
+            break;
+          case 'isSynced':
+            invasiveSection.isSynced = value ?? true;
+            break;
+        }
+      });
+    } catch (e) {
+      debugPrint("Error updating invasive section fields: $e");
+    }
   }
 
   void _updateConclusiveSectionFields(
