@@ -104,8 +104,6 @@ class RealmLocalServices with ChangeNotifier {
           });
           debugPrint('🗑️ Deleted synced entries from Realm.');
         } else if (response['servermessage'] == 'sync_with_server') {
-          //check for the message, Encode it and then update the relevant realm collection
-
           // Queue the message for processing instead of processing immediately
           _queueServerMessage(response);
         } else {
@@ -117,8 +115,6 @@ class RealmLocalServices with ChangeNotifier {
           }
         }
         syncService.pendingMessages.remove(messageId);
-
-        //special handling for batch processing, currently not being used.
       },
       onError: (error) {
         // If needed, retry everything in pendingMessages
@@ -190,6 +186,7 @@ class RealmLocalServices with ChangeNotifier {
     final action = message['action'];
     final fullDocument = message['fullDocument'];
     final updateDescription = message['updateDescription'];
+    final redisEntryId = message['redisEntryId'];
 
     if (messageId == null) {
       debugPrint("Message ID is null, skipping update");
@@ -219,11 +216,67 @@ class RealmLocalServices with ChangeNotifier {
           break;
         default:
           debugPrint("Unknown action: $action");
+          // Send negative ACK for unknown actions
+          _sendAcknowledgment(redisEntryId, false, "Unknown action: $action");
+          return;
       }
+
+      // Send positive ACK after successful processing
+      _sendAcknowledgment(redisEntryId, true, null);
     } catch (e) {
       debugPrint("Error processing server message: $e");
-      rethrow;
+      // Send negative ACK for processing errors
+      // _sendAcknowledgment(redisEntryId, false, e.toString());
+      // rethrow;
     }
+  }
+
+  // Send acknowledgment back to server after message processing
+  void _sendAcknowledgment(String redisEntryId, bool success, String? error) {
+    try {
+      final ackData = {
+        'type': 'ack',
+        'redisEntryId': redisEntryId,
+        'companyIdentifier': usersBloc.userDetails.companyidentifer,
+        'success': success,
+        'timestamp': DateTime.now().toIso8601String(),
+        if (error != null) 'error': error,
+      };
+
+      // Use the existing WebSocket channel to send ACK
+      if (_currentChannel != null) {
+        _currentChannel!.sink.add(jsonEncode(ackData));
+        debugPrint(
+          "✅ ACK sent for redis entryId $redisEntryId: success=$success",
+        );
+        if (error != null) {
+          debugPrint("❌ ACK error details: $error");
+        }
+      } else {
+        debugPrint(
+          "⚠️ Cannot send ACK - WebSocket channel is null for message $redisEntryId",
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        "💥 Error sending acknowledgment for message $redisEntryId: $e",
+      );
+    }
+  }
+
+  // Get acknowledgment status for monitoring
+  Map<String, dynamic> getAcknowledgmentStatus() {
+    return {
+      'webSocketConnected': _currentChannel != null,
+      'messageQueueSize': _messageQueue.length,
+      'isProcessingQueue': _isProcessingQueue,
+      'lastProcessedAt': DateTime.now().toIso8601String(),
+    };
+  }
+
+  // Manual acknowledgment method for special cases
+  void sendManualAcknowledgment(String messageId, bool success, String? error) {
+    _sendAcknowledgment(messageId, success, error);
   }
 
   void syncUnsyncedData() async {
