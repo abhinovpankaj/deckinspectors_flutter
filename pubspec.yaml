@@ -87,6 +87,8 @@ dependencies:
   socket_io_client: ^3.0.2
   flutter_webrtc: ^0.12.1+hotfix.1
   map_launcher: ^3.5.0
+  maps_launcher: ^3.0.0+1
+  geocoding: ^4.0.0
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

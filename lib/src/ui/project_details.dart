@@ -30,6 +30,8 @@ import 'addedit_project.dart';
 import 'addedit_location.dart';
 import 'subproject.dart';
 import 'package:intl/intl.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:geolocator/geolocator.dart';
 
 class ProjectDetailsPage extends StatefulWidget {
   final ObjectId id;
@@ -370,6 +372,46 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     return DateFormat(dateFormat).format(docDateTime);
   }
 
+  Future<Coords?> _getCurrentCoords() async {
+    try {
+      // Check if location services are enabled.
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location services are disabled.')));
+        return null;
+      }
+
+      // Check and request permission if needed.
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Location permissions are denied.')));
+          return null;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Location permissions are permanently denied. Enable from settings.')));
+        return null;
+      }
+
+      // Get current position
+      final Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
+
+      return Coords(position.latitude, position.longitude);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to get current location: ${e.toString()}')));
+      return null;
+    }
+  }
+
   Widget projectDetails(String name, String url, ObjectId id,
       String description, String editedat, String address) {
     realmProjServices =
@@ -411,39 +453,95 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                           shadowColor: Colors.transparent,
                           elevation: 1),
                       onPressed: () async {
-                        // var initlattitude = currentProject.latitude ?? 28.7;
-                        // var initlongitude = currentProject.longitude ?? 70.7;
-                        // Navigator.push(
-                        //     context,
-                        //     MaterialPageRoute(
-                        //         builder: (context) => GoogleMapsView(
-                        //             initlattitude, initlongitude, false)));
-                        if (currentProject.address == null) {
+                        final address = currentProject.address;
+                        if (address == null || address.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text(
                                     'Address is empty, please add address to navigate.')),
                           );
-                        } else {
-                          // MapsLauncher.launchQuery(
-                          //     currentProject.address as String);
-                          //check platform is iOS or Android
-                          var coords = Coords(
-                            currentProject.latitude ?? 0.0,
-                            currentProject.longitude ?? 0.0,
-                          );
-                          var address = currentProject.address ?? '';
+                          return;
+                        }
+
+                        try {
+                          // prefer stored coords if they exist and are non-zero
+                          double lat = (currentProject.latitude ?? 0.0);
+                          double lng = (currentProject.longitude ?? 0.0);
+
+                          // If coords not set (0,0) attempt geocoding
+                          if (lat == 0.0 && lng == 0.0) {
+                            final List<geocoding.Location> geoLocations =
+                                await geocoding.locationFromAddress(address);
+                            if (geoLocations.isNotEmpty) {
+                              lat = geoLocations.first.latitude;
+                              lng = geoLocations.first.longitude;
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Unable to find coordinates for address.')),
+                              );
+                              return;
+                            }
+                          }
+
+                          final coords = Coords(lat, lng);
+
+                          // Try to obtain current device coordinates to pass as origin.
+                          final Coords? originCoords =
+                              await _getCurrentCoords();
+
                           if (Platform.isIOS) {
                             final isAvailable =
                                 await MapLauncher.isMapAvailable(MapType.apple);
                             if (isAvailable != null && isAvailable) {
                               await MapLauncher.showDirections(
-                                  mapType: MapType.apple,
-                                  destinationTitle: address,
-                                  destination: coords,
-                                  originTitle: 'My Location');
+                                mapType: MapType.apple,
+                                destinationTitle: address,
+                                destination: coords,
+                                origin: originCoords,
+                                originTitle: 'My Location',
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Apple Maps not available on this device.')),
+                              );
                             }
+                          } else if (Platform.isAndroid) {
+                            final isAvailable =
+                                await MapLauncher.isMapAvailable(
+                                    MapType.google);
+                            if (isAvailable != null && isAvailable) {
+                              await MapLauncher.showDirections(
+                                mapType: MapType.google,
+                                destinationTitle: address,
+                                destination: coords,
+                                origin: originCoords,
+                                originTitle: 'My Location',
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Google Maps not available on this device.')),
+                              );
+                            }
+                          } else {
+                            // fallback for other platforms
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Platform not supported for navigation.')),
+                            );
                           }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'Failed to get coordinates: ${e.toString()}')),
+                          );
                         }
                       },
                       icon: const Icon(
