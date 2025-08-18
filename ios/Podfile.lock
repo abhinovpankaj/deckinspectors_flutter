@@ -1,7 +1,4 @@
 PODS:
-  - awesome_notifications (0.10.0):
-    - Flutter
-    - IosAwnCore (~> 0.10.0)
   - camera_avfoundation (0.0.1):
     - Flutter
   - connectivity_plus (0.0.1):
@@ -51,6 +48,8 @@ PODS:
     - WebRTC-SDK (= 125.6422.06)
   - gallery_saver_plus (0.0.1):
     - Flutter
+  - geocoding_ios (1.0.5):
+    - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
     - FlutterMacOS
@@ -67,7 +66,6 @@ PODS:
     - GoogleMaps/Base
   - image_picker_ios (0.0.1):
     - Flutter
-  - IosAwnCore (0.10.0)
   - maps_launcher (0.0.1):
     - Flutter
   - MobileVLCKit (3.6.1b1)
@@ -113,7 +111,6 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
-  - awesome_notifications (from `.symlinks/plugins/awesome_notifications/ios`)
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
@@ -122,6 +119,7 @@ DEPENDENCIES:
   - flutter_vlc_player (from `.symlinks/plugins/flutter_vlc_player/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - gallery_saver_plus (from `.symlinks/plugins/gallery_saver_plus/ios`)
+  - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - google_maps_flutter_ios (from `.symlinks/plugins/google_maps_flutter_ios/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -147,7 +145,6 @@ SPEC REPOS:
     - DKPhotoGallery
     - Google-Maps-iOS-Utils
     - GoogleMaps
-    - IosAwnCore
     - MobileVLCKit
     - SDWebImage
     - SwiftyGif
@@ -155,8 +152,6 @@ SPEC REPOS:
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
-  awesome_notifications:
-    :path: ".symlinks/plugins/awesome_notifications/ios"
   camera_avfoundation:
     :path: ".symlinks/plugins/camera_avfoundation/ios"
   connectivity_plus:
@@ -173,6 +168,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
   gallery_saver_plus:
     :path: ".symlinks/plugins/gallery_saver_plus/ios"
+  geocoding_ios:
+    :path: ".symlinks/plugins/geocoding_ios/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/darwin"
   google_maps_flutter_ios:
@@ -211,10 +208,9 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  awesome_notifications: dd5518ff1c80be03d4f1c40f04da9d9cc2a37af5
   camera_avfoundation: dd002b0330f4981e1bbcb46ae9b62829237459a4
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
-  device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
+  device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
@@ -222,12 +218,12 @@ SPEC CHECKSUMS:
   flutter_vlc_player: 1508e7989e41d11328e4fa4c9a1f188c7cf4cf7a
   flutter_webrtc: 90260f83024b1b96d239a575ea4e3708e79344d1
   gallery_saver_plus: c4b59c605df1049a02d036ef81d82972b6dfd606
+  geocoding_ios: eafacae6ad11a1eb56681f7d11df602a5fd49416
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   Google-Maps-iOS-Utils: 66d6de12be1ce6d3742a54661e7a79cb317a9321
   google_maps_flutter_ios: e31555a04d1986ab130f2b9f24b6cdc861acc6d3
   GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
-  IosAwnCore: 653786a911089012092ce831f2945cd339855a89
   maps_launcher: 2e5b6a2d664ec6c27f82ffa81b74228d770ab203
   MobileVLCKit: 2d9c7c373393ae43086aeeff890bf0b1afc15c5c
   package_info_plus: 115f4ad11e0698c8c1c5d8a689390df880f47e85

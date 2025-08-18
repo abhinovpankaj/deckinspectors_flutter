@@ -9,6 +9,7 @@ import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart'
 import 'package:flutter/material.dart';
 //import 'package:get/get.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
+//import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
@@ -18,7 +19,7 @@ import '../models/realm/realm_schemas.dart';
 import '../models/success_response.dart';
 import '../services/realm_local_services.dart';
 import 'capture_image.dart';
-//import 'googlemaps_view.dart';
+import 'googlemaps_view.dart'; // Ensure this file contains the GoogleMapView widget
 
 class AddEditProjectPage extends StatefulWidget {
   final Project newProject;
@@ -362,27 +363,27 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                       elevation: 1,
                     ),
                     onPressed: () {
-                      // var initlattitude = currentProject.latitude ?? 28.7;
-                      // var initlongitude = currentProject.longitude ?? 70.7;
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder:
-                      //         (context) => GoogleMapsView(
-                      //           initlattitude,
-                      //           initlongitude,
-                      //           isNewProject,
-                      //         ),
-                      //   ),
-                      // ).then((value) {
-                      //   if (value != null) {
-                      //     setState(() {
-                      //       _addressController.text = value["address"];
-                      //       lattitude = value["latitude"];
-                      //       longitude = value["longitude"];
-                      //     });
-                      //   }
-                      // });
+                      var initlattitude = currentProject.latitude ?? 28.7;
+                      var initlongitude = currentProject.longitude ?? 70.7;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => GoogleMapsView(
+                                initlattitude,
+                                initlongitude,
+                                isNewProject,
+                              ),
+                        ),
+                      ).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            _addressController.text = value["address"];
+                            lattitude = value["latitude"];
+                            longitude = value["longitude"];
+                          });
+                        }
+                      });
                     },
                     icon: const Icon(
                       Icons.location_pin,

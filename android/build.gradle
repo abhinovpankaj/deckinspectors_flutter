@@ -17,14 +17,84 @@ subprojects {
             project.android {
                 compileSdkVersion 34
                 buildToolsVersion "34.0.0"
+                // Ensure subprojects use Java 17 compile options
+                try {
+                    compileOptions {
+                        sourceCompatibility JavaVersion.VERSION_17
+                        targetCompatibility JavaVersion.VERSION_17
+                    }
+                } catch (ignored) {}
+                // If kotlinOptions available, set jvmTarget to 17
+                try {
+                    kotlinOptions {
+                        jvmTarget = '17'
+                    }
+                } catch (ignored) {}
             }
+            // Also ensure Java and Kotlin compile tasks target Java 17 where present
+            try {
+                project.tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach { task ->
+                    task.sourceCompatibility = '17'
+                    task.targetCompatibility = '17'
+                    if (task.options.respondsTo('release')) {
+                        task.options.release = 17
+                    }
+                }
+            } catch (ignored) {}
+
+            try {
+                project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { kt ->
+                    kt.kotlinOptions.jvmTarget = '17'
+                    // If Kotlin plugin supports jvmToolchain, set it too
+                    try {
+                        // Do not modify freeCompilerArgs here to avoid unsupported -Xjvm-default modes
+                    } catch (ignored) {}
+                }
+            } catch (ignored) {}
         }else{
              println "Warning: Android plugin not applied to ${project.name}"
         }
     }
 }
 subprojects {
-    project.evaluationDependsOn(':app')
+    project.tasks.withType(JavaCompile).configureEach { task ->
+        task.sourceCompatibility = '17'
+        task.targetCompatibility = '17'
+        if (task.options.respondsTo('release')) {
+            task.options.release = 17
+        }
+    }
+
+    // Configure Kotlin compile tasks to use JVM target 17
+    try {
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { kt ->
+            kt.kotlinOptions.jvmTarget = '17'
+            // If Kotlin plugin supports jvmToolchain, set it too
+            try {
+                // Do not modify freeCompilerArgs here to avoid unsupported -Xjvm-default modes
+            } catch (ignored) {}
+        }
+    } catch (ignored) {}
+
+    // If Kotlin plugins are applied, ensure Kotlin compile tasks target JVM 17
+    plugins.withId('org.jetbrains.kotlin.jvm') {
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { kt ->
+            kt.kotlinOptions.jvmTarget = '17'
+            // keep freeCompilerArgs if present
+            if (kt.kotlinOptions.freeCompilerArgs == null) {
+                kt.kotlinOptions.freeCompilerArgs = []
+            }
+        }
+    }
+
+    plugins.withId('org.jetbrains.kotlin.android') {
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { kt ->
+            kt.kotlinOptions.jvmTarget = '17'
+            if (kt.kotlinOptions.freeCompilerArgs == null) {
+                kt.kotlinOptions.freeCompilerArgs = []
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

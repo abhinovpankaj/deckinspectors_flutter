@@ -61,7 +61,6 @@ dependencies:
   pdf: ^3.11.1
   thumbnailer: ^3.0.0
   connectivity_plus: ^6.0.5
-  awesome_notifications: ^0.10.0
   package_info_plus: ^4.2.0
   wakelock_plus: ^1.1.4
   google_maps_place_picker_mb: ^3.1.2
@@ -72,8 +71,7 @@ dependencies:
   maps_launcher: ^3.0.0+1
   string_validator: ^1.1.0
   flutter_serial_communication: ^0.2.5
-  serial_communication: ^0.0.2
-  device_info_plus: ^10.1.2
+  device_info_plus: ^11.5.0
   udp: ^5.0.3
   flutter_mjpeg: ^2.0.4
   flutter_vlc_player: ^7.4.2
@@ -85,6 +83,7 @@ dependencies:
   socket_io_client: ^3.0.2
   flutter_webrtc: ^0.12.1+hotfix.1
   gallery_saver_plus: ^3.2.8
+  geocoding: ^4.0.0
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

@@ -12,7 +12,6 @@ import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:flutter_material_pickers/helpers/show_checkbox_picker.dart';
 import 'package:flutter_material_pickers/models/select_all_config.dart';
-import 'package:maps_launcher/maps_launcher.dart';
 
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
@@ -29,6 +28,9 @@ import 'addedit_project.dart';
 import 'addedit_location.dart';
 import 'subproject.dart';
 import 'package:intl/intl.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProjectDetailsPage extends StatefulWidget {
   final ObjectId id;
@@ -415,6 +417,74 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     return DateFormat(dateFormat).format(docDateTime);
   }
 
+  // Start navigation in external maps app. Tries platform-specific URL schemes
+  // that start turn-by-turn navigation. Falls back to web URLs.
+  Future<void> _startNavigation(double lat, double lng) async {
+    try {
+      if (Platform.isAndroid) {
+        // Try Google Maps navigation intent
+        final Uri googleNav = Uri.parse('google.navigation:q=$lat,$lng');
+        if (await canLaunchUrl(googleNav)) {
+          await launchUrl(googleNav, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback to Google Maps web directions
+        final Uri googleWeb = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+        );
+        if (await canLaunchUrl(googleWeb)) {
+          await launchUrl(googleWeb, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } else if (Platform.isIOS) {
+        // Prefer Apple Maps scheme
+        final Uri appleMaps = Uri.parse('maps://?daddr=$lat,$lng&dirflg=d');
+        if (await canLaunchUrl(appleMaps)) {
+          await launchUrl(appleMaps, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Try Google Maps on iOS if installed
+        final Uri googleIos = Uri.parse(
+          'comgooglemaps://?daddr=$lat,$lng&directionsmode=driving',
+        );
+        if (await canLaunchUrl(googleIos)) {
+          await launchUrl(googleIos, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback to Apple Maps web
+        final Uri appleWeb = Uri.parse(
+          'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d',
+        );
+        if (await canLaunchUrl(appleWeb)) {
+          await launchUrl(appleWeb, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+
+      // Generic fallback: open Google Maps web
+      final Uri fallback = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+      );
+      if (await canLaunchUrl(fallback)) {
+        await launchUrl(fallback, mode: LaunchMode.externalApplication);
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No available maps application to launch navigation.'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error launching navigation: ${e.toString()}')),
+      );
+    }
+  }
+
   Widget projectDetails(
     String name,
     String url,
@@ -460,15 +530,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                     shadowColor: Colors.transparent,
                     elevation: 1,
                   ),
-                  onPressed: () {
-                    // var initlattitude = currentProject.latitude ?? 28.7;
-                    // var initlongitude = currentProject.longitude ?? 70.7;
-                    // Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => GoogleMapsView(
-                    //             initlattitude, initlongitude, false)));
-                    if (currentProject.address == null) {
+                  onPressed: () async {
+                    final address = currentProject.address;
+                    if (address == null || address.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
@@ -476,9 +540,42 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                           ),
                         ),
                       );
-                    } else {
-                      MapsLauncher.launchQuery(
-                        currentProject.address as String,
+                      return;
+                    }
+
+                    try {
+                      // prefer stored coords if they exist and are non-zero
+                      double lat = (currentProject.latitude ?? 0.0);
+                      double lng = (currentProject.longitude ?? 0.0);
+
+                      // If coords not set (0,0) attempt geocoding
+                      if (lat == 0.0 && lng == 0.0) {
+                        final List<geocoding.Location> geoLocations =
+                            await geocoding.locationFromAddress(address);
+                        if (geoLocations.isNotEmpty) {
+                          lat = geoLocations.first.latitude;
+                          lng = geoLocations.first.longitude;
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Unable to find coordinates for address.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                      }
+
+                      // Start navigation via URL schemes so turn-by-turn starts
+                      await _startNavigation(lat, lng);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Failed to get coordinates: ${e.toString()}',
+                          ),
+                        ),
                       );
                     }
                   },

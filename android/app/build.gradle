@@ -32,15 +32,15 @@ android {
     compileSdkVersion 34
     ndkVersion flutter.ndkVersion
     
+    // Use Java 17 / Kotlin jvm target 17 to match Kotlin compiler toolchain
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_17
     }
-
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
@@ -89,9 +89,10 @@ android {
         }
     }
     namespace 'com.e3inspections.multitenant'
+    // Ensure compileOptions are set to Java 17 for AGP/Kotlin compatibility
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
