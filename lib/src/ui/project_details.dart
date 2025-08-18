@@ -32,6 +32,7 @@ import 'subproject.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProjectDetailsPage extends StatefulWidget {
   final ObjectId id;
@@ -412,6 +413,67 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     }
   }
 
+  // Start navigation in external maps app. Tries platform-specific URL schemes
+  // that start turn-by-turn navigation. Falls back to web URLs.
+  Future<void> _startNavigation(double lat, double lng) async {
+    try {
+      if (Platform.isAndroid) {
+        // Try Google Maps navigation intent
+        final Uri googleNav = Uri.parse('google.navigation:q=$lat,$lng');
+        if (await canLaunchUrl(googleNav)) {
+          await launchUrl(googleNav, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback to Google Maps web directions
+        final Uri googleWeb = Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+        if (await canLaunchUrl(googleWeb)) {
+          await launchUrl(googleWeb, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } else if (Platform.isIOS) {
+        // Prefer Apple Maps scheme
+        final Uri appleMaps = Uri.parse('maps://?daddr=$lat,$lng&dirflg=d');
+        if (await canLaunchUrl(appleMaps)) {
+          await launchUrl(appleMaps, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Try Google Maps on iOS if installed
+        final Uri googleIos = Uri.parse(
+            'comgooglemaps://?daddr=$lat,$lng&directionsmode=driving');
+        if (await canLaunchUrl(googleIos)) {
+          await launchUrl(googleIos, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback to Apple Maps web
+        final Uri appleWeb =
+            Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+        if (await canLaunchUrl(appleWeb)) {
+          await launchUrl(appleWeb, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+
+      // Generic fallback: open Google Maps web
+      final Uri fallback = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+      if (await canLaunchUrl(fallback)) {
+        await launchUrl(fallback, mode: LaunchMode.externalApplication);
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content:
+              Text('No available maps application to launch navigation.')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error launching navigation: ${e.toString()}')));
+    }
+  }
+
   Widget projectDetails(String name, String url, ObjectId id,
       String description, String editedat, String address) {
     realmProjServices =
@@ -492,42 +554,13 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                               await _getCurrentCoords();
 
                           if (Platform.isIOS) {
-                            final isAvailable =
-                                await MapLauncher.isMapAvailable(MapType.apple);
-                            if (isAvailable != null && isAvailable) {
-                              await MapLauncher.showDirections(
-                                mapType: MapType.apple,
-                                destinationTitle: address,
-                                destination: coords,
-                                origin: originCoords,
-                                originTitle: 'My Location',
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Apple Maps not available on this device.')),
-                              );
-                            }
+                            // Start navigation via URL schemes so turn-by-turn starts
+                            await _startNavigation(
+                                coords.latitude, coords.longitude);
                           } else if (Platform.isAndroid) {
-                            final isAvailable =
-                                await MapLauncher.isMapAvailable(
-                                    MapType.google);
-                            if (isAvailable != null && isAvailable) {
-                              await MapLauncher.showDirections(
-                                mapType: MapType.google,
-                                destinationTitle: address,
-                                destination: coords,
-                                origin: originCoords,
-                                originTitle: 'My Location',
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Google Maps not available on this device.')),
-                              );
-                            }
+                            // Start navigation via URL schemes so turn-by-turn starts
+                            await _startNavigation(
+                                coords.latitude, coords.longitude);
                           } else {
                             // fallback for other platforms
                             ScaffoldMessenger.of(context).showSnackBar(
