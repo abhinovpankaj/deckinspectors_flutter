@@ -637,7 +637,7 @@ class RealmLocalServices with ChangeNotifier {
         project.address = address;
         project.description = description;
         if (isNewProject) {
-          project.createdby = userName;
+          project.createdby = loggedInUser;
           project.assignedto.add(loggedInUser);
         } else {
           project.lasteditedby = userName;
@@ -2305,7 +2305,6 @@ class RealmLocalServices with ChangeNotifier {
 
   void saveUnsyncedData(Map<String, dynamic> socketData) {
     try {
-      //check if the data already exists, using findAsync with _id
       final existingData = realm.find<UnsyncedData>(
         ObjectId.fromHexString(socketData['id']),
       );
@@ -2322,6 +2321,21 @@ class RealmLocalServices with ChangeNotifier {
             update: true,
           );
         });
+      } else if (socketData['action'] == 'update') {
+        // Patch the existing data with updated fields
+        try {
+          final existingJson = jsonDecode(existingData.jsonData);
+          final updateJson = jsonDecode(socketData['data']);
+          // Only patch the fields present in updateJson
+          updateJson.forEach((key, value) {
+            existingJson[key] = value;
+          });
+          realm.write(() {
+            existingData.jsonData = jsonEncode(existingJson);
+          });
+        } catch (e) {
+          debugPrint("Error patching unsynced data: $e");
+        }
       }
     } catch (e) {
       debugPrint(e.toString());

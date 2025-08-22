@@ -40,13 +40,19 @@ void main() async {
                 syncService,
               );
               if (!appSettings.isAppOfflineMode) {
-                syncService.initSocketAsync();
-
-                realmServices.registerToChannelStream(syncService.channel);
-                Future.delayed(Duration(seconds: 1), () {
-                  print('🔁 Reconnecting...');
-                  realmServices!.uploadLocalImages();
+                syncService.initSocketAsync().then((_) {
+                  realmServices?.registerToChannelStream(syncService.channel);
+                  Future.delayed(Duration(seconds: 1), () {
+                    print('🔁 Reconnecting...');
+                    realmServices!.uploadLocalImages();
+                  });
                 });
+
+                // realmServices.registerToChannelStream(syncService.channel);
+                // Future.delayed(Duration(seconds: 1), () {
+                //   print('🔁 Reconnecting...');
+                //   realmServices!.uploadLocalImages();
+                // });
               }
             }
             return realmServices;
