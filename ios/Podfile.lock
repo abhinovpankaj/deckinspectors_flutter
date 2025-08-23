@@ -49,6 +49,8 @@ PODS:
   - flutter_webrtc (0.12.6):
     - Flutter
     - WebRTC-SDK (= 125.6422.06)
+  - gallery_saver_plus (0.0.1):
+    - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
     - FlutterMacOS
@@ -63,8 +65,6 @@ PODS:
   - GoogleMaps/Base (8.4.0)
   - GoogleMaps/Maps (8.4.0):
     - GoogleMaps/Base
-  - image_gallery_saver (2.0.2):
-    - Flutter
   - image_picker_ios (0.0.1):
     - Flutter
   - IosAwnCore (0.10.0)
@@ -121,9 +121,9 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_vlc_player (from `.symlinks/plugins/flutter_vlc_player/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
+  - gallery_saver_plus (from `.symlinks/plugins/gallery_saver_plus/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - google_maps_flutter_ios (from `.symlinks/plugins/google_maps_flutter_ios/ios`)
-  - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - maps_launcher (from `.symlinks/plugins/maps_launcher/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -171,12 +171,12 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_vlc_player/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
+  gallery_saver_plus:
+    :path: ".symlinks/plugins/gallery_saver_plus/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/darwin"
   google_maps_flutter_ios:
     :path: ".symlinks/plugins/google_maps_flutter_ios/ios"
-  image_gallery_saver:
-    :path: ".symlinks/plugins/image_gallery_saver/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   maps_launcher:
@@ -221,11 +221,11 @@ SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_vlc_player: 1508e7989e41d11328e4fa4c9a1f188c7cf4cf7a
   flutter_webrtc: 90260f83024b1b96d239a575ea4e3708e79344d1
+  gallery_saver_plus: c4b59c605df1049a02d036ef81d82972b6dfd606
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   Google-Maps-iOS-Utils: 66d6de12be1ce6d3742a54661e7a79cb317a9321
   google_maps_flutter_ios: e31555a04d1986ab130f2b9f24b6cdc861acc6d3
   GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
-  image_gallery_saver: cb43cc43141711190510e92c460eb1655cd343cb
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   IosAwnCore: 653786a911089012092ce831f2945cd339855a89
   maps_launcher: 2e5b6a2d664ec6c27f82ffa81b74228d770ab203

@@ -64,7 +64,6 @@ dependencies:
   awesome_notifications: ^0.10.0
   package_info_plus: ^4.2.0
   wakelock_plus: ^1.1.4
-  image_gallery_saver: ^2.0.3
   google_maps_place_picker_mb: ^3.1.2
   google_maps_flutter: ^2.5.3
   google_maps_flutter_platform_interface: ^2.4.3
@@ -85,6 +84,7 @@ dependencies:
   get: ^4.6.6
   socket_io_client: ^3.0.2
   flutter_webrtc: ^0.12.1+hotfix.1
+  gallery_saver_plus: ^3.2.8
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

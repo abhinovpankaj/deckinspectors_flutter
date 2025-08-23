@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 import 'package:image_editor_plus/image_editor_plus.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:realm/realm.dart';
@@ -469,7 +469,7 @@ class _SectionPageState extends State<SectionPage> {
                   for (var element in value) {
                     if (element is ImageResponse) {
                       if (element.originalPath != null) {
-                        await ImageGallerySaver.saveFile(
+                        await GallerySaver.saveImage(
                           element.originalPath as String,
                         );
                       }
