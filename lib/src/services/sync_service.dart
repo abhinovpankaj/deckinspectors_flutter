@@ -12,25 +12,6 @@ class SyncService {
 
   bool pushToWebSocket(Map<String, Object> socketData, String messageId) {
     try {
-      // Map<String, Object> socketData = {};
-      // final messageId = ObjectId().hexString;
-      // if (isDelete) {
-      //   socketData = {
-      //     "messageId": messageId,
-      //     "collectionName": collectionName,
-      //     "action": "delete",
-      //     "data": jsonEncode({"id": data['id']}),
-      //   };
-      // } else {
-      //   socketData = {
-      //     "messageId": messageId,
-      //     "collectionName": collectionName,
-      //     "action": eventName,
-      //     "data": jsonEncode(data),
-      //   };
-      // }
-      //if (socket.connected) {
-
       if (isWebSocketConnected) {
         //add client Id
         if (usersBloc.userDetails.username != null) {
@@ -54,10 +35,10 @@ class SyncService {
 
   bool isWebSocketConnected = false;
   Future<void> initSocketAsync() async {
-    final wsUrl = Uri.parse(
-      'ws://deckmultitenantwebservices-dev.azurewebsites.net',
-    );
-    //final wsUrl = Uri.parse('ws://192.168.1.5:3000/');
+    // final wsUrl = Uri.parse(
+    //   'ws://deckmultitenantwebservices-dev.azurewebsites.net',
+    // );
+    final wsUrl = Uri.parse('ws://192.168.1.3:3000/');
     channel = WebSocketChannel.connect(wsUrl);
 
     try {

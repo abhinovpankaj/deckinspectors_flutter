@@ -386,11 +386,16 @@ class _SettingsPageState extends State<SettingsPage> {
       });
       //realmServices.sessionSwitch(true);
       appSettings.activeConnection = true;
-      await realmLocalServices.syncService.initSocketAsync();
-      realmLocalServices.registerToChannelStream(
-        realmLocalServices.syncService.channel,
-      );
-      realmLocalServices.syncUnsyncedData();
+
+      realmLocalServices.syncService.initSocketAsync().then((_) {
+        realmLocalServices.registerToChannelStream(
+          realmLocalServices.syncService.channel,
+        );
+        Future.delayed(Duration(seconds: 1), () {
+          print('🔁 Reconnecting...');
+          realmLocalServices.uploadLocalImages();
+        });
+      });
     } else {
       setState(() {
         isSyncOn = false;
