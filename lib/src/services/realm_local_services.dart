@@ -456,21 +456,11 @@ class RealmLocalServices with ChangeNotifier {
         return realm.add<Project>(project, update: true);
       });
       notifyListeners();
-      // if (isNewProject) {
-      //   pushToWebSocket('create', 'project', _toJson(project));
-      // } else {
-      //   pushToWebSocket('update', 'project', {
-      //     "id": project.id.hexString,
-
-      //     "name": name,
-      //     "address": address,
-      //     "description": description,
-      //     "latitude": lattitude,
-      //     "longitude": longitude,
-      //     "lasteditedby": userName,
-      //     "editedat": DateTime.now().toString(),
-      //   });
-      // }
+      if (isNewProject) {
+        pushToWebSocket('create', 'project', _toJson(project));
+      } else {
+        pushToWebSocket('update', 'project', _toJson(project));
+      }
       return true;
     } catch (e) {
       return false;
@@ -534,12 +524,6 @@ class RealmLocalServices with ChangeNotifier {
         var foundChild = found.first;
 
         foundChild.url = url;
-        // pushToWebSocket('updateChild', 'project', {
-        //   "id": parentId.hexString,
-        //   "changedFields": {
-        //     "children": {"id": childId.hexString, "url": url},
-        //   },
-        // });
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -622,12 +606,6 @@ class RealmLocalServices with ChangeNotifier {
       var foundChild = found.first;
 
       foundChild.url = url;
-      // pushToWebSocket('updateChild', 'subProject', {
-      //   "id": parentId.hexString,
-      //   "changedFields": {
-      //     "children": {"id": childId.hexString, "url": url},
-      //   },
-      // });
     }
   }
 
@@ -688,7 +666,7 @@ class RealmLocalServices with ChangeNotifier {
       });
 
       notifyListeners();
-      pushToWebSocket('update', 'subProject', {
+      pushToWebSocket('updateImageUrl', 'subProject', {
         "id": subProject.id.hexString,
         "url": url,
         "companyIdentifier": usersBloc.userDetails.companyidentifer,
@@ -735,14 +713,7 @@ class RealmLocalServices with ChangeNotifier {
         if (isNewBuilding) {
           pushToWebSocket('create', 'subProject', _toJson(subProject));
         } else {
-          pushToWebSocket('update', 'subProject', {
-            "id": subProject.id.hexString,
-
-            "name": name,
-            "description": description,
-            "lasteditedby": fullUserName,
-            "editedat": DateTime.now().toString(),
-          });
+          pushToWebSocket('update', 'subProject', _toJson(subProject));
         }
       });
       notifyListeners();
@@ -875,13 +846,7 @@ class RealmLocalServices with ChangeNotifier {
       if (isNewLocation) {
         pushToWebSocket('create', 'location', _toJson(location));
       } else {
-        pushToWebSocket('update', 'location', {
-          "id": location.id.hexString,
-          "name": name,
-          "description": description,
-          "lasteditedby": fullUserName,
-          "editedat": DateTime.now().toString(),
-        });
+        pushToWebSocket('update', 'location', _toJson(location));
       }
       notifyListeners();
       return true;
@@ -2177,7 +2142,7 @@ class RealmLocalServices with ChangeNotifier {
           "messageId": messageId,
           "collectionName": collectionName,
           "action": "delete",
-          "data": jsonEncode({"id": messageId}),
+          "data": jsonEncode(data),
         };
 
         final sent = syncService.pushToWebSocket(socketData, messageId);
