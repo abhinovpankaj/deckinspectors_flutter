@@ -1314,7 +1314,7 @@ class RealmLocalServices with ChangeNotifier {
           onlinePaths.last,
         );
       });
-      pushToWebSocket('update', 'dynamicSection', {
+      pushToWebSocket('addImages', 'dynamicSection', {
         "id": localVisualSection.id.hexString,
         "images": localVisualSection.images,
       });
@@ -1774,7 +1774,9 @@ class RealmLocalServices with ChangeNotifier {
 
           pushToWebSocket('updateImageCount', 'location', {
             "id": parentLocation.id.hexString,
-            "sections": {"id": id, "count": length, "coverUrl": url},
+            "childId": id,
+            "count": length,
+            "coverUrl": url,
           });
         }
       }
@@ -1840,9 +1842,7 @@ class RealmLocalServices with ChangeNotifier {
       });
       pushToWebSocket('addImages', 'invasiveSection', {
         "id": currentInvasiveSection.id.hexString,
-        "changedFields": {
-          "invasiveimages": currentInvasiveSection.invasiveimages,
-        },
+        "images": currentInvasiveSection.invasiveimages,
       });
       notifyListeners();
       return true;
@@ -1882,11 +1882,9 @@ class RealmLocalServices with ChangeNotifier {
       realm.write(() {
         currentConclusiveSection.conclusiveimages.addAll(urls);
       });
-      pushToWebSocket('addImages', 'invasiveSection', {
+      pushToWebSocket('addImages', 'conclusiveSection', {
         "id": currentConclusiveSection.id.hexString,
-        "changedFields": {
-          "conclusiveimages": currentConclusiveSection.conclusiveimages,
-        },
+        "images": currentConclusiveSection.conclusiveimages,
       });
       notifyListeners();
       return true;
@@ -1927,9 +1925,10 @@ class RealmLocalServices with ChangeNotifier {
 
       pushToWebSocket('update', 'invasiveSection', {
         "id": currentInvasiveSection.id.hexString,
-
+        "companyIdentifier": currentInvasiveSection.companyIdentifier,
         "postinvasiverepairsrequired": postInvasiveRepairsRequired,
         "invasiveDescription": description,
+        "parentid": currentInvasiveSection.parentid.hexString,
       });
 
       notifyListeners();
@@ -1962,13 +1961,15 @@ class RealmLocalServices with ChangeNotifier {
       notifyListeners();
       pushToWebSocket('update', 'conclusiveSection', {
         "id": currentConclusiveSection.id.hexString,
-
+        "companyIdentifier": currentConclusiveSection.companyIdentifier,
+        "parentid": currentConclusiveSection.parentid.hexString,
         "propowneragreed": propOwnerAgreed,
         "invasiverepairsinspectedandcompleted": invasiveRepairsCompleted,
         "aweconclusive": aweConclusive,
         "eeeconclusive": eeeConclusive,
         "lbcconclusive": lbcConclusive,
         "conclusiveconsiderations": description,
+        "conclusiveimages": currentConclusiveSection.conclusiveimages,
       });
       return true;
     } catch (e) {
@@ -1986,7 +1987,7 @@ class RealmLocalServices with ChangeNotifier {
         //updateImageCount(localConclusiveSection.parenttype, localConclusiveSection.id,
         //localConclusiveSection.parentid, localConclusiveSection.images.length, "");
       });
-      pushToWebSocket('removeUrl', 'conclusiveSection', {
+      pushToWebSocket('addImages', 'conclusiveSection', {
         "id": localConclusiveSection.id.hexString,
         "conclusiveimages": localConclusiveSection.conclusiveimages,
       });
@@ -2007,9 +2008,9 @@ class RealmLocalServices with ChangeNotifier {
         //updateImageCount(localConclusiveSection.parenttype, localConclusiveSection.id,
         //localConclusiveSection.parentid, localConclusiveSection.images.length, "");
       });
-      pushToWebSocket('removeUrl', 'invasiveSection', {
+      pushToWebSocket('addImages', 'invasiveSection', {
         "id": localInvasiveSection.id.hexString,
-        "invasiveimages": localInvasiveSection.invasiveimages,
+        "images": localInvasiveSection.invasiveimages,
       });
       notifyListeners();
       return true;
