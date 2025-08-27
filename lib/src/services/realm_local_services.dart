@@ -42,6 +42,10 @@ class RealmLocalServices with ChangeNotifier {
   final Map<String, Timer> _debounceTimers = {};
   final Duration _debounceDuration = Duration(milliseconds: 500);
 
+  // Queue to serialize unsynced-data Realm writes and avoid lost updates
+  final List<Map<String, dynamic>> _unsyncedQueue = [];
+  bool _isProcessingUnsyncedQueue = false;
+
   RealmLocalServices(this.loggedInUser, this.company, this.syncService) {
     SharedPreferences.getInstance().then((value) {
       var configValue = value.getString('appSync') ?? 'true';
@@ -289,26 +293,15 @@ class RealmLocalServices with ChangeNotifier {
 
   void syncUnsyncedData() async {
     try {
-      final unsyncedList = realm.all<UnsyncedData>().toList();
+      // Sort unsynced data by Realm insertion order (oldest first)
+      final unsyncedList =
+          realm.all<UnsyncedData>().toList()
+            ..sort((a, b) => a.id.toString().compareTo(b.id.toString()));
 
       if (unsyncedList.isEmpty) {
         debugPrint('✅ No unsynced data to sync.');
         return;
       }
-      //TODO for batch procesing
-      // final List<Map<String, dynamic>> payload =
-      //     unsyncedList.map((entry) {
-      //       return {
-      //         'id': entry.id.toString(),
-      //         'action': entry.action,
-      //         'collectionName': entry.collectionName,
-      //         'jsonData': jsonDecode(entry.jsonData), // Convert back to Map
-      //         'updatedAt': entry.updatedAt,
-      //       };
-      //     }).toList();
-
-      // final message = {'action': 'batch_sync', 'payload': payload};
-      //_currentChannel?.sink.add(jsonEncode(message));
       for (var item in unsyncedList) {
         debugPrint('📤 Sent ${item.id} unsynced record over socket.');
         final dataMap = jsonDecode(item.jsonData);
@@ -1229,9 +1222,10 @@ class RealmLocalServices with ChangeNotifier {
       });
 
       notifyListeners();
-      pushToWebSocket('update', 'visualSection', {
+      pushToWebSocket('addImages', 'visualSection', {
         "id": localVisualSection.id.hexString,
         "images": localVisualSection.images,
+        "companyIdentifier": localVisualSection.companyIdentifier,
       });
       return true;
     } catch (e) {
@@ -1317,6 +1311,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('addImages', 'dynamicSection', {
         "id": localVisualSection.id.hexString,
         "images": localVisualSection.images,
+        "companyIdentifier": localVisualSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -1325,6 +1320,94 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
+  /// Consolidate updates for the same object id, debounce them and send a flat payload
+  void pushToWebSocket(
+    String eventName,
+    String collectionName,
+    Map<String, dynamic> data, {
+    bool isDelete = false,
+    bool addToDb = true,
+  }) {
+    debugPrint('Pushing to WebSocket: $eventName $collectionName');
+
+    try {
+      final messageId = (data['id'] ?? data['messageId'] ?? '').toString();
+      if (messageId.isEmpty) {
+        debugPrint('pushToWebSocket: missing id in data');
+        return;
+      }
+
+      // If delete, send immediately and remove any pending consolidation
+      if (isDelete) {
+        _debounceTimers[messageId]?.cancel();
+        _debounceTimers.remove(messageId);
+        _pendingOutgoing.remove(messageId);
+
+        final Map<String, Object> socketData = {
+          'id': messageId,
+          'messageId': messageId,
+          'collectionName': collectionName,
+          'action': 'delete',
+          'data': jsonEncode({'id': messageId}),
+        };
+
+        final sent = syncService.pushToWebSocket(socketData, messageId);
+        if (!sent && addToDb) {
+          _saveUnsyncedDataImmediate(socketData.cast<String, dynamic>());
+        }
+        return;
+      }
+
+      // Merge incoming data into pending map
+      final pending = _pendingOutgoing.putIfAbsent(messageId, () => {});
+      data.forEach((k, v) {
+        if (pending.containsKey(k)) {
+          final existing = pending[k];
+          if (existing is List && v is List) {
+            final set =
+                <dynamic>{}
+                  ..addAll(existing)
+                  ..addAll(v);
+            pending[k] = set.toList();
+          } else if (existing is Map && v is Map) {
+            pending[k] = {...existing, ...v};
+          } else {
+            pending[k] = v;
+          }
+        } else {
+          pending[k] = v;
+        }
+      });
+
+      // Debounce send
+      _debounceTimers[messageId]?.cancel();
+      _debounceTimers[messageId] = Timer(_debounceDuration, () {
+        try {
+          final merged = _pendingOutgoing.remove(messageId) ?? {};
+          _debounceTimers.remove(messageId);
+
+          final Map<String, Object> socketData = {
+            'id': messageId,
+            'messageId': messageId,
+            'collectionName': collectionName,
+            'action': eventName,
+            'data': jsonEncode(merged),
+          };
+
+          final sent = syncService.pushToWebSocket(socketData, messageId);
+          if (!sent && addToDb) {
+            _saveUnsyncedDataImmediate(socketData.cast<String, dynamic>());
+          }
+        } catch (e) {
+          debugPrint('Error sending consolidated socketData: $e');
+        }
+      });
+    } catch (e) {
+      debugPrint('Error in pushToWebSocket: $e');
+    }
+  }
+
+  // ...existing code...
   @override
   void dispose() {
     _channelSubscription?.cancel();
@@ -1418,6 +1501,7 @@ class RealmLocalServices with ChangeNotifier {
                     pushToWebSocket('update', 'project', {
                       "id": parentId.hexString,
                       "url": result.url,
+                      "companyIdentifier": project?.companyIdentifier,
                     });
                     break;
 
@@ -1427,6 +1511,7 @@ class RealmLocalServices with ChangeNotifier {
                     pushToWebSocket('update', 'subProject', {
                       "id": parentId.hexString,
                       "url": result.url,
+                      "companyIdentifier": subproject?.companyIdentifier,
                     });
                     updateChildUrl(
                       parentId,
@@ -1440,6 +1525,7 @@ class RealmLocalServices with ChangeNotifier {
                     pushToWebSocket('update', 'location', {
                       "id": parentId.hexString,
                       "url": result.url,
+                      "companyIdentifier": location?.companyIdentifier,
                     });
                     updateSubChildUrl(
                       parentId,
@@ -1456,6 +1542,12 @@ class RealmLocalServices with ChangeNotifier {
                       if (index != -1) {
                         visualsection.images[index] = result.url as String;
                         //update coverurls
+                        pushToWebSocket('addImages', 'visualSection', {
+                          "id": parentId.hexString,
+                          "images": visualsection.images,
+                          "companyIdentifier": visualsection.companyIdentifier,
+                        });
+
                         updateImageCount(
                           visualsection.parenttype,
                           visualsection.id,
@@ -1484,6 +1576,11 @@ class RealmLocalServices with ChangeNotifier {
                           visualsection.images.length,
                           visualsection.images.last,
                         );
+                        pushToWebSocket('addImages', 'dynamicSection', {
+                          "id": parentId.hexString,
+                          "images": visualsection.images,
+                          "companyIdentifier": visualsection.companyIdentifier,
+                        });
                       }
                     }
                     break;
@@ -1496,6 +1593,12 @@ class RealmLocalServices with ChangeNotifier {
                       if (index != -1) {
                         invasiveSection.invasiveimages[index] =
                             result.url as String;
+                        pushToWebSocket('addImages', 'invasiveSection', {
+                          "id": parentId.hexString,
+                          "images": invasiveSection.invasiveimages,
+                          "companyIdentifier":
+                              invasiveSection.companyIdentifier,
+                        });
                       }
                     }
                     break;
@@ -1510,6 +1613,12 @@ class RealmLocalServices with ChangeNotifier {
                       if (index != -1) {
                         conclusiveSection.conclusiveimages[index] =
                             result.url as String;
+                        pushToWebSocket('addImages', 'conclusiveSection', {
+                          "id": parentId.hexString,
+                          "images": conclusiveSection.conclusiveimages,
+                          "companyIdentifier":
+                              conclusiveSection.companyIdentifier,
+                        });
                       }
                     }
                     break;
@@ -1843,6 +1952,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('addImages', 'invasiveSection', {
         "id": currentInvasiveSection.id.hexString,
         "images": currentInvasiveSection.invasiveimages,
+        "companyIdentifier": currentInvasiveSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -1885,6 +1995,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('addImages', 'conclusiveSection', {
         "id": currentConclusiveSection.id.hexString,
         "images": currentConclusiveSection.conclusiveimages,
+        "companyIdentifier": currentConclusiveSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -1990,6 +2101,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('addImages', 'conclusiveSection', {
         "id": localConclusiveSection.id.hexString,
         "conclusiveimages": localConclusiveSection.conclusiveimages,
+        "companyIdentifier": localConclusiveSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -2011,6 +2123,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('addImages', 'invasiveSection', {
         "id": localInvasiveSection.id.hexString,
         "images": localInvasiveSection.invasiveimages,
+        "companyIdentifier": localInvasiveSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -2075,7 +2188,8 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  void saveUnsyncedData(Map<String, dynamic> socketData) {
+  // Keep original logic in a private helper so we can call it from the queued processor
+  void _saveUnsyncedDataImmediate(Map<String, dynamic> socketData) {
     try {
       //check if the data already exists, using findAsync with _id
       final existingData = realm.find<UnsyncedData>(
@@ -2095,8 +2209,8 @@ class RealmLocalServices with ChangeNotifier {
           );
         });
       } else if (socketData['action'] == 'update' ||
-          socketData['action'] == 'addImages' ||
-          socketData['action'] == 'updateImageUrl') {
+          socketData['action'] == 'updateImageUrl' ||
+          socketData['action'] == 'addImages') {
         // Patch the existing data with updated fields
         try {
           final existingJson = jsonDecode(existingData.jsonData);
@@ -2107,96 +2221,51 @@ class RealmLocalServices with ChangeNotifier {
           });
           realm.write(() {
             existingData.jsonData = jsonEncode(existingJson);
+            existingData.updatedAt = DateTime.now().toString();
           });
         } catch (e) {
           debugPrint("Error patching unsynced data: $e");
         }
+      } else if (socketData['action'] == 'delete') {
+        // For delete, remove any existing entry
+        realm.write(() {
+          realm.delete<UnsyncedData>(existingData);
+        });
       }
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  void pushToWebSocket(
-    String eventName,
-    String collectionName,
-    Map<String, dynamic> data, {
-    bool isDelete = false,
-    bool addToDb = true,
-  }) {
+  // Public wrapper - enqueue and process serially
+  void saveUnsyncedData(Map<String, dynamic> socketData) {
     try {
-      final messageId = (data['id'] ?? data['messageId'] ?? '').toString();
-      if (messageId.isEmpty) {
-        debugPrint('pushToWebSocket: missing id in data');
-        return;
-      }
-
-      // If delete - cancel pending merges and send delete immediately
-      if (isDelete) {
-        // cancel any pending consolidation for this id
-        _debounceTimers[messageId]?.cancel();
-        _debounceTimers.remove(messageId);
-        _pendingOutgoing.remove(messageId);
-
-        final Map<String, Object> socketData = {
-          "id": messageId,
-          "messageId": messageId,
-          "collectionName": collectionName,
-          "action": "delete",
-          "data": jsonEncode(data),
-        };
-
-        final sent = syncService.pushToWebSocket(socketData, messageId);
-        if (!sent && addToDb) saveUnsyncedData(socketData);
-        return;
-      }
-
-      // Merge incoming update into pendingOutgoing for this messageId
-      final pending = _pendingOutgoing.putIfAbsent(messageId, () => {});
-
-      // Merge strategy: lists are unioned, maps are shallow-merged, scalars overwritten
-      data.forEach((key, value) {
-        if (pending.containsKey(key)) {
-          final existing = pending[key];
-          if (existing is List && value is List) {
-            // union preserving order but unique
-            final set = <dynamic>{};
-            set.addAll(existing);
-            set.addAll(value);
-            pending[key] = set.toList();
-          } else if (existing is Map && value is Map) {
-            pending[key] = {...existing, ...value};
-          } else {
-            pending[key] = value;
-          }
-        } else {
-          pending[key] = value;
-        }
-      });
-
-      // Schedule (or reschedule) a debounced send for this id
-      _debounceTimers[messageId]?.cancel();
-      _debounceTimers[messageId] = Timer(_debounceDuration, () {
-        try {
-          final merged = _pendingOutgoing.remove(messageId) ?? {};
-          _debounceTimers.remove(messageId);
-
-          final Map<String, Object> socketData = {
-            "id": messageId,
-            "messageId": messageId,
-            "collectionName": collectionName,
-            "action": eventName,
-            "data": jsonEncode(merged),
-          };
-
-          final sent = syncService.pushToWebSocket(socketData, messageId);
-          if (!sent && addToDb) saveUnsyncedData(socketData);
-        } catch (e) {
-          debugPrint('Error sending consolidated socketData: $e');
-        }
-      });
+      // Defensive copy to decouple the queued map from caller
+      _unsyncedQueue.add(Map<String, dynamic>.from(socketData));
+      if (!_isProcessingUnsyncedQueue) _processUnsyncedQueue();
     } catch (e) {
-      debugPrint("Error in pushToWebSocket: $e");
+      debugPrint('Error enqueueing unsynced data: $e');
+    }
+  }
+
+  // Serial processor - drains the queue and calls the immediate saver for each item
+  Future<void> _processUnsyncedQueue() async {
+    if (_isProcessingUnsyncedQueue) return;
+    _isProcessingUnsyncedQueue = true;
+    try {
+      while (_unsyncedQueue.isNotEmpty) {
+        final item = _unsyncedQueue.removeAt(0);
+        try {
+          _saveUnsyncedDataImmediate(item);
+        } catch (e) {
+          debugPrint('Error processing unsynced item: $e');
+          // Push item back and abort processing to avoid tight loop
+          _unsyncedQueue.insert(0, item);
+          break;
+        }
+      }
+    } finally {
+      _isProcessingUnsyncedQueue = false;
     }
   }
 
