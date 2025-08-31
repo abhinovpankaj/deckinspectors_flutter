@@ -123,7 +123,7 @@ class RealmLocalServices with ChangeNotifier {
           //add this to unsynced data
           final failedData = syncService.pendingMessages[messageId];
           if (failedData != null) {
-            saveUnsyncedData(jsonDecode(failedData));
+            //saveUnsyncedData(jsonDecode(failedData));
           }
         }
         syncService.pendingMessages.remove(messageId);
@@ -131,7 +131,7 @@ class RealmLocalServices with ChangeNotifier {
       onError: (error) {
         // If needed, retry everything in pendingMessages
         for (final data in syncService.pendingMessages.values) {
-          saveUnsyncedData(jsonDecode(data));
+          //saveUnsyncedData(jsonDecode(data));
         }
         syncService.pendingMessages.clear();
       },
@@ -169,7 +169,26 @@ class RealmLocalServices with ChangeNotifier {
 
     try {
       while (_messageQueue.isNotEmpty) {
-        final message = _messageQueue.removeAt(0);
+        // Pop the next message, but if it's an update/replace and there is
+        // a pending create/insert for the same messageId later in the queue,
+        // process the create first to ensure objects exist before updates.
+        var message = _messageQueue.removeAt(0);
+
+        // If this is an update/replace, check for a create/insert for same id
+        final action = (message['action'] ?? '').toString();
+        if (action == 'update' || action == 'replace') {
+          final sameCreateIndex = _messageQueue.indexWhere((m) {
+            final a = (m['action'] ?? '').toString();
+            return (a == 'insert' || a == 'create') &&
+                m['messageId'] == message['messageId'];
+          });
+          if (sameCreateIndex != -1) {
+            // re-enqueue the update at the end and pull the create to process now
+            _messageQueue.add(message);
+            message = _messageQueue.removeAt(sameCreateIndex);
+          }
+        }
+
         debugPrint(
           "Processing message ${message['messageId']}, remaining: ${_messageQueue.length}",
         );
@@ -1007,7 +1026,9 @@ class RealmLocalServices with ChangeNotifier {
           "lbc": visualSection.lbc,
           "awe": visualSection.awe,
           "lasteditedby": userFullName,
+          "parentid": visualSection.parentid,
           "editedat": DateTime.now().toString(),
+          "companyIdentifier": visualSection.companyIdentifier,
         });
       }
       notifyListeners();
@@ -1066,7 +1087,7 @@ class RealmLocalServices with ChangeNotifier {
       } else {
         pushToWebSocket('update', 'dynamicSection', {
           "id": visualSection.id.hexString,
-
+          "companyIdentifier": visualSection.companyIdentifier,
           "name": name,
           "unitunavailable": unitUnavailable,
           "furtherinvasivereviewrequired": invasiveReviewRequired,
@@ -1074,6 +1095,7 @@ class RealmLocalServices with ChangeNotifier {
           "questions": visualSection.questions,
           "lasteditedby": userFullName,
           "editedat": DateTime.now().toString(),
+          "parentid": visualSection.parentid,
         });
       }
       notifyListeners();
@@ -1407,7 +1429,6 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
-  // ...existing code...
   @override
   void dispose() {
     _channelSubscription?.cancel();
@@ -2195,12 +2216,13 @@ class RealmLocalServices with ChangeNotifier {
       final existingData = realm.find<UnsyncedData>(
         ObjectId.fromHexString(socketData['id']),
       );
+      print('unsynceddata: $socketData');
       if (existingData == null) {
         realm.write(() {
           realm.add<UnsyncedData>(
             UnsyncedData(
               ObjectId.fromHexString(socketData['id']),
-              socketData['action'] as String,
+              'create',
               socketData['collectionName'] as String,
               socketData['data'],
               DateTime.now().toString(),
@@ -2210,6 +2232,7 @@ class RealmLocalServices with ChangeNotifier {
         });
       } else if (socketData['action'] == 'update' ||
           socketData['action'] == 'updateImageUrl' ||
+          socketData['action'] == 'updateImageCount' ||
           socketData['action'] == 'addImages') {
         // Patch the existing data with updated fields
         try {

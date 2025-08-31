@@ -43,16 +43,10 @@ void main() async {
                 syncService.initSocketAsync().then((_) {
                   realmServices?.registerToChannelStream(syncService.channel);
                   Future.delayed(Duration(seconds: 1), () {
-                    print('🔁 Reconnecting...');
+                    print('🔁 start uploading local images...');
                     realmServices!.uploadLocalImages();
                   });
                 });
-
-                // realmServices.registerToChannelStream(syncService.channel);
-                // Future.delayed(Duration(seconds: 1), () {
-                //   print('🔁 Reconnecting...');
-                //   realmServices!.uploadLocalImages();
-                // });
               }
             }
             return realmServices;

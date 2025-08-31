@@ -392,7 +392,7 @@ class _SettingsPageState extends State<SettingsPage> {
           realmLocalServices.syncService.channel,
         );
         Future.delayed(Duration(seconds: 1), () {
-          print('🔁 Reconnecting...');
+          print('🔁 starting upload local images...');
           realmLocalServices.uploadLocalImages();
         });
       });

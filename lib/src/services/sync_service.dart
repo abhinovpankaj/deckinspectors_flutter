@@ -38,7 +38,7 @@ class SyncService {
     // final wsUrl = Uri.parse(
     //   'ws://deckmultitenantwebservices-dev.azurewebsites.net',
     // );
-    final wsUrl = Uri.parse('ws://192.168.1.3:3000/');
+    final wsUrl = Uri.parse('ws://192.168.1.2:3000/');
     channel = WebSocketChannel.connect(wsUrl);
 
     try {
@@ -53,9 +53,11 @@ class SyncService {
     } on SocketException catch (e) {
       // Handle the exception.
       debugPrint("Connect Error: $e");
+      isWebSocketConnected = false;
     } on WebSocketChannelException catch (e) {
       // Handle the exception.
       debugPrint("Connect Error: $e");
+      isWebSocketConnected = false;
     }
   }
 
