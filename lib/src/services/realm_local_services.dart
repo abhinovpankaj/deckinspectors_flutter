@@ -2330,7 +2330,6 @@ class RealmLocalServices with ChangeNotifier {
   ) async {
     try {
       final objectId = ObjectId.fromHexString(messageId);
-
       await Future.microtask(() {
         final existingObj = _findRealmObjectByCollectionName(
           collectionName,
@@ -2449,7 +2448,60 @@ class RealmLocalServices with ChangeNotifier {
 
   void _updateProjectFields(Project project, Map<String, dynamic> fields) {
     fields.forEach((key, value) {
-      if (key.startsWith('children.')) {
+      // Handle a full children list replacement (some updateDescriptions send the
+      // entire array as 'children': [ ... ]) — this fixes the case where the
+      // very first child is added but not present when updates arrive as
+      // a top-level list instead of 'children.<index>'.
+      if (key == 'children' && value is List) {
+        for (final item in value) {
+          if (item is Map<String, dynamic>) {
+            final childIdStr = item['id'] ?? item['_id'];
+            if (childIdStr == null) continue;
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = project.children.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              // update existing child fields
+              item.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'type':
+                    existingChild.type = childValue?.toString() ?? '';
+                    break;
+                  case 'description':
+                    existingChild.description = childValue?.toString() ?? '';
+                    break;
+                  case 'url':
+                    existingChild.url = childValue?.toString() ?? '';
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              // insert new child
+              project.children.add(
+                Child(
+                  childId,
+                  item['isInvasive'] ?? false,
+                  name: item['name'] ?? '',
+                  type: item['type'] ?? '',
+                  description: item['description'] ?? '',
+                  url: item['url'] ?? '',
+                  sequenceNo: item['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else if (key.startsWith('children.')) {
         // Handle children updates like children.0, children.1
         // Match children.<index> but use _id to find the child
         final match = RegExp(r'children\.(\d+)').firstMatch(key);
@@ -2547,7 +2599,55 @@ class RealmLocalServices with ChangeNotifier {
     Map<String, dynamic> fields,
   ) {
     fields.forEach((key, value) {
-      if (key.startsWith('children.')) {
+      // Handle a full children list replacement as well as children.<index>
+      if (key == 'children' && value is List) {
+        for (final item in value) {
+          if (item is Map<String, dynamic>) {
+            final childIdStr = item['id'] ?? item['_id'];
+            if (childIdStr == null) continue;
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = subProject.children.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              item.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'type':
+                    existingChild.type = childValue?.toString() ?? '';
+                    break;
+                  case 'description':
+                    existingChild.description = childValue?.toString() ?? '';
+                    break;
+                  case 'url':
+                    existingChild.url = childValue?.toString() ?? '';
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              subProject.children.add(
+                Child(
+                  childId,
+                  item['isInvasive'] ?? false,
+                  name: item['name'] ?? '',
+                  type: item['type'] ?? '',
+                  description: item['description'] ?? '',
+                  url: item['url'] ?? '',
+                  sequenceNo: item['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else if (key.startsWith('children.')) {
         // Handle children updates like children.0, children.1
         // Match children.<index> but use _id to find the child
         final match = RegExp(r'children\.(\d+)').firstMatch(key);
@@ -2633,8 +2733,74 @@ class RealmLocalServices with ChangeNotifier {
 
   void _updateLocationFields(Location location, Map<String, dynamic> fields) {
     fields.forEach((key, value) {
-      //apply the same logic as in project and subproject
-      if (key.startsWith('sections.')) {
+      // Support a top-level 'sections' array like we do for project.children
+      if (key == 'sections' && value is List) {
+        for (final item in value) {
+          if (item is Map<String, dynamic>) {
+            final childIdStr = item['id'] ?? item['_id'];
+            if (childIdStr == null) continue;
+            final childId = ObjectId.fromHexString(childIdStr);
+            final existingChild = location.sections.firstWhereOrNull(
+              (c) => c.id == childId,
+            );
+            if (existingChild != null) {
+              item.forEach((childKey, childValue) {
+                switch (childKey) {
+                  case 'name':
+                    existingChild.name = childValue?.toString() ?? '';
+                    break;
+                  case 'conditionalassessment':
+                    existingChild.conditionalassessment =
+                        childValue?.toString() ?? '';
+                    break;
+                  case 'visualreview':
+                    existingChild.visualreview = childValue?.toString() ?? '';
+                    break;
+                  case 'coverUrl':
+                    existingChild.coverUrl = childValue?.toString() ?? '';
+                    break;
+                  case 'furtherinvasivereviewrequired':
+                    existingChild.furtherinvasivereviewrequired =
+                        childValue ?? false;
+                    break;
+                  case 'visualsignsofleak':
+                    existingChild.visualsignsofleak = childValue ?? false;
+                    break;
+                  case 'isInvasive':
+                    existingChild.isInvasive = childValue ?? false;
+                    break;
+                  case 'count':
+                    existingChild.count = childValue ?? 0;
+                    break;
+                  case 'isuploading':
+                    existingChild.isuploading = childValue ?? false;
+                    break;
+                  case 'sequenceNo':
+                    existingChild.sequenceNo = childValue?.toString() ?? '';
+                    break;
+                }
+              });
+            } else {
+              location.sections.add(
+                Section(
+                  childId,
+                  item['isInvasive'] ?? false,
+                  name: item['name'] ?? '',
+                  coverUrl: item['coverUrl'] ?? '',
+                  visualreview: item['visualreview'] ?? '',
+                  conditionalassessment: item['conditionalassessment'] ?? '',
+                  visualsignsofleak: item['visualsignsofleak'] ?? false,
+                  furtherinvasivereviewrequired:
+                      item['furtherinvasivereviewrequired'] ?? false,
+                  count: item['count'] ?? 0,
+                  isuploading: item['isuploading'] ?? false,
+                  sequenceNo: item['sequenceNo'] ?? '',
+                ),
+              );
+            }
+          }
+        }
+      } else if (key.startsWith('sections.')) {
         // Handle children updates like sections.0, sections.1
         // Match sections.<index> but use _id to find the child
         final match = RegExp(r'sections\.(\d+)').firstMatch(key);

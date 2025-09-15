@@ -119,9 +119,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
       body: StreamBuilder<RealmResultsChanges<Project>>(
         //projectsBloc.projects
         stream:
-            realmServices?.realm
-                .query<Project>("TRUEPREDICATE SORT(_id DESC)")
-                .changes,
+            realmServices?.realm.query<Project>(
+              "assignedto == \$0 SORT(_id DESC)",
+              [usersBloc.userDetails.username],
+            ).changes,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final data = snapshot.data;
