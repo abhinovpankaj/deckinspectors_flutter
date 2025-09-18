@@ -120,7 +120,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         //projectsBloc.projects
         stream:
             realmServices?.realm.query<Project>(
-              "assignedto == \$0 SORT(_id DESC)",
+              "\$0 IN assignedto SORT(_id DESC)",
               [usersBloc.userDetails.username],
             ).changes,
         builder: (context, snapshot) {

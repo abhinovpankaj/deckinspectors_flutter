@@ -488,11 +488,12 @@ class RealmLocalServices with ChangeNotifier {
     String type,
     String description,
   ) {
-    var parentProject = realm.find<Project>(parentId);
+    final parentProject = realm.find<Project>(parentId);
+    if (parentProject == null) return;
 
-    if (parentProject != null) {
+    realm.write(() {
       parentProject.isInvasive = isInvasive;
-      var found = parentProject.children.where(
+      final found = parentProject.children.where(
         (element) => element.id == childId,
       );
       if (found.isEmpty) {
@@ -507,36 +508,39 @@ class RealmLocalServices with ChangeNotifier {
           ),
         );
       } else {
-        var foundChild = found.first;
+        final foundChild = found.first;
         foundChild.name = name;
         foundChild.description = description;
         foundChild.isInvasive = isInvasive;
       }
-    }
+    });
+    notifyListeners();
   }
 
   void deleteProjectChildren(ObjectId childId, ObjectId parentId) {
-    var parentProject = realm.find<Project>(parentId);
-    if (parentProject != null) {
-      var foundChild = parentProject.children.firstWhere(
+    final parentProject = realm.find<Project>(parentId);
+    if (parentProject == null) return;
+    realm.write(() {
+      final foundChild = parentProject.children.firstWhere(
         (element) => element.id == childId,
       );
       parentProject.children.remove(foundChild);
-    }
+    });
+    notifyListeners();
   }
 
   void updateChildUrl(ObjectId childId, ObjectId parentId, String url) {
-    var parentProject = realm.find<Project>(parentId);
+    final parentProject = realm.find<Project>(parentId);
+    if (parentProject == null) return;
     try {
-      if (parentProject != null) {
-        var found = parentProject.children.where(
+      realm.write(() {
+        final found = parentProject.children.where(
           (element) => element.id == childId,
         );
-
-        var foundChild = found.first;
-
+        final foundChild = found.first;
         foundChild.url = url;
-      }
+      });
+      notifyListeners();
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -546,10 +550,17 @@ class RealmLocalServices with ChangeNotifier {
     try {
       var foundProject = realm.find<Project>(projectId);
       if (foundProject != null) {
+        debugPrint(
+          'updateAssignment: project=$projectId before=${foundProject.assignedto.toList()}',
+        );
         realm.write(() {
           foundProject.assignedto.clear();
           foundProject.assignedto.addAll(assignees);
         });
+        debugPrint(
+          'updateAssignment: project=$projectId after=${foundProject.assignedto.toList()}',
+        );
+        notifyListeners();
 
         pushToWebSocket('update', 'project', {
           "id": projectId.hexString,
@@ -573,10 +584,11 @@ class RealmLocalServices with ChangeNotifier {
     String type,
     String description,
   ) {
-    var parentProject = realm.find<SubProject>(parentId);
+    final parentProject = realm.find<SubProject>(parentId);
+    if (parentProject == null) return;
 
-    if (parentProject != null) {
-      var found = parentProject.children.where(
+    realm.write(() {
+      final found = parentProject.children.where(
         (element) => element.id == childId,
       );
       if (found.isEmpty) {
@@ -591,34 +603,37 @@ class RealmLocalServices with ChangeNotifier {
           ),
         );
       } else {
-        var foundChild = found.first;
+        final foundChild = found.first;
         foundChild.name = name;
         foundChild.description = description;
       }
-    }
+    });
+    notifyListeners();
   }
 
   void deleteSubProjectChildren(ObjectId childId, ObjectId parentId) {
-    var parentProject = realm.find<SubProject>(parentId);
-    if (parentProject != null) {
-      var foundChild = parentProject.children.firstWhere(
+    final parentProject = realm.find<SubProject>(parentId);
+    if (parentProject == null) return;
+    realm.write(() {
+      final foundChild = parentProject.children.firstWhere(
         (element) => element.id == childId,
       );
       parentProject.children.remove(foundChild);
-    }
+    });
+    notifyListeners();
   }
 
   void updateSubChildUrl(ObjectId childId, ObjectId parentId, String url) {
-    var parentProject = realm.find<SubProject>(parentId);
-    if (parentProject != null) {
-      var found = parentProject.children.where(
+    final parentProject = realm.find<SubProject>(parentId);
+    if (parentProject == null) return;
+    realm.write(() {
+      final found = parentProject.children.where(
         (element) => element.id == childId,
       );
-
-      var foundChild = found.first;
-
+      final foundChild = found.first;
       foundChild.url = url;
-    }
+    });
+    notifyListeners();
   }
 
   //Sub-projects
@@ -2304,6 +2319,7 @@ class RealmLocalServices with ChangeNotifier {
 
     try {
       // Use Future.microtask to make Realm write async
+      await Future.delayed(const Duration(milliseconds: 50));
       await Future.microtask(() {
         realm.write(() {
           final obj = _getRealmObjectFromCollectionName(
@@ -2316,6 +2332,8 @@ class RealmLocalServices with ChangeNotifier {
           }
         });
       });
+      // Notify UI after async insert
+      notifyListeners();
     } catch (e) {
       debugPrint("Error async inserting object: $e");
       rethrow;
@@ -2330,54 +2348,60 @@ class RealmLocalServices with ChangeNotifier {
   ) async {
     try {
       final objectId = ObjectId.fromHexString(messageId);
-      await Future.microtask(() {
-        final existingObj = _findRealmObjectByCollectionName(
-          collectionName,
-          objectId,
+      //await Future.microtask(() {
+      final existingObj = _findRealmObjectByCollectionName(
+        collectionName,
+        objectId,
+      );
+
+      if (existingObj == null) {
+        debugPrint(
+          "Object not found for update in $collectionName with id: $messageId",
         );
-
-        if (existingObj == null) {
-          debugPrint(
-            "Object not found for update in $collectionName with id: $messageId",
-          );
-          // If object doesn't exist locally and we have fullDocument, create it
-          if (fullDocument != null) {
-            realm.write(() {
-              final obj = _getRealmObjectFromCollectionName(
-                collectionName,
-                fullDocument,
-              );
-              if (obj != null) {
-                realm.add(obj, update: true);
-                debugPrint("Async created missing object in $collectionName");
-              }
-            });
-          }
-          return;
-        }
-
-        realm.write(() {
-          if (updateDescription != null &&
-              updateDescription['updatedFields'] != null) {
-            // Update only the changed fields
-            _updateSpecificFields(
-              existingObj,
-              updateDescription['updatedFields'],
-              collectionName,
-            );
-          } else if (fullDocument != null) {
-            // Fallback to full document update
+        // If object doesn't exist locally and we have fullDocument, create it
+        if (fullDocument != null) {
+          realm.write(() {
             final obj = _getRealmObjectFromCollectionName(
               collectionName,
               fullDocument,
             );
             if (obj != null) {
               realm.add(obj, update: true);
+              debugPrint("Async created missing object in $collectionName");
             }
+          });
+        }
+        return;
+      }
+
+      realm.write(() {
+        if (updateDescription != null &&
+            updateDescription['updatedFields'] != null) {
+          // Update only the changed fields
+
+          _updateSpecificFields(
+            existingObj,
+            updateDescription['updatedFields'],
+            collectionName,
+          );
+        } else if (fullDocument != null) {
+          // Fallback to full document update
+          final obj = _getRealmObjectFromCollectionName(
+            collectionName,
+            fullDocument,
+          );
+          if (obj != null) {
+            realm.add(obj, update: true);
           }
-          debugPrint("Async updated object in $collectionName");
-        });
+        }
+        debugPrint("Async updated object in $collectionName (id=$messageId)");
       });
+      // Notify UI after async update
+      debugPrint(
+        '_handleUpdateAsync: notifying listeners after update for $collectionName id=$messageId',
+      );
+      notifyListeners();
+      //});
     } catch (e) {
       debugPrint("Error async updating object: $e");
       rethrow;
@@ -2405,6 +2429,8 @@ class RealmLocalServices with ChangeNotifier {
           }
         });
       });
+      // Notify UI after async delete
+      notifyListeners();
     } catch (e) {
       debugPrint("Error async deleting object: $e");
       rethrow;
@@ -2551,6 +2577,23 @@ class RealmLocalServices with ChangeNotifier {
             }
           }
         }
+      } else if (key.startsWith('assignedto.')) {
+        // final match = RegExp(r'assignedto\.(\d+)').firstMatch(key);
+        // if (match != null && value is String) {
+        //   debugPrint(
+        //     '_updateProjectFields: assignedto update for project ${project.id.hexString} before=${project.assignedto.toList()}',
+        //   );
+        //   final index = int.parse(match.group(1)!);
+        //   if (index < project.assignedto.length) {
+        //     project.assignedto[index] = value;
+        //   }
+        //   debugPrint(
+        //     '_updateProjectFields: assignedto update for project ${project.id.hexString} after=${project.assignedto.toList()}',
+        //   );
+        // }
+        if (value is String) {
+          project.assignedto.add(value);
+        }
       } else {
         switch (key) {
           case 'name':
@@ -2576,8 +2619,14 @@ class RealmLocalServices with ChangeNotifier {
             break;
           case 'assignedto':
             if (value is List) {
+              debugPrint(
+                '_updateProjectFields: assignedto update for project ${project.id.hexString} before=${project.assignedto.toList()}',
+              );
               project.assignedto.clear();
               project.assignedto.addAll(Set<String>.from(value));
+              debugPrint(
+                '_updateProjectFields: assignedto update for project ${project.id.hexString} after=${project.assignedto.toList()}',
+              );
             }
             break;
           case 'latitude':
