@@ -202,7 +202,7 @@ class RealmLocalServices with ChangeNotifier {
         }
 
         // Small delay to prevent blocking the UI thread
-        await Future.delayed(const Duration(milliseconds: 1));
+        await Future.delayed(const Duration(milliseconds: 10));
       }
     } finally {
       _isProcessingQueue = false;
@@ -491,41 +491,41 @@ class RealmLocalServices with ChangeNotifier {
     final parentProject = realm.find<Project>(parentId);
     if (parentProject == null) return;
 
-    realm.write(() {
-      parentProject.isInvasive = isInvasive;
-      final found = parentProject.children.where(
-        (element) => element.id == childId,
+    // realm.write(() {
+    parentProject.isInvasive = isInvasive;
+    final found = parentProject.children.where(
+      (element) => element.id == childId,
+    );
+    if (found.isEmpty) {
+      parentProject.children.add(
+        Child(
+          childId,
+          isInvasive,
+          name: name,
+          type: type,
+          description: description,
+          url: "",
+        ),
       );
-      if (found.isEmpty) {
-        parentProject.children.add(
-          Child(
-            childId,
-            isInvasive,
-            name: name,
-            type: type,
-            description: description,
-            url: "",
-          ),
-        );
-      } else {
-        final foundChild = found.first;
-        foundChild.name = name;
-        foundChild.description = description;
-        foundChild.isInvasive = isInvasive;
-      }
-    });
+    } else {
+      final foundChild = found.first;
+      foundChild.name = name;
+      foundChild.description = description;
+      foundChild.isInvasive = isInvasive;
+    }
+    // });
     notifyListeners();
   }
 
   void deleteProjectChildren(ObjectId childId, ObjectId parentId) {
     final parentProject = realm.find<Project>(parentId);
     if (parentProject == null) return;
-    realm.write(() {
-      final foundChild = parentProject.children.firstWhere(
-        (element) => element.id == childId,
-      );
-      parentProject.children.remove(foundChild);
-    });
+    //realm.write(() {
+    final foundChild = parentProject.children.firstWhere(
+      (element) => element.id == childId,
+    );
+    parentProject.children.remove(foundChild);
+    // });
     notifyListeners();
   }
 
@@ -533,13 +533,13 @@ class RealmLocalServices with ChangeNotifier {
     final parentProject = realm.find<Project>(parentId);
     if (parentProject == null) return;
     try {
-      realm.write(() {
-        final found = parentProject.children.where(
-          (element) => element.id == childId,
-        );
-        final foundChild = found.first;
-        foundChild.url = url;
-      });
+      //realm.write(() {
+      final found = parentProject.children.where(
+        (element) => element.id == childId,
+      );
+      final foundChild = found.first;
+      foundChild.url = url;
+      //});
       notifyListeners();
     } catch (e) {
       debugPrint(e.toString());
@@ -587,52 +587,52 @@ class RealmLocalServices with ChangeNotifier {
     final parentProject = realm.find<SubProject>(parentId);
     if (parentProject == null) return;
 
-    realm.write(() {
-      final found = parentProject.children.where(
-        (element) => element.id == childId,
+    //realm.write(() {
+    final found = parentProject.children.where(
+      (element) => element.id == childId,
+    );
+    if (found.isEmpty) {
+      parentProject.children.add(
+        Child(
+          childId,
+          isInvasive,
+          name: name,
+          type: type,
+          description: description,
+          url: "",
+        ),
       );
-      if (found.isEmpty) {
-        parentProject.children.add(
-          Child(
-            childId,
-            isInvasive,
-            name: name,
-            type: type,
-            description: description,
-            url: "",
-          ),
-        );
-      } else {
-        final foundChild = found.first;
-        foundChild.name = name;
-        foundChild.description = description;
-      }
-    });
+    } else {
+      final foundChild = found.first;
+      foundChild.name = name;
+      foundChild.description = description;
+    }
+    //});
     notifyListeners();
   }
 
   void deleteSubProjectChildren(ObjectId childId, ObjectId parentId) {
     final parentProject = realm.find<SubProject>(parentId);
     if (parentProject == null) return;
-    realm.write(() {
-      final foundChild = parentProject.children.firstWhere(
-        (element) => element.id == childId,
-      );
-      parentProject.children.remove(foundChild);
-    });
+    //realm.write(() {
+    final foundChild = parentProject.children.firstWhere(
+      (element) => element.id == childId,
+    );
+    parentProject.children.remove(foundChild);
+    //});
     notifyListeners();
   }
 
   void updateSubChildUrl(ObjectId childId, ObjectId parentId, String url) {
     final parentProject = realm.find<SubProject>(parentId);
     if (parentProject == null) return;
-    realm.write(() {
-      final found = parentProject.children.where(
-        (element) => element.id == childId,
-      );
-      final foundChild = found.first;
-      foundChild.url = url;
-    });
+    //realm.write(() {
+    final found = parentProject.children.where(
+      (element) => element.id == childId,
+    );
+    final foundChild = found.first;
+    foundChild.url = url;
+    //});
     notifyListeners();
   }
 

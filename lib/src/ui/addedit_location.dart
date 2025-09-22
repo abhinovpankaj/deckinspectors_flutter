@@ -41,12 +41,9 @@ class AddEditLocationPage extends StatefulWidget {
 
 class _AddEditLocationPageState extends State<AddEditLocationPage> {
   late String fullUserName;
-  final TextEditingController _nameController = TextEditingController(text: '');
+  late TextEditingController _nameController;
 
-  final TextEditingController _descriptionController = TextEditingController(
-    text: '',
-  );
-
+  late TextEditingController _descriptionController;
   @override
   void dispose() {
     _nameController.dispose();
@@ -63,6 +60,13 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
 
     super.initState();
     pageType = currentLocation.type == 'apartment' ? 'Apartment' : 'Location';
+
+    _nameController = TextEditingController(
+      text: widget.isNewLocation ? "" : (currentLocation.name ?? ""),
+    );
+    _descriptionController = TextEditingController(
+      text: widget.isNewLocation ? "" : (currentLocation.description ?? ""),
+    );
     if (!widget.isNewLocation) {
       pageTitle = 'Edit $pageType';
       isNewLocation = false;

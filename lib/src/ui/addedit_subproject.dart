@@ -41,19 +41,24 @@ class AddEditSubProjectPage extends StatefulWidget {
 
 class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
   late String fullUserName;
-  final TextEditingController _nameController = TextEditingController(text: '');
+  late TextEditingController _nameController;
   bool showAssetPic = true;
-  final TextEditingController _descriptionController = TextEditingController(
-    text: '',
-  );
+  late TextEditingController _descriptionController;
   @override
   void initState() {
     currentBuilding = widget.currentBuilding;
     fullUserName = widget.fullUserName;
     pageTitle = 'Add Building';
     name = "Building";
+
     super.initState();
     isNewBuilding = widget.isNewBuilding;
+    _nameController = TextEditingController(
+      text: isNewBuilding ? "" : (currentBuilding.name ?? ""),
+    );
+    _descriptionController = TextEditingController(
+      text: isNewBuilding ? "" : (currentBuilding.description ?? ""),
+    );
     if (!widget.isNewBuilding) {
       pageTitle = 'Edit Building';
       showAssetPic = false;
