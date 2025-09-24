@@ -47,6 +47,7 @@ class SyncService {
       var clientData = jsonEncode({
         "clientId": usersBloc.userDetails.username,
         "companyIdentifier": usersBloc.userDetails.companyidentifer,
+        "deviceId": usersBloc.userDetails.deviceId,
       });
       channel.sink.add(clientData);
       debugPrint("Connected to WebSocket Server and registered client.");

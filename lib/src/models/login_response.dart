@@ -12,6 +12,7 @@ class LoginResponse {
   String? role;
   String? accesstype;
   String? token;
+  String? deviceId;
   String? companyidentifer;
   String? companyId;
 
@@ -26,6 +27,7 @@ class LoginResponse {
     this.companyidentifer,
     this.accesstype,
     this.companyId,
+    this.deviceId,
   });
 
   LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,7 @@ class LoginResponse {
     companyidentifer = json['companyIdentifier'];
     companyId = json['companyId'];
     accesstype = json['access_type'];
+    deviceId = json['deviceId'];
   }
 
   Map<String, dynamic> toJson() {
@@ -53,6 +56,7 @@ class LoginResponse {
     data['companyIdentifier'] = companyidentifer;
     data['companyId'] = companyId;
     data['token'] = token;
+    data['deviceId'] = deviceId;
     return data;
   }
 }
