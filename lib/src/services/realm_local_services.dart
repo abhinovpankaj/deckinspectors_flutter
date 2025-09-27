@@ -276,7 +276,9 @@ class RealmLocalServices with ChangeNotifier {
 
       // Use the existing WebSocket channel to send ACK
       if (_currentChannel != null) {
-        _currentChannel!.sink.add(jsonEncode(ackData));
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _currentChannel!.sink.add(jsonEncode(ackData));
+        });
         debugPrint(
           "✅ ACK sent for redis entryId $redisEntryId: success=$success",
         );

@@ -150,30 +150,24 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                   .where((element) => element.type == 'projectlocation')
                   .toList();
           locations.sort((l1, l2) {
-            if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-              if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-                return -1;
-              } else {
-                return 1;
-              }
-            } else {
-              return l1.id.toString().compareTo(l2!.id.toString());
-            }
+            final a = int.tryParse(l1!.sequenceNo ?? '');
+            final b = int.tryParse(l2!.sequenceNo ?? '');
+            if (a != null && b != null) return a.compareTo(b);
+            if (a != null) return -1;
+            if (b != null) return 1;
+            return l1.id.toString().compareTo(l2.id.toString());
           });
           buildings =
               currentProject.children
                   .where((element) => element.type == 'subproject')
                   .toList();
           buildings.sort((l1, l2) {
-            if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-              if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-                return -1;
-              } else {
-                return 1;
-              }
-            } else {
-              return l1.id.toString().compareTo(l2!.id.toString());
-            }
+            final a = int.tryParse(l1!.sequenceNo ?? '');
+            final b = int.tryParse(l2!.sequenceNo ?? '');
+            if (a != null && b != null) return a.compareTo(b);
+            if (a != null) return -1;
+            if (b != null) return 1;
+            return l1.id.toString().compareTo(l2.id.toString());
           });
         }
       }
@@ -332,26 +326,20 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                           .toList();
                 }
                 buildings.sort((l1, l2) {
-                  if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                    if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-                      return -1;
-                    } else {
-                      return 1;
-                    }
-                  } else {
-                    return l1.id.toString().compareTo(l2!.id.toString());
-                  }
+                  final a = int.tryParse(l1!.sequenceNo ?? '');
+                  final b = int.tryParse(l2!.sequenceNo ?? '');
+                  if (a != null && b != null) return a.compareTo(b);
+                  if (a != null) return -1;
+                  if (b != null) return 1;
+                  return l1.id.toString().compareTo(l2.id.toString());
                 });
                 locations.sort((l1, l2) {
-                  if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                    if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-                      return -1;
-                    } else {
-                      return 1;
-                    }
-                  } else {
-                    return l1.id.toString().compareTo(l2!.id.toString());
-                  }
+                  final a = int.tryParse(l1!.sequenceNo ?? '');
+                  final b = int.tryParse(l2!.sequenceNo ?? '');
+                  if (a != null && b != null) return a.compareTo(b);
+                  if (a != null) return -1;
+                  if (b != null) return 1;
+                  return l1.id.toString().compareTo(l2.id.toString());
                 });
                 var shortDate = DateTime.tryParse(
                   currentProject.createdat as String,

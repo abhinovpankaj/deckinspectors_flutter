@@ -359,26 +359,20 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
               .toList();
     }
     buildinglocations.sort((l1, l2) {
-      if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-        if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-          return -1;
-        } else {
-          return 1;
-        }
-      } else {
-        return l1.id.toString().compareTo(l2!.id.toString());
-      }
+      final a = int.tryParse(l1!.sequenceNo ?? '');
+      final b = int.tryParse(l2!.sequenceNo ?? '');
+      if (a != null && b != null) return a.compareTo(b);
+      if (a != null) return -1;
+      if (b != null) return 1;
+      return l1.id.toString().compareTo(l2.id.toString());
     });
     apartments.sort((l1, l2) {
-      if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-        if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
-          return -1;
-        } else {
-          return 1;
-        }
-      } else {
-        return l1.id.toString().compareTo(l2!.id.toString());
-      }
+      final a = int.tryParse(l1!.sequenceNo ?? '');
+      final b = int.tryParse(l2!.sequenceNo ?? '');
+      if (a != null && b != null) return a.compareTo(b);
+      if (a != null) return -1;
+      if (b != null) return 1;
+      return l1.id.toString().compareTo(l2.id.toString());
     });
     return Column(
       mainAxisSize: MainAxisSize.min,
