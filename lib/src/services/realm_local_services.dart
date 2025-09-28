@@ -182,6 +182,9 @@ class RealmLocalServices with ChangeNotifier {
 
     _isProcessingQueue = true;
     debugPrint("Started processing message queue");
+    // collect ACK information for all processed messages and send them
+    // only after the queue has been fully processed
+    final List<Map<String, dynamic>> _ackedResults = [];
 
     try {
       while (_messageQueue.isNotEmpty) {
@@ -210,10 +213,17 @@ class RealmLocalServices with ChangeNotifier {
         );
 
         try {
-          // Process message asynchronously
-          await _processServerMessage(message);
+          // Process message asynchronously and collect ACK info
+          final ackInfo = await _processServerMessage(message);
+          _ackedResults.add(ackInfo);
         } catch (e) {
           debugPrint("Error processing message ${message['messageId']}: $e");
+          final redisEntryId = (message['redisEntryId'] ?? '') as String;
+          _ackedResults.add({
+            'redisEntryId': redisEntryId,
+            'success': false,
+            'error': e.toString(),
+          });
           // Continue processing other messages even if one fails
         }
 
@@ -221,13 +231,33 @@ class RealmLocalServices with ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 10));
       }
     } finally {
+      // After the whole queue has been processed, send ACKs for each
+      try {
+        for (final ack in _ackedResults) {
+          try {
+            final redisEntryId = (ack['redisEntryId'] ?? '').toString();
+            final success = (ack['success'] ?? false) == true;
+            final error = ack['error'] as String?;
+            if (redisEntryId.isNotEmpty) {
+              _sendAcknowledgment(redisEntryId, success, error);
+            }
+          } catch (e) {
+            debugPrint('Error sending acknowledgment for ack entry: $e');
+          }
+        }
+      } catch (e) {
+        debugPrint('Error while sending batched acknowledgments: $e');
+      }
+
       _isProcessingQueue = false;
       debugPrint("Finished processing message queue");
     }
   }
 
   // Process individual server message asynchronously
-  Future<void> _processServerMessage(Map<String, dynamic> message) async {
+  Future<Map<String, dynamic>> _processServerMessage(
+    Map<String, dynamic> message,
+  ) async {
     final collectionName = message['collectionName'];
     final messageId = message['messageId'];
     final action = message['action'];
@@ -237,7 +267,11 @@ class RealmLocalServices with ChangeNotifier {
 
     if (messageId == null) {
       debugPrint("Message ID is null, skipping update");
-      return;
+      return {
+        'redisEntryId': redisEntryId?.toString() ?? '',
+        'success': false,
+        'error': 'Message ID is null',
+      };
     }
 
     debugPrint(
@@ -263,18 +297,28 @@ class RealmLocalServices with ChangeNotifier {
           break;
         default:
           debugPrint("Unknown action: $action");
-          // Send negative ACK for unknown actions
-          _sendAcknowledgment(redisEntryId, false, "Unknown action: $action");
-          return;
+          // Return negative ACK info for unknown actions
+          return {
+            'redisEntryId': redisEntryId?.toString() ?? '',
+            'success': false,
+            'error': 'Unknown action: $action',
+          };
       }
 
-      // Send positive ACK after successful processing
-      _sendAcknowledgment(redisEntryId, true, null);
+      // Return positive ACK info after successful processing
+      return {
+        'redisEntryId': redisEntryId?.toString() ?? '',
+        'success': true,
+        'error': null,
+      };
     } catch (e) {
       debugPrint("Error processing server message: $e");
-      // Send negative ACK for processing errors
-      // _sendAcknowledgment(redisEntryId, false, e.toString());
-      // rethrow;
+      // Return negative ACK info for processing errors
+      return {
+        'redisEntryId': redisEntryId?.toString() ?? '',
+        'success': false,
+        'error': e.toString(),
+      };
     }
   }
 
