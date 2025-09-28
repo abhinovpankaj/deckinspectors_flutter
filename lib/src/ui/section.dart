@@ -243,11 +243,12 @@ class _SectionPageState extends State<SectionPage> {
     parentType = widget.parentType;
     realmServices = Provider.of<RealmLocalServices>(context, listen: false);
     isNewSection = widget.isNewSection;
+    capturedImages = ValueNotifier<List<String>>(<String>[]);
     if (isNewSection) {
       currentVisualSection = getNewVisualSection();
-      capturedImages = [];
+      capturedImages.value = [];
     } else {
-      capturedImages.clear();
+      capturedImages.value = [];
       fetchData();
     }
     userFullName = widget.userFullName;
@@ -345,16 +346,15 @@ class _SectionPageState extends State<SectionPage> {
           currentVisualSection.furtherinvasivereviewrequired;
       hasSignsOfLeak = currentVisualSection.visualsignsofleak;
       if (currentVisualSection.images.isNotEmpty) {
+        final List<String> imgs = [];
         if (appSettings.activeConnection) {
-          capturedImages.addAll(currentVisualSection.images);
-          //call upload local images
-
-          //realmServices.uploadLocalImages();
+          imgs.addAll(currentVisualSection.images.map((e) => e));
         } else {
           for (var imgpath in currentVisualSection.images) {
-            capturedImages.add(realmServices.getlocalPath(imgpath));
+            imgs.add(realmServices.getlocalPath(imgpath));
           }
         }
+        capturedImages.value = imgs;
       }
     }
   }
@@ -381,7 +381,7 @@ class _SectionPageState extends State<SectionPage> {
             _eee == null ||
             _lbc == null ||
             _awe == null ||
-            capturedImages.isEmpty) {
+            capturedImages.value.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -396,23 +396,44 @@ class _SectionPageState extends State<SectionPage> {
         ).showSnackBar(const SnackBar(content: Text('Saving Location...')));
       }
 
-      var saveResult = realmServices.addupdateVisualSection(
-        currentVisualSection,
-        _nameController.text,
-        _concernsController.text,
-        selectedExteriorelements,
-        selectedWaterproofingElements,
-        _review,
-        _assessment,
-        _eee,
-        _lbc,
-        _awe,
-        invasiveReviewRequired,
-        hasSignsOfLeak,
-        isNewSection,
-        userFullName,
-        unitUnavailable,
+      debugPrint(
+        'Section.save: attempting save with ${capturedImages.value.length} capturedImages',
       );
+      var saveResult = false;
+      // prevent concurrent saves and indicate running state
+      setState(() {
+        isRunning = true;
+      });
+      try {
+        saveResult = await realmServices.addupdateVisualSection(
+          currentVisualSection,
+          _nameController.text,
+          _concernsController.text,
+          selectedExteriorelements,
+          selectedWaterproofingElements,
+          _review,
+          _assessment,
+          _eee,
+          _lbc,
+          _awe,
+          invasiveReviewRequired,
+          hasSignsOfLeak,
+          isNewSection,
+          userFullName,
+          unitUnavailable,
+        );
+      } catch (e, st) {
+        debugPrint('Section.save: addupdateVisualSection threw: $e');
+        debugPrint(st.toString());
+        saveResult = false;
+      }
+
+      debugPrint('Section.save: saveResult=$saveResult');
+
+      // clear running state
+      setState(() {
+        isRunning = false;
+      });
 
       if (saveResult) {
         isSaved = true;
@@ -421,12 +442,12 @@ class _SectionPageState extends State<SectionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location saved successfully.')),
         );
-        if (capturedImages.isNotEmpty) {
+        if (capturedImages.value.isNotEmpty) {
           // var imagesToUpload =
           //     capturedImages.where((e) => !e.startsWith('http')).toList();
           // get the images which are not uploaded.
           var imagesToUpload = await realmServices.getImagesNotUploaded(
-            capturedImages,
+            capturedImages.value,
             appSettings.activeConnection,
             isNewSection,
           );
@@ -507,7 +528,9 @@ class _SectionPageState extends State<SectionPage> {
 
   final _formKey = GlobalKey<FormState>();
   //List<XFile> capturedImages = [];
-  List<String> capturedImages = [];
+  ValueNotifier<List<String>> capturedImages = ValueNotifier<List<String>>(
+    <String>[],
+  );
   bool hasSignsOfLeak = false;
   bool invasiveReviewRequired = false;
   bool unitUnavailable = false;
@@ -541,59 +564,46 @@ class _SectionPageState extends State<SectionPage> {
         context,
         MaterialPageRoute(builder: (context) => const CameraScreen()),
       ).then((value) {
-        setState(() {
-          if (value != null) {
-            capturedImages.addAll(value);
-            if (value.isNotEmpty) {
-              setState(() {
-                // currentVisualSection.realm.write(() {
-                //   currentVisualSection.images
-                //       .addAll(value.map((e) => e.path).toList());
-                // });
-                unitUnavailable = false;
-                isFormUpdated = true;
-              });
-            }
-            // for (var element in capturedImages) {
-            //   //currentVisualSection.images ??= RealmList<String>[];
-            //   currentVisualSection.images.add(element);
-            // }
-          }
-        });
+        if (value != null && value.isNotEmpty) {
+          // value is List<String> paths
+          final newList = List<String>.from(capturedImages.value);
+          newList.addAll(value);
+          capturedImages.value = newList;
+          setState(() {
+            unitUnavailable = false;
+            isFormUpdated = true;
+          });
+        }
       });
     } else if (value == 3) {
       await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ESP32CameraScreen()),
       ).then((value) {
-        setState(() {
-          if (value != null) {
-            capturedImages.addAll(value);
-            if (value.isNotEmpty) {
-              setState(() {
-                unitUnavailable = false;
-                isFormUpdated = true;
-              });
-            }
-          }
-        });
+        if (value != null && value.isNotEmpty) {
+          final newList = List<String>.from(capturedImages.value);
+          newList.addAll(value);
+          capturedImages.value = newList;
+          setState(() {
+            unitUnavailable = false;
+            isFormUpdated = true;
+          });
+        }
       });
     } else if (value == 4) {
       await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const PiZeroCameraScreen()),
       ).then((value) {
-        setState(() {
-          if (value != null) {
-            capturedImages.addAll(value);
-            if (value.isNotEmpty) {
-              setState(() {
-                unitUnavailable = false;
-                isFormUpdated = true;
-              });
-            }
-          }
-        });
+        if (value != null && value.isNotEmpty) {
+          final newList = List<String>.from(capturedImages.value);
+          newList.addAll(value);
+          capturedImages.value = newList;
+          setState(() {
+            unitUnavailable = false;
+            isFormUpdated = true;
+          });
+        }
       });
     } else {
       //Code toopen gallery
@@ -601,12 +611,10 @@ class _SectionPageState extends State<SectionPage> {
       //todo
       var imageFiles = await picker.pickMultiImage(imageQuality: 100);
       if (imageFiles.isNotEmpty) {
+        final newList = List<String>.from(capturedImages.value);
+        newList.addAll(imageFiles.map((e) => e.path).toList());
+        capturedImages.value = newList;
         setState(() {
-          capturedImages.addAll(imageFiles.map((e) => e.path).toList());
-          // currentVisualSection.realm.write(() {
-          //   currentVisualSection.images
-          //       .addAll(imageFiles.map((e) => e.path).toList());
-          // });
           unitUnavailable = false;
           isFormUpdated = true;
         });
@@ -666,7 +674,12 @@ class _SectionPageState extends State<SectionPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Unit photos(${capturedImages.length})'),
+                  ValueListenableBuilder<List<String>>(
+                    valueListenable: capturedImages,
+                    builder:
+                        (context, list, _) =>
+                            Text('Unit photos(${list.length})'),
+                  ),
                   PopupMenuButton(
                     child: const Chip(
                       avatar: Icon(
@@ -712,22 +725,26 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              capturedImages.isEmpty
-                  ? const SizedBox(
-                    height: 180,
-                    child: Center(
-                      child: Text(
-                        'Add location Images',
-                        style: TextStyle(fontSize: 16),
+              ValueListenableBuilder<List<String>>(
+                valueListenable: capturedImages,
+                builder: (context, list, _) {
+                  if (list.isEmpty) {
+                    return const SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Text(
+                          'Add location Images',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
-                    ),
-                  )
-                  : SizedBox(
+                    );
+                  }
+                  return SizedBox(
                     height: MediaQuery.of(context).size.height / 3.2,
                     child: ListView.builder(
                       shrinkWrap: true,
                       scrollDirection: Axis.horizontal,
-                      itemCount: capturedImages.length,
+                      itemCount: list.length,
                       itemBuilder:
                           (BuildContext context, int index) => SizedBox(
                             width: 320,
@@ -743,7 +760,7 @@ class _SectionPageState extends State<SectionPage> {
                                       onTap:
                                           () => gotoImageEditorPage(
                                             context,
-                                            capturedImages[index],
+                                            list[index],
                                             index,
                                           ),
                                       child: Container(
@@ -757,10 +774,6 @@ class _SectionPageState extends State<SectionPage> {
                                         width: 300,
                                         decoration: const BoxDecoration(
                                           color: Colors.blue,
-                                          // image: DecorationImage(
-                                          //     image:
-                                          //         AssetImage('assets/images/icon.png'),
-                                          //     fit: BoxFit.cover),
                                           borderRadius: BorderRadius.all(
                                             Radius.circular(8.0),
                                           ),
@@ -778,15 +791,14 @@ class _SectionPageState extends State<SectionPage> {
                                           child: Stack(
                                             fit: StackFit.expand,
                                             children: [
-                                              networkImage(
-                                                capturedImages[index],
-                                              ),
+                                              networkImage(list[index]),
                                               Align(
                                                 alignment:
                                                     Alignment.bottomRight,
                                                 child:
-                                                    capturedImages[index]
-                                                            .startsWith('http')
+                                                    list[index].startsWith(
+                                                          'http',
+                                                        )
                                                         ? const Icon(
                                                           weight: 3,
                                                           size: 50,
@@ -807,11 +819,9 @@ class _SectionPageState extends State<SectionPage> {
                                       ),
                                     ),
                                   ),
-                                  //Text(capturedImages[index]), to show the image path.
                                   OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
                                       side: BorderSide.none,
-                                      // the height is 50, the width is full
                                       minimumSize: const Size.fromHeight(30),
                                       shadowColor: Colors.blue,
                                       elevation: 0,
@@ -837,7 +847,9 @@ class _SectionPageState extends State<SectionPage> {
                             ),
                           ),
                     ),
-                  ),
+                  );
+                },
+              ),
               const SizedBox(height: 4),
               const Divider(
                 color: Color.fromARGB(255, 222, 213, 213),
@@ -1669,11 +1681,24 @@ class _SectionPageState extends State<SectionPage> {
         await File('${destDirectory.path}/$imageid.jpg').create();
     if (editedImage != null) {
       var editedFile = await pathOfImage.writeAsBytes(editedImage);
+      // update local list first using copy-modify-assign so notifier notifies
+      final updated = List<String>.from(capturedImages.value);
+      updated.removeAt(index);
+      updated.insert(index, editedFile.path);
+      capturedImages.value = updated;
       setState(() {
-        capturedImages.removeAt(index);
-        realmServices.removeImageUrl(currentVisualSection, capturedImage);
-        capturedImages.insert(index, editedFile.path);
+        unitUnavailable = false;
+        isFormUpdated = true;
       });
+
+      // attempt to update realm (remove old url) using a fresh realm object
+      try {
+        await Future<void>.delayed(Duration.zero);
+        realmServices.removeImageUrl(currentVisualSection, capturedImage);
+      } catch (e, st) {
+        debugPrint('gotoImageEditorPage: removeImageUrl failed: $e');
+        debugPrint(st.toString());
+      }
     }
   }
 
@@ -1682,10 +1707,23 @@ class _SectionPageState extends State<SectionPage> {
     VisualSection currentVisualSection,
     int index,
   ) {
-    realmServices.removeImageUrl(currentVisualSection, capturedImages[index]);
+    // make UI update immediately and then perform realm remove on a fresh VisualSection
+    final removed = capturedImages.value[index];
+    final updated = List<String>.from(capturedImages.value);
+    updated.removeAt(index);
+    capturedImages.value = updated;
     setState(() {
-      capturedImages.removeAt(index);
+      isFormUpdated = true;
     });
+
+    () async {
+      try {
+        realmServices.removeImageUrl(currentVisualSection, removed);
+      } catch (e, st) {
+        debugPrint('removePhoto: removeImageUrl failed: $e');
+        debugPrint(st.toString());
+      }
+    }();
   }
 }
 

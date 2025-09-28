@@ -21,6 +21,22 @@ import '../models/success_response.dart';
 import '../ui/section.dart';
 
 class RealmLocalServices with ChangeNotifier {
+  // Simple serial write queue to avoid concurrent Realm write conflicts.
+  Future<void> _lastWrite = Future.value();
+
+  Future<T> _wrapInWrite<T>(Future<T> Function() fn) {
+    final completer = Completer<T>();
+    _lastWrite = _lastWrite.whenComplete(() async {
+      try {
+        final res = await fn();
+        completer.complete(res);
+      } catch (e, st) {
+        completer.completeError(e, st);
+      }
+    });
+    return completer.future;
+  }
+
   late Realm realm;
   bool showAll = true;
   static bool offlineModeOn = false;
@@ -34,9 +50,9 @@ class RealmLocalServices with ChangeNotifier {
 
   // Message queue for handling multiple server messages
   final List<Map<String, dynamic>> _messageQueue = [];
-  final List<Map<String, dynamic>> _failedMessages = [];
+  //final List<Map<String, dynamic>> _failedMessages = [];
   bool _isProcessingQueue = false;
-  int _maxRetries = 3;
+  //int _maxRetries = 3;
 
   final Map<String, Map<String, dynamic>> _pendingOutgoing = {};
   final Map<String, Timer> _debounceTimers = {};
@@ -961,7 +977,7 @@ class RealmLocalServices with ChangeNotifier {
     notifyListeners();
   }
 
-  bool addupdateVisualSection(
+  Future<bool> addupdateVisualSection(
     VisualSection visualSection,
     String name,
     String concerns,
@@ -977,53 +993,57 @@ class RealmLocalServices with ChangeNotifier {
     bool isNewSection,
     String userFullName,
     bool unitUnavailable,
-  ) {
+  ) async {
     try {
-      realm.write(() {
-        visualSection.name = name;
-        visualSection.unitUnavailable = unitUnavailable;
-        visualSection.additionalconsiderations = concerns;
-        visualSection.exteriorelements.clear();
-        visualSection.exteriorelements.addAll(
-          selectedExteriorelements.map((element) => element.name),
-        );
-        visualSection.waterproofingelements.clear();
-        visualSection.waterproofingelements.addAll(
-          selectedWaterproofingElements.map((element) => element.name),
-        );
+      await _wrapInWrite<bool>(() async {
+        // perform the Realm write inside the serial queue
+        realm.write(() {
+          visualSection.name = name;
+          visualSection.unitUnavailable = unitUnavailable;
+          visualSection.additionalconsiderations = concerns;
+          visualSection.exteriorelements.clear();
+          visualSection.exteriorelements.addAll(
+            selectedExteriorelements.map((element) => element.name),
+          );
+          visualSection.waterproofingelements.clear();
+          visualSection.waterproofingelements.addAll(
+            selectedWaterproofingElements.map((element) => element.name),
+          );
 
-        visualSection.visualreview = review == null ? "" : review.name;
-        visualSection.conditionalassessment =
-            assessment == null ? "" : assessment.name;
-        visualSection.eee = eee == null ? "" : eee.name;
-        visualSection.lbc = lbc == null ? "" : lbc.name;
-        visualSection.awe = awe == null ? "" : awe.name;
-        visualSection.furtherinvasivereviewrequired = invasiveReviewRequired;
-        visualSection.visualsignsofleak = hasSignsOfLeak;
+          visualSection.visualreview = review == null ? "" : review.name;
+          visualSection.conditionalassessment =
+              assessment == null ? "" : assessment.name;
+          visualSection.eee = eee == null ? "" : eee.name;
+          visualSection.lbc = lbc == null ? "" : lbc.name;
+          visualSection.awe = awe == null ? "" : awe.name;
+          visualSection.furtherinvasivereviewrequired = invasiveReviewRequired;
+          visualSection.visualsignsofleak = hasSignsOfLeak;
 
-        if (isNewSection) {
-          visualSection.createdby = userFullName;
-        } else {
-          visualSection.lasteditedby = userFullName;
-        }
+          if (isNewSection) {
+            visualSection.createdby = userFullName;
+          } else {
+            visualSection.lasteditedby = userFullName;
+          }
 
-        var creationtime = DateTime.now().toString();
-        visualSection.createdat ??= creationtime;
-        visualSection.editedat = DateTime.now().toString();
-        //update parent with the section detail
-        updateLocationSection(
-          visualSection.parenttype,
-          visualSection.id,
-          visualSection.parentid,
-          visualSection.name,
-          visualSection.visualreview,
-          visualSection.visualsignsofleak,
-          visualSection.furtherinvasivereviewrequired,
-          visualSection.conditionalassessment,
-          visualSection.images.length,
-        );
+          var creationtime = DateTime.now().toString();
+          visualSection.createdat ??= creationtime;
+          visualSection.editedat = DateTime.now().toString();
+          //update parent with the section detail
+          updateLocationSection(
+            visualSection.parenttype,
+            visualSection.id,
+            visualSection.parentid,
+            visualSection.name,
+            visualSection.visualreview,
+            visualSection.visualsignsofleak,
+            visualSection.furtherinvasivereviewrequired,
+            visualSection.conditionalassessment,
+            visualSection.images.length,
+          );
 
-        realm.add(visualSection, update: true);
+          realm.add(visualSection, update: true);
+        });
+        return true;
       });
       if (isNewSection) {
         pushToWebSocket('create', 'visualSection', _toJson(visualSection));
@@ -1050,8 +1070,10 @@ class RealmLocalServices with ChangeNotifier {
       }
       notifyListeners();
       return true;
-    } catch (e) {
-      return false;
+    } catch (e, st) {
+      debugPrint('addupdateVisualSection failed: $e');
+      debugPrint(st.toString());
+      return Future.value(false);
     }
   }
 

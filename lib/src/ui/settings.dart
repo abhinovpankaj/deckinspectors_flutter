@@ -142,7 +142,10 @@ class _SettingsPageState extends State<SettingsPage> {
   late RealmLocalServices realmLocalServices;
   @override
   Widget build(BuildContext context) {
-    realmLocalServices = Provider.of<RealmLocalServices>(context);
+    realmLocalServices = Provider.of<RealmLocalServices>(
+      context,
+      listen: false,
+    );
 
     debugPrint(App.isImageUploading.toString());
     return Scaffold(

@@ -43,39 +43,30 @@ Widget networkImage(String? netWorkImageURL) {
     //   },
     // );
     return CachedNetworkImage(
-      placeholder: (context, url) => const SizedBox(
-        width: 30,
-        height: 30,
-        child: CircularProgressIndicator(),
-      ),
+      placeholder:
+          (context, url) => const SizedBox(
+            width: 30,
+            height: 30,
+            child: CircularProgressIndicator(),
+          ),
       imageUrl: imageURL,
       fit: BoxFit.cover,
     );
   } else {
-    return FutureBuilder<File?>(
-      future: getImageFile(imageURL),
-      builder: (BuildContext context, AsyncSnapshot<File?> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError || snapshot.data == null) {
-            // Handle errors or file not found
-            //return Text('Error loading image');
-            return Image.asset(
-              "assets/images/icon.png",
-              fit: BoxFit.fill,
-              width: double.infinity,
-            );
-          }
+    try {
+      final file = File(imageURL);
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.fill, width: double.infinity);
+      }
+    } catch (e) {
+      // ignore and fall through to placeholder
+    }
 
-          return Image.file(
-            snapshot.data!,
-            fit: BoxFit.fill,
-            width: double.infinity,
-          );
-        } else {
-          // While the Future is still running, show a loading indicator or placeholder
-          return const CircularProgressIndicator();
-        }
-      },
+    // Fallback when file doesn't exist or an error occurred
+    return Image.asset(
+      "assets/images/icon.png",
+      fit: BoxFit.fill,
+      width: double.infinity,
     );
   }
 }

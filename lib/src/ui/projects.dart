@@ -83,7 +83,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
   @override
   Widget build(BuildContext context) {
     //projectsBloc.fetchAllProjects();
-    final realmServices = Provider.of<RealmLocalServices?>(context);
+    final realmServices = Provider.of<RealmLocalServices?>(
+      context,
+      listen: false,
+    );
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -148,6 +151,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           : "Multi-Level";
 
                   return SizedBox(
+                    key: ValueKey(projects[index].id.toString()),
                     height: 160,
                     width: MediaQuery.of(context).size.width - 5,
                     child: Card(

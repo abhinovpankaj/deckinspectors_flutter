@@ -186,7 +186,10 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmLocalServices>(context);
+    final realmServices = Provider.of<RealmLocalServices>(
+      context,
+      listen: false,
+    );
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
