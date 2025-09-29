@@ -214,7 +214,7 @@ class _SectionPageState extends State<SectionPage> {
   late String prevPageName;
   void fetchData() {
     isRunning = true;
-
+    photosToRemove = [];
     currentVisualSection =
         realmServices.getVisualSection(widget.sectionId) as VisualSection;
 
@@ -259,7 +259,7 @@ class _SectionPageState extends State<SectionPage> {
       currentLocation = realmServices.getLocation(widget.parentId) as Location;
     }
     // _listenForPiIpAddress();
-    //for hardcoded websocket URL use init2
+    //for hardcoded websocket URL use init2o
     websocketUrl = "http://192.168.125.1:8090";
     SignallingService.instance.init(
       websocketUrl: websocketUrl,
@@ -512,6 +512,13 @@ class _SectionPageState extends State<SectionPage> {
                     urls,
                   );
                 });
+          }
+          //update the image count and cover url in parent location
+          if (photosToRemove.isNotEmpty) {
+            realmServices.removeMultipleImages(
+              currentVisualSection,
+              photosToRemove,
+            );
           }
         }
         return true;
@@ -1702,12 +1709,12 @@ class _SectionPageState extends State<SectionPage> {
     }
   }
 
+  List<String> photosToRemove = [];
   void removePhoto(
     BuildContext context,
     VisualSection currentVisualSection,
     int index,
   ) {
-    // make UI update immediately and then perform realm remove on a fresh VisualSection
     final removed = capturedImages.value[index];
     final updated = List<String>.from(capturedImages.value);
     updated.removeAt(index);
@@ -1715,15 +1722,15 @@ class _SectionPageState extends State<SectionPage> {
     setState(() {
       isFormUpdated = true;
     });
-
-    () async {
-      try {
-        realmServices.removeImageUrl(currentVisualSection, removed);
-      } catch (e, st) {
-        debugPrint('removePhoto: removeImageUrl failed: $e');
-        debugPrint(st.toString());
-      }
-    }();
+    photosToRemove.add(removed);
+    // () async {
+    //   try {
+    //     realmServices.removeImageUrl(currentVisualSection, removed);
+    //   } catch (e, st) {
+    //     debugPrint('removePhoto: removeImageUrl failed: $e');
+    //     debugPrint(st.toString());
+    //   }
+    // }();
   }
 }
 

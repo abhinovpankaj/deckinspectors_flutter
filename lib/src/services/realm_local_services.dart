@@ -1204,6 +1204,35 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('update', 'visualSection', {
         "id": localVisualSection.id.hexString,
         "images": localVisualSection.images,
+        "companyIdentifier": localVisualSection.companyIdentifier,
+      });
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  bool removeMultipleImages(
+    VisualSection localVisualSection,
+    List<String> urls,
+  ) {
+    try {
+      realm.write(() {
+        localVisualSection.images.removeWhere((image) => urls.contains(image));
+
+        updateImageCount(
+          localVisualSection.parenttype,
+          localVisualSection.id,
+          localVisualSection.parentid,
+          localVisualSection.images.length,
+          localVisualSection.images.last,
+        );
+      });
+      pushToWebSocket('update', 'visualSection', {
+        "id": localVisualSection.id.hexString,
+        "images": localVisualSection.images,
+        "companyIdentifier": localVisualSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -1231,6 +1260,7 @@ class RealmLocalServices with ChangeNotifier {
       pushToWebSocket('update', 'dynamicSection', {
         "id": localVisualSection.id.hexString,
         "images": localVisualSection.images,
+        "companyIdentifier": localVisualSection.companyIdentifier,
       });
       notifyListeners();
       return true;
@@ -1970,6 +2000,7 @@ class RealmLocalServices with ChangeNotifier {
             "childId": id,
             "count": length,
             "coverUrl": url,
+            "companyIdentifier": parentProject.companyIdentifier,
           });
         }
       } else {
@@ -1990,6 +2021,7 @@ class RealmLocalServices with ChangeNotifier {
             "childId": id,
             "count": length,
             "coverUrl": url,
+            "companyIdentifier": parentLocation.companyIdentifier,
           });
         }
       }
@@ -2315,7 +2347,7 @@ class RealmLocalServices with ChangeNotifier {
         });
       } else if (socketData['action'] == 'update' ||
           socketData['action'] == 'updateImageUrl' ||
-          socketData['action'] == 'updateImageCount' ||
+          // socketData['action'] == 'updateImageCount' ||
           socketData['action'] == 'addImages') {
         // Patch the existing data with updated fields
         try {
@@ -2337,6 +2369,58 @@ class RealmLocalServices with ChangeNotifier {
         realm.write(() {
           realm.delete<UnsyncedData>(existingData);
         });
+      } else if (socketData['action'] == 'updateImageCount') {
+        try {
+          // Load existing JSON if present
+          Map<String, dynamic> existingJson = {};
+          try {
+            if (existingData.jsonData.isNotEmpty) {
+              final parsed = jsonDecode(existingData.jsonData);
+              if (parsed is Map<String, dynamic>) existingJson = parsed;
+            }
+          } catch (_) {
+            existingJson = {};
+          }
+
+          // Parse incoming update payload (may be a JSON string or a Map)
+          final raw = socketData['data'];
+          Map<String, dynamic> updateJson = {};
+          if (raw is String) {
+            try {
+              final parsed = jsonDecode(raw);
+              if (parsed is Map<String, dynamic>) updateJson = parsed;
+            } catch (_) {
+              updateJson = {};
+            }
+          } else if (raw is Map) {
+            updateJson = Map<String, dynamic>.from(raw);
+          }
+
+          // Extract the fields we care about (count and coverUrl) and patch existingJson
+          if (updateJson.containsKey('count')) {
+            existingJson['count'] = updateJson['count'];
+          }
+
+          // support multiple key casings for cover url
+          dynamic cover;
+          if (updateJson.containsKey('coverUrl')) {
+            cover = updateJson['coverUrl'];
+          } else if (updateJson.containsKey('coverurl')) {
+            cover = updateJson['coverurl'];
+          } else if (updateJson.containsKey('cover_url')) {
+            cover = updateJson['cover_url'];
+          }
+          if (cover != null) existingJson['coverUrl'] = cover;
+
+          realm.write(() {
+            existingData.jsonData = jsonEncode(existingJson);
+            existingData.updatedAt = DateTime.now().toString();
+          });
+        } catch (e) {
+          debugPrint('Error patching unsynced updateImageCount: $e');
+        }
+      } else {
+        debugPrint("Unhandled socket action: ${socketData['action']}");
       }
     } catch (e) {
       debugPrint(e.toString());
