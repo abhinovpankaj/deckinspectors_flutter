@@ -142,25 +142,24 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
           currentVisualSection.additionalconsiderations as String;
       invasiveReviewRequired =
           currentVisualSection.furtherinvasivereviewrequired;
+    }
+    for (Question question in currentVisualSection.questions) {
+      questions.add(Question(
+          question.id, question.type, question.name, question.answer,
+          allowedValues: question.allowedValues,
+          isMandatory: question.isMandatory,
+          multipleAnswers: question.multipleAnswers));
+    }
+    if (currentVisualSection.images.isNotEmpty) {
+      if (appSettings.activeConnection) {
+        capturedImages.addAll(currentVisualSection.images);
+        //call upload local images
 
-      if (currentVisualSection.images.isNotEmpty) {
-        if (appSettings.activeConnection) {
-          capturedImages.addAll(currentVisualSection.images);
-          //call upload local images
-
-          //realmServices.uploadLocalImages();
-        } else {
-          for (var imgpath in currentVisualSection.images) {
-            capturedImages.add(realmServices.getlocalPath(imgpath));
-          }
+        //realmServices.uploadLocalImages();
+      } else {
+        for (var imgpath in currentVisualSection.images) {
+          capturedImages.add(realmServices.getlocalPath(imgpath));
         }
-      }
-      for (Question question in currentVisualSection.questions) {
-        questions.add(Question(
-            question.id, question.type, question.name, question.answer,
-            allowedValues: question.allowedValues,
-            isMandatory: question.isMandatory,
-            multipleAnswers: question.multipleAnswers));
       }
     }
   }
@@ -396,7 +395,7 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
                 //   currentVisualSection.images
                 //       .addAll(value.map((e) => e.path).toList());
                 // });
-                unitUnavailable = false;
+                //unitUnavailable = false;
                 isFormUpdated = true;
               });
             }
@@ -1158,83 +1157,81 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Saving Location...')),
         );
+      }
+      var saveResult = realmServices.addupdateDynamicVisualSection(
+          currentVisualSection,
+          _nameController.text,
+          _concernsController.text,
+          invasiveReviewRequired,
+          isNewSection,
+          userFullName,
+          questions,
+          unitUnavailable);
 
-        var saveResult = realmServices.addupdateDynamicVisualSection(
-            currentVisualSection,
-            _nameController.text,
-            _concernsController.text,
-            invasiveReviewRequired,
-            isNewSection,
-            userFullName,
-            questions,
-            unitUnavailable);
+      if (saveResult) {
+        isSaved = true;
+        Navigator.of(context).pop(createNew);
 
-        if (saveResult) {
-          isSaved = true;
-          Navigator.of(context).pop(createNew);
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location saved successfully.')));
+        if (capturedImages.isNotEmpty) {
+          var imagesToUpload = await realmServices.getImagesNotUploaded(
+              capturedImages, appSettings.activeConnection, isNewSection);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location saved successfully.')));
-          if (capturedImages.isNotEmpty) {
-            var imagesToUpload = await realmServices.getImagesNotUploaded(
-                capturedImages, appSettings.activeConnection, isNewSection);
+          if (imagesToUpload.isNotEmpty) {
+            if (parentType != 'project') {
+              realmServices.updateImageUploadStatus(
+                  currentLocation, currentVisualSection.id, true);
+            }
+            List<String> transformedimagesPath = [];
+            // update the path of the images
+            if (Platform.isIOS) {
+              Directory imageDirectory = await getApplicationSupportDirectory();
+              transformedimagesPath = imagesToUpload
+                  .map((imgpath) =>
+                      imgpath = path.join(imageDirectory.path, imgpath))
+                  .toList();
+            } else {
+              transformedimagesPath = imagesToUpload;
+            }
 
-            if (imagesToUpload.isNotEmpty) {
+            imagesBloc
+                .uploadMultipleImages(
+                    transformedimagesPath,
+                    currentVisualSection.name as String,
+                    userFullName,
+                    currentVisualSection.id.toString(),
+                    parentType,
+                    'section')
+                .then((value) async {
+              List<String> urls = [];
+              for (var element in value) {
+                if (element is ImageResponse) {
+                  if (element.originalPath != null) {
+                    await ImageGallerySaver.saveFile(
+                        element.originalPath as String);
+                  }
+
+                  urls.add(element.url as String);
+                }
+              }
               if (parentType != 'project') {
                 realmServices.updateImageUploadStatus(
-                    currentLocation, currentVisualSection.id, true);
-              }
-              List<String> transformedimagesPath = [];
-              // update the path of the images
-              if (Platform.isIOS) {
-                Directory imageDirectory =
-                    await getApplicationSupportDirectory();
-                transformedimagesPath = imagesToUpload
-                    .map((imgpath) =>
-                        imgpath = path.join(imageDirectory.path, imgpath))
-                    .toList();
-              } else {
-                transformedimagesPath = imagesToUpload;
+                    currentLocation, currentVisualSection.id, false);
               }
 
-              imagesBloc
-                  .uploadMultipleImages(
-                      transformedimagesPath,
-                      currentVisualSection.name as String,
-                      userFullName,
-                      currentVisualSection.id.toString(),
-                      parentType,
-                      'section')
-                  .then((value) async {
-                List<String> urls = [];
-                for (var element in value) {
-                  if (element is ImageResponse) {
-                    if (element.originalPath != null) {
-                      await ImageGallerySaver.saveFile(
-                          element.originalPath as String);
-                    }
-
-                    urls.add(element.url as String);
-                  }
-                }
-                if (parentType != 'project') {
-                  realmServices.updateImageUploadStatus(
-                      currentLocation, currentVisualSection.id, false);
-                }
-
-                realmServices.addImagesUrlToDynamicform(
-                    currentVisualSection, imagesToUpload, urls);
-              });
-            }
+              realmServices.addImagesUrlToDynamicform(
+                  currentVisualSection, imagesToUpload, urls);
+            });
           }
-          return true;
-          // Navigator.pop(context);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to save the location.')),
-          );
-          return false;
         }
+        return true;
+        // Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save the location.')),
+        );
+        return false;
       }
     }
     return false;

@@ -316,16 +316,16 @@ class _SectionPageState extends State<SectionPage> {
       invasiveReviewRequired =
           currentVisualSection.furtherinvasivereviewrequired;
       hasSignsOfLeak = currentVisualSection.visualsignsofleak;
-      if (currentVisualSection.images.isNotEmpty) {
-        if (appSettings.activeConnection) {
-          capturedImages.addAll(currentVisualSection.images);
-          //call upload local images
+    }
+    if (currentVisualSection.images.isNotEmpty) {
+      if (appSettings.activeConnection) {
+        capturedImages.addAll(currentVisualSection.images);
+        //call upload local images
 
-          //realmServices.uploadLocalImages();
-        } else {
-          for (var imgpath in currentVisualSection.images) {
-            capturedImages.add(realmServices.getlocalPath(imgpath));
-          }
+        //realmServices.uploadLocalImages();
+      } else {
+        for (var imgpath in currentVisualSection.images) {
+          capturedImages.add(realmServices.getlocalPath(imgpath));
         }
       }
     }
@@ -498,7 +498,7 @@ class _SectionPageState extends State<SectionPage> {
                 //   currentVisualSection.images
                 //       .addAll(value.map((e) => e.path).toList());
                 // });
-                unitUnavailable = false;
+                //unitUnavailable = false;
                 isFormUpdated = true;
               });
             }
