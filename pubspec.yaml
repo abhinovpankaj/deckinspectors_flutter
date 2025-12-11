@@ -48,14 +48,14 @@ dependencies:
   shared_preferences: ^2.1.0
   cached_network_image: ^3.3.1
   realm: ^3.0.0
-  speech_to_text: ^6.1.1
+  speech_to_text: ^7.0.0
   json_annotation: ^4.8.0
   smartstruct: ^1.4.0
   provider: ^6.0.5
   image_editor_plus: ^1.0.6
   assorted_layout_widgets: ^8.0.4
   share_plus: ^7.0.2
-  syncfusion_flutter_pdfviewer: ^24.2.8
+  syncfusion_flutter_pdfviewer: ^28.1.37
   webview_flutter: ^4.2.2
   webview_flutter_android: ^3.8.1
   webview_flutter_wkwebview: ^3.6.1
@@ -63,10 +63,10 @@ dependencies:
   pdf: ^3.11.1
   thumbnailer: ^2.2.0
   connectivity_plus: ^6.0.5
-  awesome_notifications: ^0.8.2
+  awesome_notifications: ^0.9.0
   package_info_plus: ^4.2.0
   wakelock_plus: ^1.1.4
-  image_gallery_saver: ^2.0.3
+  
   google_maps_place_picker_mb: ^3.1.2
   google_maps_flutter: ^2.5.3
   google_maps_flutter_platform_interface: ^2.4.3
@@ -74,8 +74,7 @@ dependencies:
   google_maps_flutter_ios: ^2.3.6
   string_validator: ^1.1.0
   flutter_serial_communication: ^0.2.5
-  serial_communication: ^0.0.2
-  device_info_plus: ^9.1.2
+  device_info_plus: ^10.1.0
   udp: ^5.0.3
   flutter_mjpeg: ^2.0.4
   flutter_vlc_player: ^7.4.2
@@ -89,6 +88,7 @@ dependencies:
   map_launcher: ^3.5.0
   maps_launcher: ^3.0.0+1
   geocoding: ^4.0.0
+  gallery_saver_plus: ^3.2.9
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

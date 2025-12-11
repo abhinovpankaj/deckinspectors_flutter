@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/location.dart';
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+//import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:provider/provider.dart';
 import '../bloc/images_bloc.dart';
 import '../models/realm/realm_schemas.dart';
@@ -10,6 +10,7 @@ import '../models/success_response.dart';
 import '../resources/realm/realm_services.dart';
 //import 'breadcrumb_navigation.dart';
 import 'capture_image.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 
 class AddEditLocationPage extends StatefulWidget {
   final Location currentLocation;
@@ -139,7 +140,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
               imageURL, name, fullUserName, id, parenttype, type);
 
           if (result is ImageResponse) {
-            await ImageGallerySaver.saveFile(result.originalPath as String);
+            await GallerySaver.saveImage(result.originalPath as String);
 
             realmServices.updateLocationUrl(
                 currentLocation, result.url as String);

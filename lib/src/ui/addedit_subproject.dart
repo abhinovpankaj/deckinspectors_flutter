@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/subproject.dart';
 import 'package:flutter/material.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:provider/provider.dart';
 import '../bloc/images_bloc.dart';
 import '../models/realm/realm_schemas.dart';
@@ -119,7 +119,7 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
               'building');
 
           if (result is ImageResponse) {
-            await ImageGallerySaver.saveFile(result.originalPath as String);
+            await GallerySaver.saveImage(result.originalPath as String);
 
             realmServices.updateSubProjectUrl(
                 currentBuilding, result.url as String);

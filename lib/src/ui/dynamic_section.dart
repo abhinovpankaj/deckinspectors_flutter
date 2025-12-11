@@ -5,7 +5,7 @@ import 'package:E3InspectionsMultiTenant/src/ui/image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_editor_plus/image_editor_plus.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -1208,7 +1208,7 @@ class _DynamicVisualSectionPageState extends State<DynamicVisualSectionPage> {
               for (var element in value) {
                 if (element is ImageResponse) {
                   if (element.originalPath != null) {
-                    await ImageGallerySaver.saveFile(
+                    await GallerySaver.saveImage(
                         element.originalPath as String);
                   }
 

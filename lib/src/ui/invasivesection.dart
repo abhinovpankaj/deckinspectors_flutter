@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_editor_plus/image_editor_plus.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
@@ -412,8 +412,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
             for (var element in value) {
               if (element is ImageResponse) {
                 if (element.originalPath != null) {
-                  await ImageGallerySaver.saveFile(
-                      element.originalPath as String);
+                  await GallerySaver.saveImage(element.originalPath as String);
                 }
 
                 urls.add(element.url as String);
@@ -450,8 +449,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
           for (var element in value) {
             if (element is ImageResponse) {
               if (element.originalPath != null) {
-                await ImageGallerySaver.saveFile(
-                    element.originalPath as String);
+                await GallerySaver.saveImage(element.originalPath as String);
               }
               urls.add(element.url as String);
             }
