@@ -12,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   pdfx
   permission_handler_windows
   printing
-  realm
   share_plus
   speech_to_text_windows
   syncfusion_pdfviewer_windows

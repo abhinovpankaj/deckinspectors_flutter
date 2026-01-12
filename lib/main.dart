@@ -8,44 +8,33 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:provider/provider.dart';
 import 'src/app.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'src/bloc/locations_bloc.dart';
 import 'src/bloc/notificationcontroller.dart';
-import 'src/resources/realm/app_services.dart';
-import 'src/resources/realm/realm_services.dart';
+import 'src/resources/couchbase/couchbase_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final realmConfig = json
-      .decode(await rootBundle.loadString('assets/config/atlasConfig.json'));
-  String appId = realmConfig['appId'];
-  Uri baseUrl = Uri.parse(realmConfig['baseUrl']);
+  final couchbaseConfig = json.decode(
+      await rootBundle.loadString('assets/config/couchbaseConfig.json'));
+  String syncGatewayUrl = couchbaseConfig['syncGatewayUrl'];
+  String syncGatewayUsername = couchbaseConfig['syncGatewayUsername'];
+  String syncGatewayPassword = couchbaseConfig['syncGatewayPassword'];
+
   // Always initialize Awesome Notifications
   await NotificationController.initializeLocalNotifications();
   await NotificationController.initializeIsolateReceivePort();
   if (Platform.isAndroid) {
     AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
   }
-  return runApp(MultiProvider(providers: [
-    ChangeNotifierProvider<AppServices>(
-        create: (_) => AppServices(appId, baseUrl)),
-    ChangeNotifierProxyProvider<AppSettings, RealmProjectServices?>(
-        create: (context) => null,
-        update: (BuildContext context, AppSettings appSettings,
-            RealmProjectServices? realmServices) {
-          realmServices?.uploadLocalImages();
-          return realmServices;
-        }),
-    ChangeNotifierProxyProvider<AppServices, RealmProjectServices?>(
-        // RealmServices can only be initialized only if the user is logged in.
-        create: (context) => null,
-        update: (BuildContext context, AppServices appServices,
-            RealmProjectServices? realmServices) {
-          return (appServices.app.currentUser != null &&
-                  usersBloc.userDetails.username != null)
-              ? RealmProjectServices(
-                  appServices.app,
-                  usersBloc.userDetails.username as String,
-                  usersBloc.userDetails.companyidentifer as String)
-              : null;
-        }),
-  ], child: const App()));
+  return runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<CouchbaseServices>(
+          create: (_) => CouchbaseServices(syncGatewayUrl),
+        ),
+      ],
+      child: const App(),
+    ),
+  );
 }

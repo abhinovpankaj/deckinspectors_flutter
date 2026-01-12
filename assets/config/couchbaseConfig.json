@@ -1,0 +1,11 @@
+{
+  "syncGatewayUrl": "http://localhost:4984",
+  "syncGatewayUsername": "admin",
+  "syncGatewayPassword": "admin_password",
+  "databaseName": "inspection_db",
+  "enableLogging": true,
+  "logLevel": "debug",
+  "replicationEnabled": true,
+  "continuousReplication": true,
+  "acceptParentDomainCookies": true
+}

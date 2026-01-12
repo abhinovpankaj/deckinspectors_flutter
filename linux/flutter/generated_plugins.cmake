@@ -8,7 +8,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_webrtc
   maps_launcher
   printing
-  realm
   url_launcher_linux
 )
 

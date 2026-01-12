@@ -4,8 +4,8 @@ import 'package:E3InspectionsMultiTenant/src/models/project_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/section_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/subproject_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/users_response.dart';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/database_provider.dart';
 import 'package:E3InspectionsMultiTenant/src/resources/project_api_provider.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/realm/realm_services.dart';
 import 'package:E3InspectionsMultiTenant/src/resources/user_provider.dart';
 import '../models/location_model.dart';
 import '../models/login_response.dart';
@@ -112,7 +112,7 @@ class Repository {
 
   Future<Object> uploadImage(String path, String containerName, String uploader,
       String id, String parentType, String entityName) {
-    if (RealmProjectServices.offlineModeOn || !appSettings.activeConnection) {
+    if (DatabaseProvider.offlineModeOn || !appSettings.activeConnection) {
       return imageApiProvider.uploadImageLocally(
           path, containerName, uploader, id, parentType, entityName);
     } else {

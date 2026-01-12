@@ -1,39 +1,42 @@
-import 'dart:convert';
-import '../models/location_model.dart';
-import '../resources/repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../resources/couchbase/location_repository.dart';
+import '../models/couchbase/couchbase_models.dart';
+import 'locations_event.dart';
+import 'locations_state.dart';
 
-class LocationsBloc {
-  final Repository _repository = Repository();
+class LocationsBloc extends Bloc<LocationsEvent, LocationsState> {
+  final LocationRepository locationRepository;
 
-  Future<Object> getLocation(String id) async {
-    var response = await _repository.getLocation(id);
-    return response;
+  LocationsBloc({required this.locationRepository})
+      : super(LocationsInitial()) {
+    on<SaveLocationEvent>(_onSaveLocation);
+    on<DeleteLocationEvent>(_onDeleteLocation);
   }
 
-  Future<Object> addLocation(Location location) async {
-    var response = await _repository.addLocation(location);
-
-    return response;
+  Future<void> _onSaveLocation(
+      SaveLocationEvent event, Emitter<LocationsState> emit) async {
+    emit(LocationsLoading());
+    try {
+      if (event.isNew) {
+        await locationRepository.createLocation(event.location);
+      } else {
+        await locationRepository.addupdateLocation(event.location, event.name,
+            event.description, event.fullUserName, event.isNew);
+      }
+      emit(LocationSaveSuccess());
+    } catch (e) {
+      emit(LocationSaveFailure(e.toString()));
+    }
   }
 
-  updateLocation(Location location) async {
-    var response =
-        await _repository.updateLocation(location, location.id as String);
-    return response;
-  }
-
-  deleteLocation(String id, String? type, String name, String parentId,
-      String parentType, bool isVisible) async {
-    final locationObject = jsonEncode({
-      'name': name,
-      'type': type,
-      'parentType': parentType,
-      'isVisible': isVisible,
-      'parentId': parentId
-    });
-    var response = await _repository.deleteLocation(locationObject, id);
-    return response;
+  Future<void> _onDeleteLocation(
+      DeleteLocationEvent event, Emitter<LocationsState> emit) async {
+    emit(LocationsLoading());
+    try {
+      await locationRepository.deleteLocation(event.location);
+      emit(LocationDeleteSuccess());
+    } catch (e) {
+      emit(LocationDeleteFailure(e.toString()));
+    }
   }
 }
-
-final locationsBloc = LocationsBloc();

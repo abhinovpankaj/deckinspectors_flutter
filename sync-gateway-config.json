@@ -1,0 +1,59 @@
+{
+  "logging": {
+    "console": {
+      "enabled": true,
+      "log_level": "info"
+    },
+    "warn": {
+      "enabled": true
+    },
+    "info": {
+      "enabled": true
+    },
+    "debug": {
+      "enabled": true
+    }
+  },
+  "databases": {
+    "db": {
+      "bucket": "inspection_db",
+      "username": "inspection_db",
+      "password": "inspection_db_password",
+      "server": "couchbase://couchbase:8091",
+      "enable_shared_bucket_access": false,
+      "deltaSync": {
+        "enabled": true
+      },
+      "sync": "function sync(doc, oldDoc) {\n          // Validation\n          if (doc.type === undefined) {\n            throw({forbidden: \"Document type must be specified\"});\n          }\n\n          // Route documents based on type\n          if (doc.type === \"Project\") {\n            // Projects are shared with assigned users\n            if (doc.assignedto) {\n              for (var i = 0; i < doc.assignedto.length; i++) {\n                channel(doc.assignedto[i]);\n              }\n            }\n          } else if (doc.type === \"Location\" || doc.type === \"VisualSection\" || \n                     doc.type === \"DynamicVisualSection\" || doc.type === \"LocationForm\") {\n            // Shared documents by company\n            if (doc.companyIdentifier) {\n              channel(\"company_\" + doc.companyIdentifier);\n            }\n          } else if (doc.type === \"DeckImage\") {\n            // Images can be accessed by the uploader and company users\n            if (doc.uploadedBy) {\n              channel(doc.uploadedBy);\n            }\n            if (doc.companyIdentifier) {\n              channel(\"company_\" + doc.companyIdentifier);\n            }\n          } else {\n            // Default: channel by user\n            channel(doc.createdby || \"public\");\n          }\n\n          // Track document changes\n          access(doc.createdby || \"public\", doc._id);\n        }",
+      "users": {
+        "admin": {
+          "password": "admin_password",
+          "admin_channels": ["*"]
+        }
+      },
+      "roles": {
+        "user": {
+          "admin_channels": []
+        },
+        "inspector": {
+          "admin_channels": []
+        },
+        "company_admin": {
+          "admin_channels": []
+        }
+      }
+    }
+  },
+  "interface": "0.0.0.0:4984",
+  "adminInterface": "127.0.0.1:4985",
+  "maxIncomingConnectionLimit": 0,
+  "maxFileDescriptors": 90000,
+  "logFilePath": "./logs/syncgateway.log",
+  "pretty": true,
+  "profileInterface": "127.0.0.1:6060",
+  "configServer": "http://localhost:8091",
+  "replicas": 1,
+  "unsupported": {
+    "replicator_2": true
+  }
+}

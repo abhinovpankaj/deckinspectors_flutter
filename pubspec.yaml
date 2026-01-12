@@ -47,7 +47,8 @@ dependencies:
   path:
   shared_preferences: ^2.1.0
   cached_network_image: ^3.3.1
-  realm: ^3.0.0
+  cbl: ^3.6.0+2
+  http_auth: ^1.0.0
   speech_to_text: ^7.0.0
   json_annotation: ^4.8.0
   smartstruct: ^1.4.0
@@ -89,6 +90,9 @@ dependencies:
   maps_launcher: ^3.0.0+1
   geocoding: ^4.0.0
   gallery_saver_plus: ^3.2.9
+  cbl_flutter: ^3.3.5
+  equatable: ^2.0.8
+  flutter_bloc: ^9.1.1
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

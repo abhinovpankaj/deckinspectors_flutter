@@ -73,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.13"
+  bloc:
+    dependency: transitive
+    description:
+      name: bloc
+      sha256: a48653a82055a900b88cd35f92429f068c5a8057ae9b136d197b3d56c57efb81
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.2.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -89,14 +97,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.2"
-  build_cli_annotations:
-    dependency: transitive
-    description:
-      name: build_cli_annotations
-      sha256: b59d2769769efd6c9ff6d4c4cede0be115a566afc591705c2040b707534b1172
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   build_config:
     dependency: transitive
     description:
@@ -217,14 +217,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.5"
-  cancellation_token:
-    dependency: transitive
+  cbl:
+    dependency: "direct main"
     description:
-      name: cancellation_token
-      sha256: ad95acf9d4b2f3563e25dc937f63587e46a70ce534e910b65d10e115490f1027
+      name: cbl
+      sha256: ef1c74d22217c66fd33cbe1594aca819be879aadc5837814e0742b9209546354
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "3.6.0+2"
+  cbl_flutter:
+    dependency: "direct main"
+    description:
+      name: cbl_flutter
+      sha256: dc2ac04dae75c62071bac3758a3ac391f43a00c97ea6fd83eabcc9b96c03994c
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.5"
+  cbl_flutter_platform_interface:
+    dependency: transitive
+    description:
+      name: cbl_flutter_platform_interface
+      sha256: cf74e496c7ab154ea6529a5ebae904b391972a567de63e9991f600b1b73771a7
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.6"
+  cbl_libcblite_api:
+    dependency: transitive
+    description:
+      name: cbl_libcblite_api
+      sha256: "71628aad89e18f732f3113827c697ef2f49a8dfc49082f2a46a75fb371ba36e6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.4"
+  cbl_libcblitedart_api:
+    dependency: transitive
+    description:
+      name: cbl_libcblitedart_api
+      sha256: "20b25fce47e6241630d2c0a54a145cac6ce822caa953af961485eedb60654834"
+      url: "https://pub.dev"
+    source: hosted
+    version: "12.0.0"
   characters:
     dependency: transitive
     description:
@@ -353,14 +385,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
-  decimal:
-    dependency: transitive
-    description:
-      name: decimal
-      sha256: fc706a5618b81e5b367b01dd62621def37abc096f2b46a9bd9068b64c1fa36d0
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.4"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -377,22 +401,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.3"
-  ejson:
-    dependency: transitive
+  equatable:
+    dependency: "direct main"
     description:
-      name: ejson
-      sha256: "5856e32943e476d67304731dedcd2a4b2363f2d14442176e2a151039605c4633"
+      name: equatable
+      sha256: "3e0141505477fd8ad55d6eb4e7776d3fe8430be8e497ccb1521370c3f21a3e2b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.1"
-  ejson_annotation:
-    dependency: transitive
-    description:
-      name: ejson_annotation
-      sha256: "966c38370f21a0b5ed296a33293c2592a7d14e4b320cc1a5de49d6c55606cc2f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.1"
+    version: "2.0.8"
   extended_image:
     dependency: transitive
     description:
@@ -510,6 +526,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_bloc:
+    dependency: "direct main"
+    description:
+      name: flutter_bloc
+      sha256: cf51747952201a455a1c840f8171d273be009b932c75093020f9af64f2123e38
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.1.1"
   flutter_cache_manager:
     dependency: transitive
     description:
@@ -841,6 +865,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
+  http_auth:
+    dependency: "direct main"
+    description:
+      name: http_auth
+      sha256: b7625acba2987fa69140d9600c679819f33227d665f525fbb2f394e08cf917d1
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   http_client_helper:
     dependency: transitive
     description:
@@ -1105,14 +1137,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.0"
-  objectid:
-    dependency: transitive
-    description:
-      name: objectid
-      sha256: "4d0866753dde818e34fd043d6ef0baf698f65c1db202054c58c87087ccfb4dcf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.1"
   octo_image:
     dependency: transitive
     description:
@@ -1369,46 +1393,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
-  rational:
-    dependency: transitive
-    description:
-      name: rational
-      sha256: cb808fb6f1a839e6fc5f7d8cb3b0a10e1db48b3be102de73938c627f0b636336
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.3"
-  realm:
-    dependency: "direct main"
-    description:
-      name: realm
-      sha256: "076d0b6bdad5acb73f0a3c636ea12b28bd0a4550efa30e811be574290d53171a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.2"
-  realm_common:
-    dependency: transitive
-    description:
-      name: realm_common
-      sha256: "212fe6fc7635f80109c3c7c4361431f3836a6efd74d14483cf87fd0b562a7095"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.5.0"
-  realm_dart:
-    dependency: transitive
-    description:
-      name: realm_dart
-      sha256: "1d214d80f307e96b70a5570de0bf185cda6ac8f3c6f8a86c023990220d4d5693"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.2"
-  realm_generator:
-    dependency: transitive
-    description:
-      name: realm_generator
-      sha256: c87bb0b999c44e91aad5689f94a55e0ddb80fb51f987eb84cc859456dfd1e7ff
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.5.0"
   reorderables:
     dependency: transitive
     description:
@@ -1425,14 +1409,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.27.7"
-  sane_uuid:
-    dependency: transitive
-    description:
-      name: sane_uuid
-      sha256: "5b3fd581f51d01aef0526344c175e198d04ff701249c1a75186429dbb4367265"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
   sanitize_html:
     dependency: transitive
     description:
@@ -1822,14 +1798,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
-  type_plus:
-    dependency: transitive
-    description:
-      name: type_plus
-      sha256: d5d1019471f0d38b91603adb9b5fd4ce7ab903c879d2fbf1a3f80a630a03fcc9
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.1"
   typed_data:
     dependency: transitive
     description:

@@ -9,14 +9,13 @@ import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 import '../bloc/settings_bloc.dart';
 import '../models/exteriorelements.dart';
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 import 'package:http/http.dart' as http;
 import '../models/success_response.dart';
 import 'package:path/path.dart' as path;
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import 'capturemultipic.dart';
 import 'image_widget.dart';
 import 'package:image_picker/image_picker.dart';

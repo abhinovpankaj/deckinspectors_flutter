@@ -7,7 +7,7 @@ import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/models/error_response.dart';
 import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/realm/realm_services.dart';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/couchbase_project_services.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 //import 'package:E3InspectionsMultiTenant/src/ui/pdfviewer.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
@@ -17,8 +17,7 @@ import 'package:map_launcher/map_launcher.dart';
 //import 'package:maps_launcher/maps_launcher.dart';
 
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 
 import 'addedit_subproject.dart';
 

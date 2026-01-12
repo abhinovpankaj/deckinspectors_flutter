@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/users_bloc.dart';
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

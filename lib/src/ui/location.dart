@@ -5,17 +5,16 @@ import 'package:E3InspectionsMultiTenant/src/ui/section.dart';
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 
-import '../models/realm/realm_schemas.dart';
-import '../resources/realm/realm_services.dart';
+import '../models/couchbase/couchbase_models.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 //import 'breadcrumb_navigation.dart';
 import 'cachedimage_widget.dart';
 import 'dynamic_section.dart';
 import 'showprojecttype_widget.dart';
 
 class LocationPage extends StatefulWidget {
-  final ObjectId id;
+  final String id;
   final String userFullName;
   final String parentType;
   final String locationType;
@@ -24,7 +23,7 @@ class LocationPage extends StatefulWidget {
       {super.key});
   @override
   State<LocationPage> createState() => _LocationPageState();
-  static MaterialPageRoute getRoute(ObjectId id, String parentType,
+  static MaterialPageRoute getRoute(String id, String parentType,
           String locationType, String userName, String pageName) =>
       MaterialPageRoute(
           settings: RouteSettings(name: pageName),

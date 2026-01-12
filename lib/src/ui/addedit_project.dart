@@ -12,12 +12,11 @@ import 'package:flutter/material.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 import '../bloc/images_bloc.dart';
 
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 import '../models/success_response.dart';
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
 

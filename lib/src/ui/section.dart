@@ -13,14 +13,13 @@ import 'package:image_editor_plus/image_editor_plus.dart';
 //import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 import 'package:udp/udp.dart';
 import '../models/exteriorelements.dart';
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 
 import '../models/success_response.dart';
 import 'package:path/path.dart' as path;
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import '../services/signalling.service.dart';
 import 'breadcrumb_navigation.dart';
 //import 'capture_multipic_esp_32.dart';
@@ -59,7 +58,7 @@ class SectionPage extends StatefulWidget {
 }
 
 class _SectionPageState extends State<SectionPage> {
-  late RealmProjectServices realmServices;
+  late CouchbaseProjectServices couchbaseServices;
 
   @override
   Widget build(BuildContext context) {
@@ -1595,9 +1594,3 @@ class _SectionPageState extends State<SectionPage> {
     });
   }
 }
-
-enum VisualReview { good, fair, bad }
-
-enum ConditionalAssessment { pass, fail, futureinspection }
-
-enum ExpectancyYears { one, four, seven, sevenplus }

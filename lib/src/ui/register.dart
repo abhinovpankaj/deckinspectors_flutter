@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../resources/realm/app_services.dart';
+import '../resources/couchbase/couchbase_services.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -22,7 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool showPassword = false;
   bool isLoading = false;
 
-  late AppServices appServices;
+  late CouchbaseServices couchbaseServices;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // Sign In Function
   Future<void> registerUser() async {
-    appServices = Provider.of<AppServices>(context, listen: false);
+    couchbaseServices = Provider.of<CouchbaseServices>(context, listen: false);
     if (_usernameController.text.isNotEmpty &&
         _passwordController.text.isNotEmpty &&
         _emailController.text.isNotEmpty &&

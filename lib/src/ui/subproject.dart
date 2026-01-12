@@ -3,11 +3,10 @@ import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import 'addedit_location.dart';
 import 'addedit_subproject.dart';
 
@@ -15,7 +14,7 @@ import 'location.dart';
 import 'package:flutter/material.dart';
 
 class SubProjectDetailsPage extends StatefulWidget {
-  final ObjectId id;
+  final String id;
   final String userfullName;
   final String prevPageName;
   const SubProjectDetailsPage(this.id, this.prevPageName, this.userfullName,

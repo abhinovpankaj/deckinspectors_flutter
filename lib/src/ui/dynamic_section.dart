@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:E3InspectionsMultiTenant/src/models/realm/realm_schemas.dart';
+import 'package:E3InspectionsMultiTenant/src/models/couchbase/couchbase_models.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,12 +11,11 @@ import 'package:intl/intl.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
 import 'package:path/path.dart' as path;
 import '../bloc/images_bloc.dart';
 import '../bloc/settings_bloc.dart';
 import '../models/success_response.dart';
-import '../resources/realm/realm_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import '../services/signalling.service.dart';
 import 'capture_multipic_esp_32.dart';
 import 'capture_multipic_raspi.dart';
