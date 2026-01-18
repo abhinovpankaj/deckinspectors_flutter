@@ -15,15 +15,21 @@ class SubprojectRepository {
   final UsersBloc _usersBloc;
   final AppSettings appSettings;
 
-  SubprojectRepository(this._databaseProvider, this._projectRepository,
-      this._imageRepository, this._usersBloc, this.appSettings);
+  SubprojectRepository(
+    this._databaseProvider,
+    this._projectRepository,
+    this._imageRepository,
+    this._usersBloc,
+    this.appSettings,
+  );
   final String subprojectDocumentType = 'subproject';
   final String attributeDocumentType = 'documentType';
 
   Future<void> deleteProjectChildren(String childId, String parentId) async {
     try {
-      final parentDoc =
-          await _databaseProvider.projectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.projectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final project = Project.fromDocument(parentDoc.toPlainMap());
 
@@ -40,9 +46,12 @@ class SubprojectRepository {
     try {
       // remove from parent project children
       await deleteProjectChildren(
-          subProject.id as String, subProject.parentid ?? '');
-      final doc = await _databaseProvider.subProjectCollection
-          .document(subProject.id as String);
+        subProject.id as String,
+        subProject.parentid ?? '',
+      );
+      final doc = await _databaseProvider.subProjectCollection.document(
+        subProject.id as String,
+      );
       if (doc != null) {
         await _databaseProvider.subProjectCollection.deleteDocument(doc);
       }
@@ -59,6 +68,8 @@ class SubprojectRepository {
       if (doc != null) {
         final model = SubProject.fromDocument(doc.toPlainMap());
 
+        // set model id from document id
+        model.id = doc.id;
         return model;
       }
       return null;
@@ -87,12 +98,17 @@ class SubprojectRepository {
 
       // update parent project child url
       await _projectRepository.updateChildUrl(
-          subProject.id as String, subProject.parentid, url);
+        subProject.id as String,
+        subProject.parentid,
+        url,
+      );
 
       subProject.url = url;
 
       final doc = MutableDocument.withId(
-          subProject.id as String, subProject.toDocument());
+        subProject.id as String,
+        subProject.toDocument(),
+      );
       await _databaseProvider.subProjectCollection.saveDocument(doc);
 
       return true;
@@ -111,22 +127,25 @@ class SubprojectRepository {
     String description,
   ) async {
     try {
-      final parentDoc =
-          await _databaseProvider.subProjectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.subProjectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
 
       subProject.isInvasive = isInvasive;
       final found = subProject.children.where((c) => c.id == childId);
       if (found.isEmpty) {
-        subProject.children.add(Child(
-          id: childId,
-          name: name,
-          type: type,
-          description: description,
-          url: '',
-          isInvasive: isInvasive,
-        ));
+        subProject.children.add(
+          Child(
+            id: childId,
+            name: name,
+            type: type,
+            description: description,
+            url: '',
+            isInvasive: isInvasive,
+          ),
+        );
       } else {
         final foundChild = found.first;
         foundChild.name = name;
@@ -142,16 +161,22 @@ class SubprojectRepository {
   }
 
   Future<void> createOrUpdateSubProject(SubProject subProject) async {
-    final doc = MutableDocument.withId(
-        subProject.id as String, subProject.toDocument());
+    // ensure id exists
+    final id = subProject.id ?? CouchbaseDocument.generateId();
+    subProject.id = id;
+    final doc = MutableDocument.withId(id, subProject.toDocument());
     await _databaseProvider.subProjectCollection.saveDocument(doc);
   }
 
   Future<void> updateChildUrl(
-      String childId, String parentId, String url) async {
+    String childId,
+    String parentId,
+    String url,
+  ) async {
     try {
-      final parentDoc =
-          await _databaseProvider.subProjectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.subProjectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
       final found = subProject.children.where((c) => c.id == childId);
@@ -189,6 +214,10 @@ class SubprojectRepository {
       subProject.createdat ??= creationtime;
       subProject.editedat = DateTime.now().toString();
 
+      // ensure id exists before updating parent or saving
+      final id = subProject.id ?? CouchbaseDocument.generateId();
+      subProject.id = id;
+
       // update parent project's children
       await _projectRepository.updateProjectChildren(
         subProject.id as String,
@@ -200,7 +229,9 @@ class SubprojectRepository {
       );
 
       final doc = MutableDocument.withId(
-          subProject.id as String, subProject.toDocument());
+        subProject.id as String,
+        subProject.toDocument(),
+      );
       await _databaseProvider.subProjectCollection.saveDocument(doc);
       return true;
     } catch (e) {

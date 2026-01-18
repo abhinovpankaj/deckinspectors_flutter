@@ -1,13 +1,13 @@
-import 'package:E3InspectionsMultiTenant/src/app.dart';
-import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/couchbase/couchbase_services.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/login.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app.dart';
+import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
+import '../resources/couchbase/couchbase_services.dart';
+import 'login.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -42,8 +42,9 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       var quality = prefs.getString('imagequality') ?? 'medium';
       var repQuality = prefs.getInt('reportimagequality') ?? 100;
-      reportImageQuality =
-          reportQulityList.firstWhere((element) => element == repQuality);
+      reportImageQuality = reportQulityList.firstWhere(
+        (element) => element == repQuality,
+      );
       var count = prefs.getInt('imageCount') ?? 4;
       imageCount = imageCountList.firstWhere((element) => element == count);
 
@@ -157,220 +158,211 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
       body: Center(
-          child: ListView(children: [
-        Column(
+        child: ListView(
           children: [
-            const SizedBox(
-              height: 4,
-            ),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: Text(
-                  'Image Settings',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 0,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
-            SizedBox(
-              height: 200,
-              child: ListView(
-                padding: const EdgeInsets.all(8),
-                children: <Widget>[
-                  ListTile(
-                    onTap: () => {setImageQuality('high')},
-                    selected: isHighQuality,
-                    leading: isHighQuality
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.blue,
-                          )
-                        : const SizedBox(
-                            width: 40,
-                          ),
-                    title: const Text('High Quality'),
-                  ),
-                  ListTile(
-                    onTap: () => {setImageQuality('medium')},
-                    selected: isMediumQuality,
-                    leading: isMediumQuality
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.blue,
-                          )
-                        : const SizedBox(
-                            width: 40,
-                          ),
-                    title: const Text('Medium Quality'),
-                  ),
-                  ListTile(
-                    onTap: () => {setImageQuality('low')},
-                    selected: isLowQuality,
-                    leading: isLowQuality
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.blue,
-                          )
-                        : const SizedBox(
-                            width: 40,
-                          ),
-                    title: const Text('Low Quality'),
-                  ),
-                ],
-              ),
-            ),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: Text(
-                  'Sync Settings',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 0,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Column(
               children: [
-                const Text(
-                  'Offline ',
-                  style: TextStyle(fontSize: 15),
+                const SizedBox(height: 4),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'Image Settings',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-                Switch(
-                  onChanged: (value) {
-                    toggleSwitch(value);
-                  },
-                  value: isSyncOn,
+                const Divider(
+                  color: Color.fromARGB(255, 222, 213, 213),
+                  height: 0,
+                  thickness: 1,
+                  indent: 2,
+                  endIndent: 2,
                 ),
-                const Text(
-                  'Online',
-                  style: TextStyle(fontSize: 15),
+                SizedBox(
+                  height: 200,
+                  child: ListView(
+                    padding: const EdgeInsets.all(8),
+                    children: <Widget>[
+                      ListTile(
+                        onTap: () => {setImageQuality('high')},
+                        selected: isHighQuality,
+                        leading:
+                            isHighQuality
+                                ? const Icon(Icons.check, color: Colors.blue)
+                                : const SizedBox(width: 40),
+                        title: const Text('High Quality'),
+                      ),
+                      ListTile(
+                        onTap: () => {setImageQuality('medium')},
+                        selected: isMediumQuality,
+                        leading:
+                            isMediumQuality
+                                ? const Icon(Icons.check, color: Colors.blue)
+                                : const SizedBox(width: 40),
+                        title: const Text('Medium Quality'),
+                      ),
+                      ListTile(
+                        onTap: () => {setImageQuality('low')},
+                        selected: isLowQuality,
+                        leading:
+                            isLowQuality
+                                ? const Icon(Icons.check, color: Colors.blue)
+                                : const SizedBox(width: 40),
+                        title: const Text('Low Quality'),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            Visibility(
-              visible: App.isImageUploading,
-              child: const Padding(
-                padding: EdgeInsets.all(12),
-                child: LinearProgressIndicator(
-                  backgroundColor: Colors.orange,
-                  color: Colors.blue,
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'Sync Settings',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+                const Divider(
+                  color: Color.fromARGB(255, 222, 213, 213),
+                  height: 0,
+                  thickness: 1,
+                  indent: 2,
+                  endIndent: 2,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    const Text('Offline ', style: TextStyle(fontSize: 15)),
+                    Switch(
+                      onChanged: (value) {
+                        toggleSwitch(value);
+                      },
+                      value: isSyncOn,
+                    ),
+                    const Text('Online', style: TextStyle(fontSize: 15)),
+                  ],
+                ),
+                Visibility(
+                  visible: App.isImageUploading,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: LinearProgressIndicator(
+                      backgroundColor: Colors.orange,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
 
-            // OutlinedButton.icon(
-            //     style: OutlinedButton.styleFrom(
-            //         side: BorderSide.none,
-            //         // the height is 50, the width is full
-            //         minimumSize: const Size.fromHeight(40),
-            //         backgroundColor: Colors.white,
-            //         shadowColor: Colors.blue,
-            //         elevation: 0),
-            //     onPressed: () {
-            //       forceSync(context, realmServices);
-            //     },
-            //     icon: const Icon(
-            //       Icons.sync_alt_rounded,
-            //       color: Colors.blue,
-            //     ),
-            //     label: const Text(
-            //       'Force Sync',
-            //       style: TextStyle(color: Colors.blue),
-            //     )),
-            const SizedBox(
-              height: 30,
-            ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 0,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
+                // OutlinedButton.icon(
+                //     style: OutlinedButton.styleFrom(
+                //         side: BorderSide.none,
+                //         // the height is 50, the width is full
+                //         minimumSize: const Size.fromHeight(40),
+                //         backgroundColor: Colors.white,
+                //         shadowColor: Colors.blue,
+                //         elevation: 0),
+                //     onPressed: () {
+                //       forceSync(context, realmServices);
+                //     },
+                //     icon: const Icon(
+                //       Icons.sync_alt_rounded,
+                //       color: Colors.blue,
+                //     ),
+                //     label: const Text(
+                //       'Force Sync',
+                //       style: TextStyle(color: Colors.blue),
+                //     )),
+                const SizedBox(height: 30),
+                const Divider(
+                  color: Color.fromARGB(255, 222, 213, 213),
+                  height: 0,
+                  thickness: 1,
+                  indent: 2,
+                  endIndent: 2,
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
                     side: BorderSide.none,
                     // the height is 50, the width is full
                     minimumSize: const Size.fromHeight(40),
                     backgroundColor: Colors.white,
                     shadowColor: Colors.orange,
-                    elevation: 0),
-                onPressed: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-
-                  var result = await usersBloc
-                      .logout(usersBloc.userDetails.username as String);
-                  if (result) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Logged out successfully')),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
                     );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Failed to clear the user session.')),
-                    );
-                  }
-                },
-                icon: const Icon(
-                  Icons.logout_outlined,
-                  color: Colors.blue,
-                ),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.orange),
-                )),
 
-            const SizedBox(
-              height: 30,
-            ),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: Text(
-                  'App Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    var result = await usersBloc.logout(
+                      usersBloc.userDetails.username as String,
+                    );
+                    if (result) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logged out successfully'),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to clear the user session.'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.logout_outlined, color: Colors.blue),
+                  label: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.orange),
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 30),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'App Details',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(
+                  color: Color.fromARGB(255, 222, 213, 213),
+                  height: 0,
+                  thickness: 1,
+                  indent: 2,
+                  endIndent: 2,
+                ),
+                _infoTile('App name', _packageInfo.appName),
+                _infoTile('Package name', _packageInfo.packageName),
+                _infoTile('App version', _packageInfo.version),
+                _infoTile('Build number', _packageInfo.buildNumber),
+                _infoTile('Build signature', _packageInfo.buildSignature),
+                _infoTile('Created On', '18th May 24'),
+              ],
             ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 0,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
-            _infoTile('App name', _packageInfo.appName),
-            _infoTile('Package name', _packageInfo.packageName),
-            _infoTile('App version', _packageInfo.version),
-            _infoTile('Build number', _packageInfo.buildNumber),
-            _infoTile('Build signature', _packageInfo.buildSignature),
-            _infoTile('Created On', '18th May 24'),
           ],
-        )
-      ])),
+        ),
+      ),
     );
   }
 

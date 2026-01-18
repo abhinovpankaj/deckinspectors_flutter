@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:E3InspectionsMultiTenant/src/models/location_model.dart';
-import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/urls.dart';
 import 'package:http/http.dart' show Client;
 import '../models/error_response.dart';
+import '../models/location_model.dart';
+import '../models/success_response.dart';
+import 'urls.dart';
 
 class LocationsApiProvider {
   Client client = Client();
@@ -28,12 +28,15 @@ class LocationsApiProvider {
       'parenttype': location.parenttype,
       'url': location.url,
       'createdby': location.createdby,
-      'type': location.type
+      'type': location.type,
     });
     var endPoint = '${URLS.manageLocationUrl}add';
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.post(baseUrl,
-        body: locationObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: locationObject,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));
@@ -47,12 +50,15 @@ class LocationsApiProvider {
       'name': location.name,
       'description': location.description,
       'url': location.url,
-      'lasteditedby': location.lasteditedby
+      'lasteditedby': location.lasteditedby,
     });
     var endPoint = URLS.manageLocationUrl + id;
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.put(baseUrl,
-        body: locationObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.put(
+      baseUrl,
+      body: locationObject,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));
@@ -64,8 +70,11 @@ class LocationsApiProvider {
   Future<Object> deleteLocation(Object requestBody, String id) async {
     var endPoint = '${URLS.manageLocationUrl}$id/toggleVisibility';
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.post(baseUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));

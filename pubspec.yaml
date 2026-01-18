@@ -1,4 +1,4 @@
-name: E3InspectionsMultiTenant
+name: e3_inspections_multi_tenant
 description: Application for E3Inspections inc for capturing inspection data and create reports.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -92,6 +92,8 @@ dependencies:
   cbl_flutter: ^3.3.5
   equatable: ^2.0.8
   flutter_bloc: ^9.1.1
+  geolocator: ^10.1.1
+  url_launcher: ^6.3.2
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

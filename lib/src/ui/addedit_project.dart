@@ -1,11 +1,4 @@
 import 'dart:io';
-
-//import 'package:deckinspectors/src/ui/breadcrumb_navigation.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-// import 'package:E3InspectionsMultiTenant/src/ui/home.dart';
-// import 'package:E3InspectionsMultiTenant/src/ui/project_details.dart';
-// import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 //import 'package:get/get.dart';
@@ -26,6 +19,7 @@ import '../resources/couchbase/image_repository.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../models/success_response.dart';
 // import '../resources/couchbase/couchbase_project_services.dart';
+import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
 
@@ -39,8 +33,8 @@ class AddEditProjectPage extends StatefulWidget {
     this.newProject,
     this.isNewProject,
     this.userFullName, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
   static MaterialPageRoute getRoute(
     Project project,
     bool isNew,
@@ -125,17 +119,6 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Saving Project...')));
-
-      // Removed unused result variable
-
-      // if (currentProject.id == null) {
-      //   result = await projectsBloc.addProject(currentProject);
-      //   if (result is SuccessResponse) {
-      //     currentProject.id = result.id;
-      //   }
-      // } else {
-      //   result = await projectsBloc.updateProject(currentProject);
-      // }
 
       // TODO: Integrate ProjectRepository/BLoC for add/update project
       // Example: context.read<AddEditProjectBloc>().add(SaveProject(...));

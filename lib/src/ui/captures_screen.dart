@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/preview_screen.dart';
 import 'package:flutter/material.dart';
+
+import 'preview_screen.dart';
 
 class CapturesScreen extends StatelessWidget {
   final List<XFile> imageFileList;
@@ -22,10 +23,7 @@ class CapturesScreen extends StatelessWidget {
               padding: EdgeInsets.all(16.0),
               child: Text(
                 'Captures',
-                style: TextStyle(
-                  fontSize: 32.0,
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontSize: 32.0, color: Colors.white),
               ),
             ),
             GridView.count(
@@ -36,19 +34,17 @@ class CapturesScreen extends StatelessWidget {
                 for (XFile imageFile in imageFileList)
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 2,
-                      ),
+                      border: Border.all(color: Colors.black, width: 2),
                     ),
                     child: InkWell(
                       onTap: () {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                            builder: (context) => PreviewScreen(
-                              fileList: imageFileList,
-                              imageFile: File(imageFile.path),
-                            ),
+                            builder:
+                                (context) => PreviewScreen(
+                                  fileList: imageFileList,
+                                  imageFile: File(imageFile.path),
+                                ),
                           ),
                         );
                       },

@@ -1,10 +1,8 @@
-import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
-import 'package:E3InspectionsMultiTenant/src/models/couchbase/couchbase_models.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/users_bloc.dart';
+import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/project_repository.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
@@ -12,23 +10,27 @@ import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
 import '../bloc/projects_state.dart';
 import 'addedit_project.dart';
+import 'cachedimage_widget.dart';
 import 'project_details.dart';
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({Key? key}) : super(key: key);
+  const ProjectsPage({super.key});
 
   static MaterialPageRoute getRoute() => MaterialPageRoute(
-      settings: const RouteSettings(name: 'Home'),
-      builder: (context) {
-        final dbProvider = DatabaseProvider();
-        final imageRepo = ImageRepository(dbProvider);
-        final projectRepository = ProjectRepository(dbProvider, imageRepo);
-        return BlocProvider(
-          create: (_) => ProjectsBloc(projectRepository: projectRepository)
-            ..add(LoadProjectsEvent()),
-          child: const ProjectsPage(),
-        );
-      });
+    settings: const RouteSettings(name: 'Home'),
+    builder: (context) {
+      final dbProvider = DatabaseProvider();
+      final imageRepo = ImageRepository(dbProvider);
+      final projectRepository = ProjectRepository(dbProvider, imageRepo);
+      return BlocProvider(
+        create:
+            (_) =>
+                ProjectsBloc(projectRepository: projectRepository)
+                  ..add(LoadProjectsEvent()),
+        child: const ProjectsPage(),
+      );
+    },
+  );
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
@@ -65,26 +67,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   void addEditProject() {
-    Navigator.push(context,
-            AddEditProjectPage.getRoute(getProject(), true, userFullName))
-        .then((value) => setState(() => {}));
+    Navigator.push(
+      context,
+      AddEditProjectPage.getRoute(getProject(), true, userFullName),
+    ).then((value) => setState(() => {}));
   }
 
   void gotoProjectDetails(String projectId, String projName) {
     //setState(() {});
     Navigator.push(
-            context,
-            ProjectDetailsPage.getRoute(
-                projectId, userFullName, false, projName))
-        .then((value) => setState(() => {}));
+      context,
+      ProjectDetailsPage.getRoute(projectId, userFullName, false, projName),
+    ).then((value) => setState(() => {}));
   }
 
   void gotoInvasiveProjectDetails(String projectId, String projName) {
     Navigator.push(
-            context,
-            ProjectDetailsPage.getRoute(
-                projectId, userFullName, true, projName))
-        .then((value) => setState(() => {}));
+      context,
+      ProjectDetailsPage.getRoute(projectId, userFullName, true, projName),
+    ).then((value) => setState(() => {}));
   }
 
   getCustomFormattedDateTime(String givenDateTime, String dateFormat) {
@@ -105,30 +106,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Your Projects',
-              style: TextStyle(color: Colors.black),
-            ),
+            const Text('Your Projects', style: TextStyle(color: Colors.black)),
             InkWell(
-                onTap: () {
-                  addEditProject();
-                },
-                child: const Chip(
-                  avatar: Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.blue,
-                  ),
-                  labelPadding: EdgeInsets.all(2),
-                  label: Text(
-                    'Add new project',
-                    style: TextStyle(color: Colors.blue),
-                    selectionColor: Colors.white,
-                  ),
-                  shadowColor: Colors.white,
-                  backgroundColor: Colors.white,
-                  elevation: 0,
-                  autofocus: true,
-                )),
+              onTap: () {
+                addEditProject();
+              },
+              child: const Chip(
+                avatar: Icon(Icons.add_circle_outline, color: Colors.blue),
+                labelPadding: EdgeInsets.all(2),
+                label: Text(
+                  'Add new project',
+                  style: TextStyle(color: Colors.blue),
+                  selectionColor: Colors.white,
+                ),
+                shadowColor: Colors.white,
+                backgroundColor: Colors.white,
+                elevation: 0,
+                autofocus: true,
+              ),
+            ),
           ],
         ),
       ),
@@ -149,9 +145,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
             return ListView.builder(
               itemCount: projects.length,
               itemBuilder: (context, index) {
-                final projType = projects[index].projecttype == null
-                    ? "Multi-Level"
-                    : projects[index].projecttype == 'singlelevel'
+                final projType =
+                    projects[index].projecttype == null
+                        ? "Multi-Level"
+                        : projects[index].projecttype == 'singlelevel'
                         ? "Single-Level"
                         : "Multi-Level";
                 return SizedBox(
@@ -168,24 +165,32 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             onTap: () {
                               if (projects[index].projecttype ==
                                   'singlelevel') {
-                                gotoSingleLevelProject(projects[index].id ?? '',
-                                    projects[index].name ?? '');
+                                gotoSingleLevelProject(
+                                  projects[index].id ?? '',
+                                  projects[index].name ?? '',
+                                );
                               } else {
-                                gotoProjectDetails(projects[index].id ?? '',
-                                    projects[index].name ?? '');
+                                gotoProjectDetails(
+                                  projects[index].id ?? '',
+                                  projects[index].name ?? '',
+                                );
                               }
                             },
                             child: Container(
                               width: 100.0,
                               height: 100.0,
                               decoration: const BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8.0)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 1.0, color: Colors.blue)
-                                  ]),
+                                color: Colors.orange,
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8.0),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    blurRadius: 1.0,
+                                    color: Colors.blue,
+                                  ),
+                                ],
+                              ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8.0),
                                 child: cachedNetworkImage(projects[index].url),
@@ -206,9 +211,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                     overflow: TextOverflow.fade,
                                     textAlign: TextAlign.left,
                                     style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
+                                      color: Colors.black,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -227,7 +233,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.fromLTRB(
-                                                      0, 8, 0, 0),
+                                                    0,
+                                                    8,
+                                                    0,
+                                                    0,
+                                                  ),
                                               child: Text(
                                                 projType,
                                                 textAlign: TextAlign.left,
@@ -242,85 +252,104 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.fromLTRB(
-                                                      0, 8, 0, 0),
+                                                    0,
+                                                    8,
+                                                    0,
+                                                    0,
+                                                  ),
                                               child: Text(
                                                 'Edited at:  ${projects[index].editedat != null ? getCustomFormattedDateTime(projects[index].editedat as String, 'MM/dd/yy hh:mm') : ''}',
                                                 textAlign: TextAlign.left,
                                                 style: const TextStyle(
-                                                    color: Colors.black87,
-                                                    fontSize: 10,
-                                                    fontStyle:
-                                                        FontStyle.italic),
+                                                  color: Colors.black87,
+                                                  fontSize: 10,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
                                               ),
                                             ),
                                           ),
                                           Expanded(
-                                              flex: 2,
-                                              child: Padding(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    0,
+                                                    8,
+                                                    0,
+                                                    0,
+                                                  ),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  if (projects[index]
+                                                          .projecttype ==
+                                                      'singlelevel') {
+                                                    gotoSingleLevelProject(
+                                                      projects[index].id ?? '',
+                                                      projects[index].name ??
+                                                          '',
+                                                    );
+                                                  } else {
+                                                    gotoProjectDetails(
+                                                      projects[index].id ?? '',
+                                                      projects[index].name ??
+                                                          '',
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  alignment:
+                                                      Alignment.bottomRight,
                                                   padding:
                                                       const EdgeInsets.fromLTRB(
-                                                          0, 8, 0, 0),
-                                                  child: GestureDetector(
-                                                      onTap: () {
-                                                        if (projects[index]
-                                                                .projecttype ==
-                                                            'singlelevel') {
-                                                          gotoSingleLevelProject(
-                                                              projects[index]
-                                                                      .id ??
-                                                                  '',
-                                                              projects[index]
-                                                                      .name ??
-                                                                  '');
-                                                        } else {
-                                                          gotoProjectDetails(
-                                                              projects[index]
-                                                                      .id ??
-                                                                  '',
-                                                              projects[index]
-                                                                      .name ??
-                                                                  '');
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                          alignment: Alignment
-                                                              .bottomRight,
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .fromLTRB(
-                                                                  0, 8, 8, 8),
-                                                          child: const Text(
-                                                            'Visual',
-                                                            style: TextStyle(
-                                                                color:
-                                                                    Colors.blue,
-                                                                fontSize: 17),
-                                                          )))))
+                                                        0,
+                                                        8,
+                                                        8,
+                                                        8,
+                                                      ),
+                                                  child: const Text(
+                                                    'Visual',
+                                                    style: TextStyle(
+                                                      color: Colors.blue,
+                                                      fontSize: 17,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       GestureDetector(
-                                          onTap: () {
-                                            if (projects[index].projecttype ==
-                                                'singlelevel') {
-                                              gotoInvasiveSingleProject(
-                                                  projects[index].id ?? '');
-                                            } else {
-                                              gotoInvasiveProjectDetails(
-                                                  projects[index].id ?? '',
-                                                  projects[index].name ?? '');
-                                            }
-                                          },
-                                          child: Container(
-                                              alignment: Alignment.bottomRight,
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      8, 8, 16, 8),
-                                              child: const Text(
-                                                'Invasive',
-                                                style: TextStyle(
-                                                    color: Colors.blue,
-                                                    fontSize: 17),
-                                              )))
+                                        onTap: () {
+                                          if (projects[index].projecttype ==
+                                              'singlelevel') {
+                                            gotoInvasiveSingleProject(
+                                              projects[index].id ?? '',
+                                            );
+                                          } else {
+                                            gotoInvasiveProjectDetails(
+                                              projects[index].id ?? '',
+                                              projects[index].name ?? '',
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          alignment: Alignment.bottomRight,
+                                          padding: const EdgeInsets.fromLTRB(
+                                            8,
+                                            8,
+                                            16,
+                                            8,
+                                          ),
+                                          child: const Text(
+                                            'Invasive',
+                                            style: TextStyle(
+                                              color: Colors.blue,
+                                              fontSize: 17,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:E3InspectionsMultiTenant/src/models/users_response.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cbl_flutter/cbl_flutter.dart';
 import 'package:cbl/cbl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../models/users_response.dart';
 
 class DatabaseProvider {
   // Singleton instance
@@ -56,10 +57,7 @@ class DatabaseProvider {
     try {
       if (!isInitialized) {
         isInitialized = true;
-        await Future.wait([
-          setupFileSystem(),
-          CouchbaseLiteFlutter.init(),
-        ]);
+        await Future.wait([setupFileSystem(), CouchbaseLiteFlutter.init()]);
         _setupCouchbaseLogging();
       }
       final prefs = await SharedPreferences.getInstance();
@@ -87,17 +85,20 @@ class DatabaseProvider {
     cblPreBuiltDatabasePath =
         "${cblDatabaseDirectory.path}/$defaultInspectionDatabaseName.cblite2";
     debugPrint(
-        '${DateTime.now()} [DatabaseProvider] info: database directory: ${cblDatabaseDirectory.path}');
+      '${DateTime.now()} [DatabaseProvider] info: database directory: ${cblDatabaseDirectory.path}',
+    );
   }
 
   //setup and open the database file(s)
   Future<void> initDatabases({required User user}) async {
     try {
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] info: initializing databases');
+        '${DateTime.now()} [DatabaseProvider] info: initializing databases',
+      );
 
-      final dbConfig =
-          DatabaseConfiguration(directory: cblDatabaseDirectory.path);
+      final dbConfig = DatabaseConfiguration(
+        directory: cblDatabaseDirectory.path,
+      );
 
       //calculate database name based on current logged in users team name
       final companyName = user.companyIdentifier?.toLowerCase().trim();
@@ -106,8 +107,10 @@ class DatabaseProvider {
 
       /* create or open a database to share between team members to store
       projects, assets, and user profiles */
-      e3inspectionsDatabase =
-          await Database.openAsync(currentInspectionDatabaseName, dbConfig);
+      e3inspectionsDatabase = await Database.openAsync(
+        currentInspectionDatabaseName,
+        dbConfig,
+      );
       // initialize collections (create if missing)
       projectCollection = await _getOrCreateCollection('projects');
       subProjectCollection = await _getOrCreateCollection('subProjects');
@@ -115,18 +118,22 @@ class DatabaseProvider {
       deckImageCollection = await _getOrCreateCollection('deckImages');
       visualSectionCollection = await _getOrCreateCollection('visualSections');
       formCollection = await _getOrCreateCollection('forms');
-      invasiveSectionCollection =
-          await _getOrCreateCollection('invasiveSections');
-      dynamicSectionCollection =
-          await _getOrCreateCollection('dynamicSections');
-      conclusiveSectionCollection =
-          await _getOrCreateCollection('conclusiveSections');
+      invasiveSectionCollection = await _getOrCreateCollection(
+        'invasiveSections',
+      );
+      dynamicSectionCollection = await _getOrCreateCollection(
+        'dynamicSections',
+      );
+      conclusiveSectionCollection = await _getOrCreateCollection(
+        'conclusiveSections',
+      );
       //create indexes for queries
       await _createDocumentTypeIndex();
       await _createCompanyDocumentTypeIndex();
 
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] info: databases initialized');
+        '${DateTime.now()} [DatabaseProvider] info: databases initialized',
+      );
     } catch (e) {
       debugPrint('${DateTime.now()} [DatabaseProvider] error: ${e.toString()}');
     }
@@ -138,10 +145,13 @@ class DatabaseProvider {
   Future<void> initDatabasesForAppStartup() async {
     try {
       if (e3inspectionsDatabase != null) return;
-      final dbConfig =
-          DatabaseConfiguration(directory: cblDatabaseDirectory.path);
-      e3inspectionsDatabase =
-          await Database.openAsync(defaultInspectionDatabaseName, dbConfig);
+      final dbConfig = DatabaseConfiguration(
+        directory: cblDatabaseDirectory.path,
+      );
+      e3inspectionsDatabase = await Database.openAsync(
+        defaultInspectionDatabaseName,
+        dbConfig,
+      );
 
       projectCollection = await _getOrCreateCollection('projects');
       subProjectCollection = await _getOrCreateCollection('subProjects');
@@ -149,20 +159,25 @@ class DatabaseProvider {
       deckImageCollection = await _getOrCreateCollection('deckImages');
       visualSectionCollection = await _getOrCreateCollection('visualSections');
       formCollection = await _getOrCreateCollection('forms');
-      invasiveSectionCollection =
-          await _getOrCreateCollection('invasiveSections');
-      dynamicSectionCollection =
-          await _getOrCreateCollection('dynamicSections');
-      conclusiveSectionCollection =
-          await _getOrCreateCollection('conclusiveSections');
+      invasiveSectionCollection = await _getOrCreateCollection(
+        'invasiveSections',
+      );
+      dynamicSectionCollection = await _getOrCreateCollection(
+        'dynamicSections',
+      );
+      conclusiveSectionCollection = await _getOrCreateCollection(
+        'conclusiveSections',
+      );
 
       await _createDocumentTypeIndex();
       await _createCompanyDocumentTypeIndex();
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] info: startup databases initialized');
+        '${DateTime.now()} [DatabaseProvider] info: startup databases initialized',
+      );
     } catch (e) {
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] error initializing startup DB: ${e.toString()}');
+        '${DateTime.now()} [DatabaseProvider] error initializing startup DB: ${e.toString()}',
+      );
     }
   }
 
@@ -195,7 +210,8 @@ class DatabaseProvider {
   Future<void> closeDatabases() async {
     try {
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] info: closing databases');
+        '${DateTime.now()} [DatabaseProvider] info: closing databases',
+      );
 
       if (e3inspectionsDatabase != null) {
         await e3inspectionsDatabase?.close();
@@ -203,7 +219,8 @@ class DatabaseProvider {
       debugPrint('${DateTime.now()} [DatabaseProvider] info: databases closed');
     } catch (e) {
       debugPrint(
-          '${DateTime.now()} [DatabaseProvider] error: trying to close databases ${e.toString()}');
+        '${DateTime.now()} [DatabaseProvider] error: trying to close databases ${e.toString()}',
+      );
     }
     e3inspectionsDatabase = null;
   }
@@ -223,12 +240,13 @@ class DatabaseProvider {
   }
 
   Future<void> _createCompanyDocumentTypeIndex() async {
-    final documentTypeExpression =
-        Expression.property(documentTypeAttributeName); //<1>
+    final documentTypeExpression = Expression.property(
+      documentTypeAttributeName,
+    ); //<1>
     final companyExpression = Expression.property(companyAttributeName); //<2>
     final valueIndexItems = {
       ValueIndexItem.expression(documentTypeExpression),
-      ValueIndexItem.expression(companyExpression)
+      ValueIndexItem.expression(companyExpression),
     }; //<3>
     final index = IndexBuilder.valueIndex(valueIndexItems); //<4>
     var e3inspectionsDb = e3inspectionsDatabase; //<5>
@@ -261,7 +279,9 @@ class DatabaseProvider {
       try {
         if (dbLog.file != null) {
           dbLog.file.config = LogFileConfiguration(
-              directory: cblLogsDirectory.path, usePlainText: true);
+            directory: cblLogsDirectory.path,
+            usePlainText: true,
+          );
         }
       } catch (_) {}
     } catch (e) {

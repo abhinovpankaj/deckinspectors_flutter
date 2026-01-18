@@ -6,13 +6,14 @@ class Child {
   String? url;
   int count = 0;
 
-  Child(
-      {this.id,
-      this.name,
-      this.type,
-      this.description,
-      this.url,
-      required this.count});
+  Child({
+    this.id,
+    this.name,
+    this.type,
+    this.description,
+    this.url,
+    required this.count,
+  });
 
   Child.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -51,21 +52,22 @@ class Project {
   List<String?>? assignedto;
   List<Child>? children;
 
-  Project(
-      {this.id,
-      this.name,
-      this.projecttype,
-      this.description,
-      this.address,
-      this.createdby,
-      this.createdat,
-      this.url,
-      this.isavailableoffline,
-      this.iscomplete,
-      this.editedat,
-      this.lasteditedby,
-      this.assignedto,
-      this.children});
+  Project({
+    this.id,
+    this.name,
+    this.projecttype,
+    this.description,
+    this.address,
+    this.createdby,
+    this.createdat,
+    this.url,
+    this.isavailableoffline,
+    this.iscomplete,
+    this.editedat,
+    this.lasteditedby,
+    this.assignedto,
+    this.children,
+  });
 
   Project.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
@@ -86,9 +88,10 @@ class Project {
       editedat =
           json['editedat'] == null ? null : DateTime.tryParse(json['editedat']);
       lasteditedby = json['lasteditedby'];
-      assignedto = json['assignedto'] == null
-          ? []
-          : List.castFrom<dynamic, String>(json['assignedto']);
+      assignedto =
+          json['assignedto'] == null
+              ? []
+              : List.castFrom<dynamic, String>(json['assignedto']);
     }
   }
   Map<String, dynamic> toJson() {
@@ -105,8 +108,7 @@ class Project {
     data['editedat'] = editedat;
     data['lasteditedby'] = lasteditedby;
     data['assignedto'] = assignedto;
-    data['children'] =
-        children?.map((v) => v.toJson()).toList();
+    data['children'] = children?.map((v) => v.toJson()).toList();
     return data;
   }
 }
@@ -131,8 +133,7 @@ class Projects {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['projects'] =
-        projects?.map((v) => v?.toJson()).toList();
+    data['projects'] = projects?.map((v) => v?.toJson()).toList();
     data['message'] = message;
     data['code'] = code;
     return data;

@@ -1,7 +1,4 @@
 import 'dart:io';
-import 'package:E3InspectionsMultiTenant/src/resources/couchbase/location_repository.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/location.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,7 +6,10 @@ import '../bloc/locations_bloc.dart';
 import '../bloc/locations_event.dart';
 import '../bloc/locations_state.dart';
 import '../models/couchbase/couchbase_models.dart';
+import '../resources/couchbase/location_repository.dart';
+import 'cachedimage_widget.dart';
 import 'capture_image.dart';
+import 'location.dart';
 
 class AddEditLocationPage extends StatefulWidget {
   final Location currentLocation;

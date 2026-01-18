@@ -1,6 +1,4 @@
 import 'dart:io';
-
-import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import '../bloc/subproject_bloc.dart';
 import '../bloc/subproject_event.dart';
 import '../bloc/subproject_state.dart';
 import '../models/couchbase/couchbase_models.dart';
+import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
@@ -21,17 +20,24 @@ class AddEditSubProjectPage extends StatefulWidget {
   final String fullUserName;
   final String prevPageName;
   final bool isNewBuilding;
-  const AddEditSubProjectPage(this.currentBuilding, this.isNewBuilding,
-      this.fullUserName, this.prevPageName,
-      {Key? key})
-      : super(key: key);
-  static MaterialPageRoute getRoute(SubProject subProject, bool isNew,
-          String userName, String prevPageName) =>
-      MaterialPageRoute(
-          settings:
-              RouteSettings(name: isNew ? 'Add Building' : 'Edit Building'),
-          builder: (context) =>
-              AddEditSubProjectPage(subProject, isNew, userName, prevPageName));
+  const AddEditSubProjectPage(
+    this.currentBuilding,
+    this.isNewBuilding,
+    this.fullUserName,
+    this.prevPageName, {
+    Key? key,
+  }) : super(key: key);
+  static MaterialPageRoute getRoute(
+    SubProject subProject,
+    bool isNew,
+    String userName,
+    String prevPageName,
+  ) => MaterialPageRoute(
+    settings: RouteSettings(name: isNew ? 'Add Building' : 'Edit Building'),
+    builder:
+        (context) =>
+            AddEditSubProjectPage(subProject, isNew, userName, prevPageName),
+  );
   @override
   State<AddEditSubProjectPage> createState() => _AddEditSubProjectPageState();
 }
@@ -40,8 +46,9 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
   late String fullUserName;
   final TextEditingController _nameController = TextEditingController(text: '');
   bool showAssetPic = true;
-  final TextEditingController _descriptionController =
-      TextEditingController(text: '');
+  final TextEditingController _descriptionController = TextEditingController(
+    text: '',
+  );
   @override
   void initState() {
     currentBuilding = widget.currentBuilding;
@@ -91,11 +98,13 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
         listener: (context, state) {
           if (state is SubProjectSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Building saved successfully.')));
+              const SnackBar(content: Text('Building saved successfully.')),
+            );
             Navigator.of(context).pop();
           } else if (state is SubProjectFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed: ${state.error}')));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Failed: ${state.error}')));
           }
         },
         child: Scaffold(
@@ -104,10 +113,7 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
             leadingWidth: 120,
             leading: ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(
-                Icons.arrow_back_ios,
-                color: Colors.blue,
-              ),
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
               label: const Text(
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -127,20 +133,17 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
                 onTap: () {
                   final updatedSubProject = currentBuilding;
                   context.read<SubProjectBloc>().add(
-                        SaveSubProjectEvent(
-                          updatedSubProject,
-                          _nameController.text,
-                          _descriptionController.text,
-                          isNewBuilding,
-                          fullUserName,
-                        ),
-                      );
+                    SaveSubProjectEvent(
+                      updatedSubProject,
+                      _nameController.text,
+                      _descriptionController.text,
+                      isNewBuilding,
+                      fullUserName,
+                    ),
+                  );
                 },
                 child: const Chip(
-                  avatar: Icon(
-                    Icons.save_outlined,
-                    color: Colors.black,
-                  ),
+                  avatar: Icon(Icons.save_outlined, color: Colors.black),
                   labelPadding: EdgeInsets.all(2),
                   label: Text(
                     'Save',
@@ -158,7 +161,9 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
               maxLines: 2,
               pageTitle,
               style: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.normal),
+                color: Colors.black,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ),
           // floatingActionButton: Padding(
@@ -167,40 +172,60 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
           // ),
           body: SingleChildScrollView(
             child: Form(
-                key: _formKey,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * .9,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(name),
-                        const SizedBox(
-                          height: 8,
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * .9,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name),
+                      const SizedBox(height: 8),
+                      inputWidgetwithValidation(
+                        '$name name',
+                        'Please enter $name name',
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('Description'),
+                      const SizedBox(height: 8),
+                      inputWidgetNoValidation('$name Description', 3),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide.none,
+                          // the height is 50, the width is full
+                          minimumSize: const Size.fromHeight(40),
+                          backgroundColor: Colors.white,
+                          shadowColor: Colors.blue,
+                          elevation: 0,
                         ),
-                        inputWidgetwithValidation(
-                            '$name name', 'Please enter $name name'),
-                        const SizedBox(
-                          height: 16,
+                        onPressed: () async {
+                          showAssetPic = false;
+                          //add logic to open camera.
+                          var xfile = await captureImage(context);
+                          if (xfile != null) {
+                            setState(() {
+                              imageURL = xfile.path;
+                            });
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.camera_outlined,
+                          color: Colors.blueAccent,
                         ),
-                        const Text('Description'),
-                        const SizedBox(
-                          height: 8,
+                        label: const Text(
+                          'Add Image',
+                          style: TextStyle(color: Colors.blueAccent),
                         ),
-                        inputWidgetNoValidation('$name Description', 3),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                                side: BorderSide.none,
-                                // the height is 50, the width is full
-                                minimumSize: const Size.fromHeight(40),
-                                backgroundColor: Colors.white,
-                                shadowColor: Colors.blue,
-                                elevation: 0),
-                            onPressed: () async {
+                      ),
+                      SizedBox(
+                        height: 220,
+                        child: Card(
+                          borderOnForeground: false,
+                          elevation: 8,
+                          child: GestureDetector(
+                            onTap: () async {
                               showAssetPic = false;
                               //add logic to open camera.
                               var xfile = await captureImage(context);
@@ -210,90 +235,70 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
                                 });
                               }
                             },
-                            icon: const Icon(
-                              Icons.camera_outlined,
-                              color: Colors.blueAccent,
-                            ),
-                            label: const Text(
-                              'Add Image',
-                              style: TextStyle(color: Colors.blueAccent),
-                            )),
-                        SizedBox(
-                          height: 220,
-                          child: Card(
-                              borderOnForeground: false,
-                              elevation: 8,
-                              child: GestureDetector(
-                                onTap: () async {
-                                  showAssetPic = false;
-                                  //add logic to open camera.
-                                  var xfile = await captureImage(context);
-                                  if (xfile != null) {
-                                    setState(() {
-                                      imageURL = xfile.path;
-                                    });
-                                  }
-                                },
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                      color: Colors.blue,
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(8.0)),
-                                      boxShadow: [
-                                        BoxShadow(
-                                            blurRadius: 1.0, color: Colors.blue)
-                                      ]),
-                                  child: showAssetPic
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8.0),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    blurRadius: 1.0,
+                                    color: Colors.blue,
+                                  ),
+                                ],
+                              ),
+                              child:
+                                  showAssetPic
                                       ? currentBuilding.url == ""
                                           ? Image.asset(
-                                              "assets/images/icon.png",
-                                              fit: BoxFit.fill,
-                                              width: double.infinity,
-                                              height: 250,
-                                            )
+                                            "assets/images/icon.png",
+                                            fit: BoxFit.fill,
+                                            width: double.infinity,
+                                            height: 250,
+                                          )
                                           : Image.file(
-                                              File(imageURL),
-                                              fit: BoxFit.fill,
-                                              width: double.infinity,
-                                              height: 250,
-                                            )
+                                            File(imageURL),
+                                            fit: BoxFit.fill,
+                                            width: double.infinity,
+                                            height: 250,
+                                          )
                                       : cachedNetworkImage(imageURL),
-                                ),
-                              )),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        if (!isNewBuilding)
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                                side: BorderSide.none,
-                                // the height is 50, the width is full
-                                minimumSize: const Size.fromHeight(40),
-                                backgroundColor: Colors.white,
-                                shadowColor: Colors.blue,
-                                elevation: 0),
-                            onPressed: () {
-                              context
-                                  .read<SubProjectBloc>()
-                                  .add(DeleteSubProjectEvent(currentBuilding));
-                            },
-                            icon: const Icon(
-                              Icons.delete_outline_outlined,
-                              color: Colors.redAccent,
-                            ),
-                            label: const Text(
-                              'Delete Building',
-                              style: TextStyle(color: Colors.red),
                             ),
                           ),
-                        const SizedBox(
-                          height: 40,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (!isNewBuilding)
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide.none,
+                            // the height is 50, the width is full
+                            minimumSize: const Size.fromHeight(40),
+                            backgroundColor: Colors.white,
+                            shadowColor: Colors.blue,
+                            elevation: 0,
+                          ),
+                          onPressed: () {
+                            context.read<SubProjectBloc>().add(
+                              DeleteSubProjectEvent(currentBuilding),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.delete_outline_outlined,
+                            color: Colors.redAccent,
+                          ),
+                          label: const Text(
+                            'Delete Building',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                )),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -302,43 +307,43 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
 
   Widget inputWidgetwithValidation(String hint, String message) {
     return TextFormField(
-        controller: _nameController,
+      controller: _nameController,
 
-        // The validator receives the text that the user has entered.
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return message;
-          }
-          return null;
-        },
-        maxLines: 1,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              fontSize: 14.0,
-              color: Color(0xFFABB3BB),
-              height: 1.0,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            )));
+      // The validator receives the text that the user has entered.
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return message;
+        }
+        return null;
+      },
+      maxLines: 1,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 14.0,
+          color: Color(0xFFABB3BB),
+          height: 1.0,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   Widget inputWidgetNoValidation(String hint, int? lines) {
     return TextField(
-        controller: _descriptionController,
+      controller: _descriptionController,
 
-        // The validator receives the text that the user has entered.
-        maxLines: lines,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              fontSize: 14.0,
-              color: Color(0xFFABB3BB),
-              height: 1.0,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            )));
+      // The validator receives the text that the user has entered.
+      maxLines: lines,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 14.0,
+          color: Color(0xFFABB3BB),
+          height: 1.0,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 }

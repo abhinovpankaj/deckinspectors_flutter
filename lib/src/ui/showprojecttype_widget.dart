@@ -1,5 +1,5 @@
-import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:flutter/material.dart';
+import '../bloc/settings_bloc.dart';
 
 class ProjectType extends StatefulWidget {
   const ProjectType({super.key});
@@ -36,28 +36,24 @@ class _ProjectTypeState extends State<ProjectType>
   @override
   Widget build(BuildContext context) {
     return
-        // FadeTransition(
-        //   opacity: _fadeAnimation,
-        //   // Wrap the ListTile in a Material widget so the ListTile has someplace
-        //   // to draw the animated colors during the fade transition.
-        //   child:
-        Material(
-            child: ListTile(
-      visualDensity: const VisualDensity(vertical: -4),
-      minLeadingWidth: 100,
-      title: appSettings.isInvasiveMode
-          ? const Text(
-              'Invasive Mode',
-              textAlign: TextAlign.center,
-            )
-          : const Text(
-              'Visual Mode',
-              textAlign: TextAlign.center,
-            ),
-      selectedTileColor:
-          appSettings.isInvasiveMode ? Colors.orange : Colors.blue,
-      selectedColor: Colors.white,
-      selected: true,
-    ));
+    // FadeTransition(
+    //   opacity: _fadeAnimation,
+    //   // Wrap the ListTile in a Material widget so the ListTile has someplace
+    //   // to draw the animated colors during the fade transition.
+    //   child:
+    Material(
+      child: ListTile(
+        visualDensity: const VisualDensity(vertical: -4),
+        minLeadingWidth: 100,
+        title:
+            appSettings.isInvasiveMode
+                ? const Text('Invasive Mode', textAlign: TextAlign.center)
+                : const Text('Visual Mode', textAlign: TextAlign.center),
+        selectedTileColor:
+            appSettings.isInvasiveMode ? Colors.orange : Colors.blue,
+        selectedColor: Colors.white,
+        selected: true,
+      ),
+    );
   }
 }

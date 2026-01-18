@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 import 'dart:io';
-import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
-import 'package:E3InspectionsMultiTenant/src/models/project_model.dart';
-import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/urls.dart';
 import 'package:http/http.dart' show Client;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import '../bloc/users_bloc.dart';
 import '../models/error_response.dart';
+import '../models/project_model.dart';
+import '../models/success_response.dart';
+import 'urls.dart';
 
 class ProjectsApiProvider {
   Client client = Client();
@@ -44,11 +44,14 @@ class ProjectsApiProvider {
       'address': project.address,
       'url': project.url,
       'projectType': project.projecttype,
-      'createdby': project.createdby
+      'createdby': project.createdby,
     });
     final baseUrl = Uri.parse(URLS.addProjectsUrl);
-    final response = await client.post(baseUrl,
-        body: projectObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: projectObject,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -64,12 +67,15 @@ class ProjectsApiProvider {
       'description': project.description,
       'address': project.address,
       'url': project.url,
-      'lasteditedby': project.lasteditedby
+      'lasteditedby': project.lasteditedby,
     });
     var endPoint = URLS.manageProjectsUrl + id;
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.put(baseUrl,
-        body: projectObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.put(
+      baseUrl,
+      body: projectObject,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -82,8 +88,11 @@ class ProjectsApiProvider {
   deleteProject(Object requestBody, String id) async {
     var endPoint = '${URLS.manageProjectsUrl}id/toggleVisibility';
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.post(baseUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -96,8 +105,10 @@ class ProjectsApiProvider {
   Future<Object> deleteProjectPermanently(String id) async {
     var endPoint = '${URLS.manageProjectsUrl}$id';
     final baseUrl = Uri.parse(endPoint);
-    final response = await client
-        .delete(baseUrl, headers: {'Content-Type': 'application/json'});
+    final response = await client.delete(
+      baseUrl,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -108,13 +119,14 @@ class ProjectsApiProvider {
   }
 
   Future<Object> downloadReport(
-      String projectName,
-      String id,
-      String fileType,
-      int quality,
-      int imageFactor,
-      String reportType,
-      String companyName) async {
+    String projectName,
+    String id,
+    String fileType,
+    int quality,
+    int imageFactor,
+    String reportType,
+    String companyName,
+  ) async {
     try {
       var endPoint = '${URLS.manageProjectsUrl}/generatereporthtml';
       final baseUrl = Uri.parse(endPoint);
@@ -129,27 +141,37 @@ class ProjectsApiProvider {
         },
       });
 
-      final response = await client.post(baseUrl, body: reportBody, headers: {
-        'Content-Type': 'application/json',
-        'authorization': usersBloc.userDetails.token as String
-      }).timeout(const Duration(seconds: 600));
+      final response = await client
+          .post(
+            baseUrl,
+            body: reportBody,
+            headers: {
+              'Content-Type': 'application/json',
+              'authorization': usersBloc.userDetails.token as String,
+            },
+          )
+          .timeout(const Duration(seconds: 600));
       //print(response.body.toString());
 
       if (response.statusCode == 200) {
         //save file
         Directory? directory = await getApplicationDocumentsDirectory();
 
-        var destDirectory =
-            await Directory(path.join(directory.path, companyName))
-                .create(recursive: true);
+        var destDirectory = await Directory(
+          path.join(directory.path, companyName),
+        ).create(recursive: true);
         final now = DateTime.now();
-        var reportFile =
-            path.join(destDirectory.path, '$projectName-$reportType-$now.html');
+        var reportFile = path.join(
+          destDirectory.path,
+          '$projectName-$reportType-$now.html',
+        );
         final file = File(reportFile);
 
         //print("HTML_RESULT ${response.body}");
-        var writtenFile =
-            await file.writeAsString(response.body, encoding: utf8);
+        var writtenFile = await file.writeAsString(
+          response.body,
+          encoding: utf8,
+        );
         return SuccessResponse(code: 200, message: writtenFile.path);
       } else if (response.statusCode == 500) {
         return ErrorResponse(message: response.body, code: response.statusCode);

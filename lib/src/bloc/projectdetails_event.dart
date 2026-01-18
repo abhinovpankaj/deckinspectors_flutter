@@ -15,6 +15,7 @@ class LoadProjectDetails extends ProjectDetailsEvent {
 
 class UpdateProjectDetails extends ProjectDetailsEvent {
   final Project project;
+
   const UpdateProjectDetails(this.project);
   @override
   List<Object?> get props => [project];

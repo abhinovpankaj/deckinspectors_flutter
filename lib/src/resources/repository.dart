@@ -1,19 +1,19 @@
 import 'dart:async';
-import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
-import 'package:E3InspectionsMultiTenant/src/models/project_model.dart';
-import 'package:E3InspectionsMultiTenant/src/models/section_model.dart';
-import 'package:E3InspectionsMultiTenant/src/models/subproject_model.dart';
-import 'package:E3InspectionsMultiTenant/src/models/users_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/couchbase/database_provider.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/project_api_provider.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/user_provider.dart';
-import 'package:E3InspectionsMultiTenant/src/services/realm_local_services.dart';
+import '../bloc/settings_bloc.dart';
 import '../models/location_model.dart';
 import '../models/login_response.dart';
+
+import '../models/project_model.dart';
+import '../models/section_model.dart';
+import '../models/subproject_model.dart';
+import '../models/users_response.dart';
+import 'couchbase/database_provider.dart';
 import 'image_api_provider.dart';
 import 'location_api_provider.dart';
+import 'project_api_provider.dart';
 import 'section_api_provider.dart';
 import 'subproject_api_provider.dart';
+import 'user_provider.dart';
 
 class Repository {
   //Projects

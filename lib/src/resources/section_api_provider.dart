@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/urls.dart';
 import 'package:http/http.dart' show Client;
 import '../models/error_response.dart';
 import '../models/section_model.dart';
+import '../models/success_response.dart';
+import 'urls.dart';
 
 class SectionsApiProvider {
   Client client = Client();
@@ -39,8 +39,11 @@ class SectionsApiProvider {
       'createdby': visualSection.createdby,
       'parentid': visualSection.parentid,
     });
-    final response = await client.post(baseUrl,
-        body: sectionObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: sectionObject,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));
@@ -68,8 +71,11 @@ class SectionsApiProvider {
       'lasteditedby': visualSection.lasteditedby,
       'parentid': visualSection.parentid,
     });
-    final response = await client.put(baseUrl,
-        body: sectionObject, headers: {'Content-Type': 'application/json'});
+    final response = await client.put(
+      baseUrl,
+      body: sectionObject,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));
@@ -81,8 +87,11 @@ class SectionsApiProvider {
   deleteSection(Object requestBody, String id) async {
     var endPoint = '${URLS.manageSectionUrl}id/toggleVisibility';
     final baseUrl = Uri.parse(endPoint);
-    final response = await client.post(baseUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      baseUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
 
     if (response.statusCode == 201) {
       return SuccessResponse.fromJson(json.decode(response.body));

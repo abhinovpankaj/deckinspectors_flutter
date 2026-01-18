@@ -1,6 +1,7 @@
-import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../bloc/settings_bloc.dart';
 
 Future<XFile?> captureImage(BuildContext context) async {
   final ImagePicker picker = ImagePicker();

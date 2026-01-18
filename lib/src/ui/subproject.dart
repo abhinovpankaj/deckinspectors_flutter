@@ -1,9 +1,6 @@
-import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
-//import 'package:E3InspectionsMultiTenant/src/ui/breadcrumb_navigation.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../bloc/settings_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/subproject_repository.dart';
 import '../bloc/subproject_bloc.dart';
@@ -12,8 +9,11 @@ import '../bloc/subproject_state.dart';
 import 'addedit_location.dart';
 import 'addedit_subproject.dart';
 
+import 'cachedimage_widget.dart';
 import 'location.dart';
 import 'package:flutter/material.dart';
+
+import 'showprojecttype_widget.dart';
 
 class SubProjectDetailsPage extends StatefulWidget {
   final String id;
@@ -23,8 +23,8 @@ class SubProjectDetailsPage extends StatefulWidget {
     this.id,
     this.prevPageName,
     this.userfullName, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
   @override
   State<SubProjectDetailsPage> createState() => _SubProjectDetailsPageState();
   static MaterialPageRoute getRoute(

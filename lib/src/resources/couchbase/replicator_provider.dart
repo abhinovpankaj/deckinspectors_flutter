@@ -1,7 +1,7 @@
-import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
 
+import '../../bloc/users_bloc.dart';
 import 'database_provider.dart';
 
 class ReplicatorProvider {
@@ -84,8 +84,10 @@ class ReplicatorProvider {
         path: 'projects',
       );
 
-      var basicAuthenticator =
-          BasicAuthenticator(username: user.username, password: user.password);
+      var basicAuthenticator = BasicAuthenticator(
+        username: user.username,
+        password: user.password,
+      );
       var endPoint = UrlEndpoint(url);
 
       // <2>
@@ -111,11 +113,13 @@ class ReplicatorProvider {
 
   // callbacks are used to get information on status of replication
   // and what documents are being replicated through the replicator
-  Future<void> startReplicator(
-      {required Function(ReplicatorChange change)? onStatusChange,
-      required Function(DocumentReplication document)? onDocument}) async {
+  Future<void> startReplicator({
+    required Function(ReplicatorChange change)? onStatusChange,
+    required Function(DocumentReplication document)? onDocument,
+  }) async {
     debugPrint(
-        '${DateTime.now()} [ReplicatorProvider] info: starting replicator.');
+      '${DateTime.now()} [ReplicatorProvider] info: starting replicator.',
+    );
 
     var replicator = _replicator;
     if (replicator != null) {
@@ -130,10 +134,12 @@ class ReplicatorProvider {
       await replicator.start();
 
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] info: started replicator.');
+        '${DateTime.now()} [ReplicatorProvider] info: started replicator.',
+      );
     } else {
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] error: cannot start replicator, it is null.');
+        '${DateTime.now()} [ReplicatorProvider] error: cannot start replicator, it is null.',
+      );
     }
   }
 
@@ -141,7 +147,8 @@ class ReplicatorProvider {
     var replicator = _replicator;
     if (replicator != null) {
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] info: stopping replicator.');
+        '${DateTime.now()} [ReplicatorProvider] info: stopping replicator.',
+      );
 
       //remove change listeners before stopping replicator, this should
       //automatically be done with stopping, but just to be safe
@@ -155,10 +162,12 @@ class ReplicatorProvider {
       documentReplicationToken = null;
 
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] info: stopped replicator.');
+        '${DateTime.now()} [ReplicatorProvider] info: stopped replicator.',
+      );
     } else {
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] warning: tried to stop replicator but it was null.');
+        '${DateTime.now()} [ReplicatorProvider] warning: tried to stop replicator but it was null.',
+      );
     }
   }
 
@@ -169,7 +178,8 @@ class ReplicatorProvider {
       replicator.removeChangeListener(token);
     } else {
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] warning: tried to remove statusChangeListener but something was null');
+        '${DateTime.now()} [ReplicatorProvider] warning: tried to remove statusChangeListener but something was null',
+      );
     }
   }
 
@@ -180,7 +190,8 @@ class ReplicatorProvider {
       replicator.removeChangeListener(token);
     } else {
       debugPrint(
-          '${DateTime.now()} [ReplicatorProvider] warning: tried to remove documentChangeListener but something was null');
+        '${DateTime.now()} [ReplicatorProvider] warning: tried to remove documentChangeListener but something was null',
+      );
     }
   }
 }

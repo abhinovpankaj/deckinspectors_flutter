@@ -1,9 +1,10 @@
 // import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../bloc/users_bloc.dart';
 
 class SyncService {
   late WebSocketChannel channel;

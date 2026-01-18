@@ -1,11 +1,10 @@
 import 'dart:convert';
-
-import 'package:E3InspectionsMultiTenant/src/resources/urls.dart';
 import 'package:http/http.dart' show Client;
 
 //import '../models/error_response.dart';
 import '../models/login_response.dart';
 import '../models/users_response.dart';
+import 'urls.dart';
 
 class UsersApiProvider {
   Client client = Client();
@@ -14,8 +13,11 @@ class UsersApiProvider {
   final _regUrl = Uri.parse(URLS.registerUser);
   final _allUsersUrl = Uri.parse(URLS.getAllUsers);
   Future<LoginResponse> login(Object requestBody) async {
-    final response = await client.post(_baseUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      _baseUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -28,8 +30,11 @@ class UsersApiProvider {
   }
 
   Future<bool> logout(Object requestBody) async {
-    final response = await client.post(_logoutUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      _logoutUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -40,8 +45,11 @@ class UsersApiProvider {
   }
 
   Future<RegisterResponse> register(Object requestBody) async {
-    final response = await client.post(_regUrl,
-        body: requestBody, headers: {'Content-Type': 'application/json'});
+    final response = await client.post(
+      _regUrl,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 201) {
@@ -52,8 +60,10 @@ class UsersApiProvider {
   }
 
   Future<UsersResponse> getAllUsers(String token) async {
-    final response = await client.get(_allUsersUrl,
-        headers: {'Content-Type': 'application/json', 'authorization': token});
+    final response = await client.get(
+      _allUsersUrl,
+      headers: {'Content-Type': 'application/json', 'authorization': token},
+    );
     //print(response.body.toString());
 
     if (response.statusCode == 200) {
