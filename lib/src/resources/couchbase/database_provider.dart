@@ -8,7 +8,13 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DatabaseProvider {
-  DatabaseProvider();
+  // Singleton instance
+  static final DatabaseProvider _instance = DatabaseProvider._internal();
+
+  /// Returns the shared DatabaseProvider instance.
+  factory DatabaseProvider() => _instance;
+
+  DatabaseProvider._internal();
 
   //database information
   final String defaultInspectionDatabaseName = 'e3inspections';
@@ -47,16 +53,20 @@ class DatabaseProvider {
 
   Future<void> initialize() async {
     //init Couchbase Lite for use with databases
-    if (!isInitialized) {
-      isInitialized = true;
-      await Future.wait([
-        setupFileSystem(),
-        CouchbaseLiteFlutter.init(),
-      ]);
-      _setupCouchbaseLogging();
+    try {
+      if (!isInitialized) {
+        isInitialized = true;
+        await Future.wait([
+          setupFileSystem(),
+          CouchbaseLiteFlutter.init(),
+        ]);
+        _setupCouchbaseLogging();
+      }
+      final prefs = await SharedPreferences.getInstance();
+      offlineModeOn = prefs.getString('appSync') == 'false';
+    } catch (e) {
+      debugPrint('Error initializing database provider: $e');
     }
-    final prefs = await SharedPreferences.getInstance();
-    offlineModeOn = prefs.getString('appSync') == 'false';
   }
 
   String getInventoryDatabasePath() =>
@@ -76,6 +86,8 @@ class DatabaseProvider {
     }
     cblPreBuiltDatabasePath =
         "${cblDatabaseDirectory.path}/$defaultInspectionDatabaseName.cblite2";
+    debugPrint(
+        '${DateTime.now()} [DatabaseProvider] info: database directory: ${cblDatabaseDirectory.path}');
   }
 
   //setup and open the database file(s)
@@ -87,15 +99,6 @@ class DatabaseProvider {
       final dbConfig =
           DatabaseConfiguration(directory: cblDatabaseDirectory.path);
 
-      // create the warehouse database if it doesn't already exist
-      // if (!File("$cblPreBuiltDatabasePath/$databaseFileName").existsSync()) {
-      //   await _unzipPrebuiltDatabase();
-      //   await _copyWarehouseDatabase();
-      // }
-      // //open the warehouse database
-      // warehouseDatabase =
-      //     await Database.openAsync(warehouseDatabaseName, dbConfig);
-
       //calculate database name based on current logged in users team name
       final companyName = user.companyIdentifier?.toLowerCase().trim();
       currentInspectionDatabaseName =
@@ -105,26 +108,19 @@ class DatabaseProvider {
       projects, assets, and user profiles */
       e3inspectionsDatabase =
           await Database.openAsync(currentInspectionDatabaseName, dbConfig);
-      //initialize collections
-
-      projectCollection =
-          (await e3inspectionsDatabase?.collection('projects'))!;
-      subProjectCollection =
-          (await e3inspectionsDatabase?.collection('subProjects'))!;
-      locationCollection =
-          (await e3inspectionsDatabase?.collection('locations'))!;
-      deckImageCollection =
-          (await e3inspectionsDatabase?.collection('deckImages'))!;
-      visualSectionCollection =
-          (await e3inspectionsDatabase?.collection('visualSections'))!;
-      formCollection = (await e3inspectionsDatabase?.collection('forms'))!;
-
+      // initialize collections (create if missing)
+      projectCollection = await _getOrCreateCollection('projects');
+      subProjectCollection = await _getOrCreateCollection('subProjects');
+      locationCollection = await _getOrCreateCollection('locations');
+      deckImageCollection = await _getOrCreateCollection('deckImages');
+      visualSectionCollection = await _getOrCreateCollection('visualSections');
+      formCollection = await _getOrCreateCollection('forms');
       invasiveSectionCollection =
-          (await e3inspectionsDatabase?.collection('invasiveSections'))!;
+          await _getOrCreateCollection('invasiveSections');
       dynamicSectionCollection =
-          (await e3inspectionsDatabase?.collection('dynamicSections'))!;
+          await _getOrCreateCollection('dynamicSections');
       conclusiveSectionCollection =
-          (await e3inspectionsDatabase?.collection('conclusiveSections'))!;
+          await _getOrCreateCollection('conclusiveSections');
       //create indexes for queries
       await _createDocumentTypeIndex();
       await _createCompanyDocumentTypeIndex();
@@ -133,6 +129,40 @@ class DatabaseProvider {
           '${DateTime.now()} [DatabaseProvider] info: databases initialized');
     } catch (e) {
       debugPrint('${DateTime.now()} [DatabaseProvider] error: ${e.toString()}');
+    }
+  }
+
+  /// Initialize databases at app startup when no user is logged in yet.
+  /// Opens a default inspection database without company prefix so the
+  /// app can use Couchbase Lite early. This does not depend on a User.
+  Future<void> initDatabasesForAppStartup() async {
+    try {
+      if (e3inspectionsDatabase != null) return;
+      final dbConfig =
+          DatabaseConfiguration(directory: cblDatabaseDirectory.path);
+      e3inspectionsDatabase =
+          await Database.openAsync(defaultInspectionDatabaseName, dbConfig);
+
+      projectCollection = await _getOrCreateCollection('projects');
+      subProjectCollection = await _getOrCreateCollection('subProjects');
+      locationCollection = await _getOrCreateCollection('locations');
+      deckImageCollection = await _getOrCreateCollection('deckImages');
+      visualSectionCollection = await _getOrCreateCollection('visualSections');
+      formCollection = await _getOrCreateCollection('forms');
+      invasiveSectionCollection =
+          await _getOrCreateCollection('invasiveSections');
+      dynamicSectionCollection =
+          await _getOrCreateCollection('dynamicSections');
+      conclusiveSectionCollection =
+          await _getOrCreateCollection('conclusiveSections');
+
+      await _createDocumentTypeIndex();
+      await _createCompanyDocumentTypeIndex();
+      debugPrint(
+          '${DateTime.now()} [DatabaseProvider] info: startup databases initialized');
+    } catch (e) {
+      debugPrint(
+          '${DateTime.now()} [DatabaseProvider] error initializing startup DB: ${e.toString()}');
     }
   }
 
@@ -214,13 +244,68 @@ class DatabaseProvider {
 
   /* _setupCouchbaseLogging - For Flutter apps `Database.log.custom` is setup with a logger, which logs to `print`, but only at log level `warning`. */
   void _setupCouchbaseLogging() {
-    //use for dev builds only!!
-    Database.log.custom!.level = LogLevel.verbose;
-    Database.log.file.config = LogFileConfiguration(
-        directory: cblLogsDirectory.path, usePlainText: true);
+    // Use for dev builds only. Guard against null handlers on some
+    // platform implementations to avoid runtime exceptions.
+    try {
+      final dbLog = Database.log;
+      // Set verbose level if available
+      try {
+        if (dbLog.custom != null) {
+          dbLog.custom!.level = LogLevel.verbose;
+        }
+      } catch (_) {
+        // ignore if underlying implementation doesn't support custom/file logs
+      }
+
+      // Configure file logging if available
+      try {
+        if (dbLog.file != null) {
+          dbLog.file.config = LogFileConfiguration(
+              directory: cblLogsDirectory.path, usePlainText: true);
+        }
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('Error configuring Couchbase logging: $e');
+    }
   }
 
   bool isAppOfflineMode() {
     return offlineModeOn;
+  }
+}
+
+// Helper extension methods below
+extension on DatabaseProvider {
+  Future<Collection> _getOrCreateCollection(String name) async {
+    try {
+      // Try to get existing collection
+      final existing = await e3inspectionsDatabase?.collection(name);
+      if (existing != null) return existing;
+
+      // If not present, attempt to create it
+      try {
+        // Some platform implementations expose `createCollection`.
+        // Use no-scope collection creation if available.
+        final createMethod = e3inspectionsDatabase?.createCollection;
+        if (createMethod != null) {
+          // ignore: invalid_use_of_protected_member
+          await e3inspectionsDatabase?.createCollection(name);
+        } else {
+          // Fallback: call collection access again (may auto-create on some platforms)
+        }
+      } catch (e) {
+        debugPrint('Could not call createCollection for $name: $e');
+      }
+
+      // Try to read it again
+      final created = await e3inspectionsDatabase?.collection(name);
+      if (created != null) return created;
+
+      // As a last resort throw an informative error
+      throw StateError('Failed to obtain or create collection: $name');
+    } catch (e) {
+      debugPrint('Error getting/creating collection $name: $e');
+      rethrow;
+    }
   }
 }

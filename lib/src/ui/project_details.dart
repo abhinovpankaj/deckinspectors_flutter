@@ -1,28 +1,21 @@
 import 'dart:async' as async;
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:E3InspectionsMultiTenant/src/bloc/projects_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/models/error_response.dart';
 import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
-import 'package:E3InspectionsMultiTenant/src/resources/couchbase/couchbase_project_services.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-//import 'package:E3InspectionsMultiTenant/src/ui/pdfviewer.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:flutter_material_pickers/helpers/show_checkbox_picker.dart';
 import 'package:flutter_material_pickers/models/select_all_config.dart';
 import 'package:map_launcher/map_launcher.dart';
-//import 'package:maps_launcher/maps_launcher.dart';
-
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:E3InspectionsMultiTenant/src/bloc/projectdetails_bloc.dart';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/project_repository.dart';
 import '../models/couchbase/couchbase_models.dart';
-
-import '../services/realm_local_services.dart';
+import '../resources/repository.dart';
 import 'addedit_subproject.dart';
-
-//import 'breadcrumb_navigation.dart';
 import 'htmlviewer.dart';
 import 'location.dart';
 import 'package:flutter/material.dart';
@@ -35,28 +28,25 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProjectDetailsPage extends StatefulWidget {
-  final ObjectId id;
+  final String id;
   final String userFullName;
   final bool isInvasiveMode;
   const ProjectDetailsPage(
-    this.id,
-    this.userFullName,
-    this.isInvasiveMode, {
-    super.key,
-  });
+      {required this.id,
+      required this.userFullName,
+      required this.isInvasiveMode,
+      Key? key})
+      : super(key: key);
 
   @override
   State<ProjectDetailsPage> createState() => _ProjectDetailsPageState();
 
   static MaterialPageRoute getRoute(
-    ObjectId id,
-    String userName,
-    bool isInvasive,
-    String pageName,
-  ) => MaterialPageRoute(
-    settings: RouteSettings(name: pageName),
-    builder: (context) => ProjectDetailsPage(id, userName, isInvasive),
-  );
+          String id, String userName, bool isInvasive, String pageName) =>
+      MaterialPageRoute(
+          settings: RouteSettings(name: pageName),
+          builder: (context) => ProjectDetailsPage(
+              id: id, userFullName: userName, isInvasiveMode: isInvasive));
 }
 
 //Add New Project
@@ -64,22 +54,19 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     with SingleTickerProviderStateMixin {
   late Project currentProject;
   late int selectedTabIndex = 0;
-  //Tab Controls
+//Tab Controls
   late TabController _tabController;
   late String userFullName;
   late String createdAt;
   late List<Child?> locations;
   late List<Child?> buildings;
   late bool isInvasiveMode;
-  late ObjectId projectId;
-  late RealmLocalServices realmProjServices;
+  late String projectId;
   List<String> assignedUsers = [];
   Location getNewLocation() {
-    var newLocation = Location(
-      ObjectId(),
-      projectId,
-      false,
-      usersBloc.userDetails.companyidentifer as String,
+    return Location(
+      parentid: projectId,
+      isInvasive: false,
       name: "",
       description: "",
       url: "",
@@ -87,23 +74,18 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       type: 'projectlocation',
       parenttype: 'project',
     );
-    return newLocation;
   }
 
   SubProject getNewBuilding() {
-    var newBuilding = SubProject(
-      ObjectId(),
-      projectId,
-      false,
-      usersBloc.userDetails.companyidentifer as String,
+    return SubProject(
+      parentid: projectId,
+      isInvasive: false,
       name: "",
       description: "",
       url: "",
       createdby: userFullName,
       type: 'subproject',
-      parenttype: 'project',
     );
-    return newBuilding;
   }
 
   @override
@@ -130,48 +112,44 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     //   //
     // }
     setState(() {
-      if (currentProject.isValid) {
-        if (isInvasiveMode) {
-          locations =
-              currentProject.children
-                  .where(
-                    (element) =>
-                        element.type == 'projectlocation' && element.isInvasive,
-                  )
-                  .toList();
-          buildings =
-              currentProject.children
-                  .where(
-                    (element) =>
-                        element.type == 'subproject' && element.isInvasive,
-                  )
-                  .toList();
-        } else {
-          locations =
-              currentProject.children
-                  .where((element) => element.type == 'projectlocation')
-                  .toList();
-          locations.sort((l1, l2) {
-            final a = int.tryParse(l1!.sequenceNo ?? '');
-            final b = int.tryParse(l2!.sequenceNo ?? '');
-            if (a != null && b != null) return a.compareTo(b);
-            if (a != null) return -1;
-            if (b != null) return 1;
-            return l1.id.toString().compareTo(l2.id.toString());
-          });
-          buildings =
-              currentProject.children
-                  .where((element) => element.type == 'subproject')
-                  .toList();
-          buildings.sort((l1, l2) {
-            final a = int.tryParse(l1!.sequenceNo ?? '');
-            final b = int.tryParse(l2!.sequenceNo ?? '');
-            if (a != null && b != null) return a.compareTo(b);
-            if (a != null) return -1;
-            if (b != null) return 1;
-            return l1.id.toString().compareTo(l2.id.toString());
-          });
-        }
+      if (isInvasiveMode) {
+        locations = currentProject.children
+            .where((element) =>
+                element.type == 'projectlocation' && element.isInvasive)
+            .toList();
+        buildings = currentProject.children
+            .where(
+                (element) => element.type == 'subproject' && element.isInvasive)
+            .toList();
+      } else {
+        locations = currentProject.children
+            .where((element) => element.type == 'projectlocation')
+            .toList();
+        locations.sort((l1, l2) {
+          if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+            if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
+              return -1;
+            } else {
+              return 1;
+            }
+          } else {
+            return l1.id.toString().compareTo(l2!.id.toString());
+          }
+        });
+        buildings = currentProject.children
+            .where((element) => element.type == 'subproject')
+            .toList();
+        buildings.sort((l1, l2) {
+          if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+            if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
+              return -1;
+            } else {
+              return 1;
+            }
+          } else {
+            return l1.id.toString().compareTo(l2!.id.toString());
+          }
+        });
       }
     });
   }
@@ -194,48 +172,31 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   }
 
   void addEditProject() {
-    Navigator.push(
-      context,
-      AddEditProjectPage.getRoute(currentProject, false, userFullName),
-    );
+    Navigator.push(context,
+        AddEditProjectPage.getRoute(currentProject, false, userFullName));
   }
 
   void addNewChild(String name) {
     //setState(() {});
     if (selectedTabIndex == 1) {
       Navigator.push(
-        context,
-        AddEditLocationPage.getRoute(
-          getNewLocation(),
-          true,
-          userFullName,
-          name,
-        ),
-      ); //.then(refreshProjectDetails);
+          context,
+          AddEditLocationPage.getRoute(getNewLocation(), true, userFullName,
+              name)); //.then(refreshProjectDetails);
     } else {
       Navigator.push(
-        context,
-        AddEditSubProjectPage.getRoute(
-          getNewBuilding(),
-          true,
-          userFullName,
-          name,
-        ),
-      ); //.then(refreshProjectDetails);
+          context,
+          AddEditSubProjectPage.getRoute(getNewBuilding(), true, userFullName,
+              name)); //.then(refreshProjectDetails);
     }
   }
 
-  void gotoDetails(ObjectId id, String name, String pageName) {
+  void gotoDetails(String id, String name, String pageName) {
     if (selectedTabIndex == 1) {
       Navigator.push(
         context,
         LocationPage.getRoute(
-          id,
-          name,
-          'Project Locations',
-          userFullName,
-          pageName,
-        ),
+            id, name, 'Project Locations', userFullName, pageName),
       ).then((value) {
         locations.remove(value);
         setState(() => {});
@@ -250,153 +211,126 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmLocalServices>(
-      context,
-      listen: false,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leadingWidth: 140,
-        leading: ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-          label: const Text('Home', style: TextStyle(color: Colors.blue)),
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
+    return BlocProvider(
+      create: (context) => ProjectDetailsBloc(
+        projectRepository: RepositoryProvider.of<ProjectRepository>(context),
+        globalRepository: RepositoryProvider.of<Repository>(context),
+      )..add(LoadProjectDetails(projectId)),
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leadingWidth: 140,
+          leading: ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: Colors.blue,
+            ),
+            label: const Text(
+              'Home',
+              style: TextStyle(color: Colors.blue),
+            ),
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+            ),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.blue,
+          elevation: 0,
+          title: const Text(
+            'Project',
+            style:
+                TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue,
-        elevation: 0,
-        title: const Text(
-          'Project',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
-        ),
-      ),
-      // floatingActionButton: Padding(
-      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-      //   child: BreadCrumbNavigator(),
-      // ),
-      body: StreamBuilder<RealmObjectChanges<Project>>(
-        //projectsBloc.projects
-        stream: realmServices.getProject(projectId)?.changes,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final data = snapshot.data;
+        // floatingActionButton: Padding(
+        //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+        //   child: BreadCrumbNavigator(),
+        // ),
+        body: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
+          builder: (context, state) {
+            if (state is ProjectDetailsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            if (data == null) {
-              return Center(
-                child: Text(
-                  '${snapshot.error} occurred',
-                  style: const TextStyle(fontSize: 18),
-                ),
-              );
+            if (state is ProjectDetailsLoaded) {
+              currentProject = state.project;
 
-              // if we got our data
-            } else {
-              currentProject = data.object;
-              if (currentProject.isValid) {
-                if (isInvasiveMode) {
-                  locations =
-                      currentProject.children
-                          .where(
-                            (element) =>
-                                element.type == 'projectlocation' &&
-                                element.isInvasive,
-                          )
-                          .toList();
+              if (isInvasiveMode) {
+                locations = currentProject.children
+                    .where((element) =>
+                        element.type == 'projectlocation' && element.isInvasive)
+                    .toList();
 
-                  buildings =
-                      currentProject.children
-                          .where(
-                            (element) =>
-                                element.type == 'subproject' &&
-                                element.isInvasive,
-                          )
-                          .toList();
+                buildings = currentProject.children
+                    .where((element) =>
+                        element.type == 'subproject' && element.isInvasive)
+                    .toList();
+              } else {
+                locations = currentProject.children
+                    .where((element) => element.type == 'projectlocation')
+                    .toList();
+
+                buildings = currentProject.children
+                    .where((element) => element.type == 'subproject')
+                    .toList();
+              }
+
+              buildings.sort((l1, l2) {
+                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                    return -1;
+                  } else {
+                    return 1;
+                  }
                 } else {
-                  locations =
-                      currentProject.children
-                          .where((element) => element.type == 'projectlocation')
-                          .toList();
+                  return l1.id.toString().compareTo(l2!.id.toString());
+                }
+              });
 
-                  buildings =
-                      currentProject.children
-                          .where((element) => element.type == 'subproject')
-                          .toList();
-                }
-                buildings.sort((l1, l2) {
-                  final a = int.tryParse(l1!.sequenceNo ?? '');
-                  final b = int.tryParse(l2!.sequenceNo ?? '');
-                  if (a != null && b != null) return a.compareTo(b);
-                  if (a != null) return -1;
-                  if (b != null) return 1;
-                  return l1.id.toString().compareTo(l2.id.toString());
-                });
-                locations.sort((l1, l2) {
-                  final a = int.tryParse(l1!.sequenceNo ?? '');
-                  final b = int.tryParse(l2!.sequenceNo ?? '');
-                  if (a != null && b != null) return a.compareTo(b);
-                  if (a != null) return -1;
-                  if (b != null) return 1;
-                  return l1.id.toString().compareTo(l2.id.toString());
-                });
-                var shortDate = DateTime.tryParse(
-                  currentProject.createdat as String,
-                );
-                if (shortDate != null) {
-                  createdAt = DateFormat.yMMMEd().format(shortDate);
+              locations.sort((l1, l2) {
+                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                    return -1;
+                  } else {
+                    return 1;
+                  }
                 } else {
-                  createdAt = "";
+                  return l1.id.toString().compareTo(l2!.id.toString());
                 }
+              });
+
+              var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
+              if (shortDate != null) {
+                createdAt = DateFormat.yMMMEd().format(shortDate);
+              } else {
+                createdAt = "";
               }
 
               return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // StatefulBuilder(builder: (context, StateSetter setState) {
-                    projectDetails(
-                      currentProject.name as String,
-                      currentProject.url as String,
-                      currentProject.id,
-                      currentProject.description as String,
-                      currentProject.editedat as String,
-                      currentProject.address as String,
-                    ),
-                    //}),
-                    projectChildrenTab(context),
-                    // const Divider(
-                    //   color: Color.fromARGB(255, 222, 213, 213),
-                    //   height: 2,
-                    //   thickness: 2,
-                    //   indent: 0,
-                    //   endIndent: 0,
-                    // ),
-                    // Padding(
-                    //   padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-                    //   child: BreadCrumbNavigator(),
-                    // )
-                  ],
-                ),
-              );
-
-              // if (data is ErrorResponse) {
-              //   return Center(
-              //     child: Text(
-              //       '${data.message}',
-              //       style: const TextStyle(fontSize: 18),
-              //     ),
-              //   );
-              // }
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  projectDetails(
+                      currentProject.name ?? '',
+                      currentProject.url ?? '',
+                      currentProject.id as String,
+                      currentProject.description ?? '',
+                      currentProject.editedat ?? '',
+                      currentProject.address ?? ''),
+                  projectChildrenTab(context),
+                ],
+              ));
             }
-          }
 
-          // Displaying LoadingSpinner to indicate waiting state
-          return const Center(child: CircularProgressIndicator());
-        },
+            if (state is ProjectDetailsError) {
+              return Center(child: Text(state.message));
+            }
+
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }
@@ -413,8 +347,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location services are disabled.')),
-        );
+            const SnackBar(content: Text('Location services are disabled.')));
         return null;
       }
 
@@ -423,36 +356,27 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied.')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Location permissions are denied.')));
           return null;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
-              'Location permissions are permanently denied. Enable from settings.',
-            ),
-          ),
-        );
+                'Location permissions are permanently denied. Enable from settings.')));
         return null;
       }
 
       // Get current position
       final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-      );
+          desiredAccuracy: LocationAccuracy.best);
 
       return Coords(position.latitude, position.longitude);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to get current location: ${e.toString()}'),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to get current location: ${e.toString()}')));
       return null;
     }
   }
@@ -471,8 +395,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
         // Fallback to Google Maps web directions
         final Uri googleWeb = Uri.parse(
-          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
-        );
+            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
         if (await canLaunchUrl(googleWeb)) {
           await launchUrl(googleWeb, mode: LaunchMode.externalApplication);
           return;
@@ -487,17 +410,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
         // Try Google Maps on iOS if installed
         final Uri googleIos = Uri.parse(
-          'comgooglemaps://?daddr=$lat,$lng&directionsmode=driving',
-        );
+            'comgooglemaps://?daddr=$lat,$lng&directionsmode=driving');
         if (await canLaunchUrl(googleIos)) {
           await launchUrl(googleIos, mode: LaunchMode.externalApplication);
           return;
         }
 
         // Fallback to Apple Maps web
-        final Uri appleWeb = Uri.parse(
-          'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d',
-        );
+        final Uri appleWeb =
+            Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
         if (await canLaunchUrl(appleWeb)) {
           await launchUrl(appleWeb, mode: LaunchMode.externalApplication);
           return;
@@ -506,360 +427,317 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
       // Generic fallback: open Google Maps web
       final Uri fallback = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
-      );
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
       if (await canLaunchUrl(fallback)) {
         await launchUrl(fallback, mode: LaunchMode.externalApplication);
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No available maps application to launch navigation.'),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content:
+              Text('No available maps application to launch navigation.')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error launching navigation: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error launching navigation: ${e.toString()}')));
     }
   }
 
-  Widget projectDetails(
-    String name,
-    String url,
-    ObjectId id,
-    String description,
-    String editedat,
-    String address,
-  ) {
-    realmProjServices = Provider.of<RealmProjectServices>(
-      context,
-      listen: false,
-    );
+  Widget projectDetails(String name, String url, String id, String description,
+      String editedat, String address) {
+    // Realm services removed; repository used for data operations.
     return Padding(
       padding: const EdgeInsets.all(0.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const SizedBox(height: 4),
+          const SizedBox(
+            height: 4,
+          ),
           const ProjectType(),
           Container(
-            height: 220,
-            decoration: BoxDecoration(
-              color: isInvasiveMode ? Colors.orange : Colors.blue,
-              // image: networkImage(currentProject.url as String),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(8.0),
-              ),
-              boxShadow: const [BoxShadow(blurRadius: 1.0, color: Colors.blue)],
-            ),
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(8.0),
+              height: 220,
+              decoration: BoxDecoration(
+                  color: isInvasiveMode ? Colors.orange : Colors.blue,
+                  // image: networkImage(currentProject.url as String),
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(8.0)),
+                  boxShadow: const [
+                    BoxShadow(blurRadius: 1.0, color: Colors.blue)
+                  ]),
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(8.0)),
+                    child: cachedNetworkImage(url),
                   ),
-                  child: cachedNetworkImage(url),
-                ),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide.none,
-                    foregroundColor: Colors.white,
-                    // the height is 50, the width is full
-                    minimumSize: const Size.fromHeight(30),
-                    backgroundColor: Colors.lightBlue,
-                    shadowColor: Colors.transparent,
-                    elevation: 1,
-                  ),
-                  onPressed: () async {
-                    final address = currentProject.address;
-                    if (address == null || address.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Address is empty, please add address to navigate.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
-                    try {
-                      // prefer stored coords if they exist and are non-zero
-                      double lat = (currentProject.latitude ?? 0.0);
-                      double lng = (currentProject.longitude ?? 0.0);
-
-                      // If coords not set (0,0) attempt geocoding
-                      if (lat == 0.0 && lng == 0.0) {
-                        final List<geocoding.Location> geoLocations =
-                            await geocoding.locationFromAddress(address);
-                        if (geoLocations.isNotEmpty) {
-                          lat = geoLocations.first.latitude;
-                          lng = geoLocations.first.longitude;
-                        } else {
+                  OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                          side: BorderSide.none,
+                          foregroundColor: Colors.white,
+                          // the height is 50, the width is full
+                          minimumSize: const Size.fromHeight(30),
+                          backgroundColor: Colors.lightBlue,
+                          shadowColor: Colors.transparent,
+                          elevation: 1),
+                      onPressed: () async {
+                        final address = currentProject.address;
+                        if (address == null || address.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Unable to find coordinates for address.',
-                              ),
-                            ),
+                                content: Text(
+                                    'Address is empty, please add address to navigate.')),
                           );
                           return;
                         }
-                      }
 
-                      final coords = Coords(lat, lng);
+                        try {
+                          // prefer stored coords if they exist and are non-zero
+                          double lat = (currentProject.latitude ?? 0.0);
+                          double lng = (currentProject.longitude ?? 0.0);
 
-                      // Try to obtain current device coordinates to pass as origin.
-                      final Coords? originCoords = await _getCurrentCoords();
+                          // If coords not set (0,0) attempt geocoding
+                          if (lat == 0.0 && lng == 0.0) {
+                            final List<geocoding.Location> geoLocations =
+                                await geocoding.locationFromAddress(address);
+                            if (geoLocations.isNotEmpty) {
+                              lat = geoLocations.first.latitude;
+                              lng = geoLocations.first.longitude;
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Unable to find coordinates for address.')),
+                              );
+                              return;
+                            }
+                          }
 
-                      if (Platform.isIOS) {
-                        // Start navigation via URL schemes so turn-by-turn starts
-                        await _startNavigation(
-                          coords.latitude,
-                          coords.longitude,
-                        );
-                      } else if (Platform.isAndroid) {
-                        // Start navigation via URL schemes so turn-by-turn starts
-                        await _startNavigation(
-                          coords.latitude,
-                          coords.longitude,
-                        );
-                      } else {
-                        // fallback for other platforms
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Platform not supported for navigation.',
-                            ),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Failed to get coordinates: ${e.toString()}',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.location_pin,
-                    color: Colors.blueAccent,
-                  ),
-                  label: const Text(
-                    'Navigate',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                          final coords = Coords(lat, lng);
+
+                          // Try to obtain current device coordinates to pass as origin.
+                          final Coords? originCoords =
+                              await _getCurrentCoords();
+
+                          if (Platform.isIOS) {
+                            // Start navigation via URL schemes so turn-by-turn starts
+                            await _startNavigation(
+                                coords.latitude, coords.longitude);
+                          } else if (Platform.isAndroid) {
+                            // Start navigation via URL schemes so turn-by-turn starts
+                            await _startNavigation(
+                                coords.latitude, coords.longitude);
+                          } else {
+                            // fallback for other platforms
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Platform not supported for navigation.')),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'Failed to get coordinates: ${e.toString()}')),
+                          );
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.location_pin,
+                        color: Colors.blueAccent,
+                      ),
+                      label: const Text(
+                        'Navigate',
+                        style: TextStyle(color: Colors.white),
+                      )),
+                ],
+              )),
           //networkImage(currentProject.url as String),
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      name,
-                      maxLines: 2,
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 2,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          overflow: TextOverflow.ellipsis,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    Visibility(
+                      visible: !isInvasiveMode,
+                      child: InkWell(
+                          onTap: () {
+                            addEditProject();
+                          },
+                          child: const Chip(
+                            avatar:
+                                Icon(Icons.edit_outlined, color: Colors.blue),
+                            labelPadding: EdgeInsets.all(2),
+                            label: Text(
+                              'Edit Project ',
+                              style: TextStyle(color: Colors.blue),
+                              selectionColor: Colors.transparent,
+                            ),
+                            shadowColor: Colors.white,
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            autofocus: true,
+                          )),
+                    ),
+                  ],
+                )),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edited on ${getCustomFormattedDateTime(editedat, 'MM/dd/yy hh:mm')}',
                       style: const TextStyle(
-                        fontSize: 18,
-                        overflow: TextOverflow.ellipsis,
-                        fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic),
+                    ),
+                    Visibility(
+                      visible: !isInvasiveMode,
+                      child: InkWell(
+                          onTap: () {
+                            assignProject();
+                          },
+                          child: const Chip(
+                            avatar: Icon(Icons.account_circle_outlined,
+                                color: Colors.blue),
+                            labelPadding: EdgeInsets.all(0),
+                            label: Text(
+                              'Assign Project ',
+                              style: TextStyle(color: Colors.blue),
+                              selectionColor: Colors.transparent,
+                            ),
+                            shadowColor: Colors.white,
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            autofocus: true,
+                          )),
+                    ),
+                  ],
+                )),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Description',
+                      style: TextStyle(
+                        fontSize: 14,
                       ),
                       textAlign: TextAlign.left,
                     ),
-                  ),
-                  Visibility(
-                    visible: !isInvasiveMode,
-                    child: InkWell(
-                      onTap: () {
-                        addEditProject();
-                      },
-                      child: const Chip(
-                        avatar: Icon(Icons.edit_outlined, color: Colors.blue),
-                        labelPadding: EdgeInsets.all(2),
-                        label: Text(
-                          'Edit Project ',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Edited on ${getCustomFormattedDateTime(editedat, 'MM/dd/yy hh:mm')}',
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  Visibility(
-                    visible: !isInvasiveMode,
-                    child: InkWell(
-                      onTap: () {
-                        assignProject();
-                      },
-                      child: const Chip(
-                        avatar: Icon(
-                          Icons.account_circle_outlined,
-                          color: Colors.blue,
-                        ),
-                        labelPadding: EdgeInsets.all(0),
-                        label: Text(
-                          'Assign Project ',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontSize: 14),
-                    textAlign: TextAlign.left,
-                  ),
-                  //remove project download option
-                  isInvasiveMode
-                      ? PopupMenuButton(
-                        child: Chip(
-                          avatar:
-                              isDownloading
+                    //remove project download option
+                    isInvasiveMode
+                        ? PopupMenuButton(
+                            child: Chip(
+                              avatar: isDownloading
                                   ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    ),
-                                  )
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                      ),
+                                    )
                                   : const Icon(
-                                    Icons.file_download_done_outlined,
-                                    color: Colors.blue,
-                                  ),
-                          labelPadding: const EdgeInsets.all(2),
-                          label: const Text(
-                            'Download Report',
-                            style: TextStyle(color: Colors.blue, fontSize: 15),
-                          ),
-                          shadowColor: Colors.transparent,
-                          backgroundColor: Colors.transparent,
-                          elevation: 10,
-                          autofocus: true,
-                        ),
-                        onSelected: (value) {
-                          _onMenuItemSelected(value as int);
-                        },
-                        itemBuilder:
-                            (ctx) => [
-                              _buildPopupMenuItem(
-                                'Invasive',
-                                Icons.edit_document,
-                                1,
+                                      Icons.file_download_done_outlined,
+                                      color: Colors.blue),
+                              labelPadding: const EdgeInsets.all(2),
+                              label: const Text(
+                                'Download Report',
+                                style:
+                                    TextStyle(color: Colors.blue, fontSize: 15),
                               ),
+                              shadowColor: Colors.transparent,
+                              backgroundColor: Colors.transparent,
+                              elevation: 10,
+                              autofocus: true,
+                            ),
+                            onSelected: (value) {
+                              _onMenuItemSelected(value as int);
+                            },
+                            itemBuilder: (ctx) => [
                               _buildPopupMenuItem(
-                                'Invasive Only',
-                                Icons.browse_gallery_outlined,
-                                2,
-                              ),
+                                  'Invasive', Icons.edit_document, 1),
+                              _buildPopupMenuItem('Invasive Only',
+                                  Icons.browse_gallery_outlined, 2),
                             ],
-                      )
-                      : InkWell(
-                        onTap: () {
-                          isDownloading
-                              ? null
-                              : downloadProjectReport(id, 'Visual');
-                        },
-                        child: Chip(
-                          avatar:
+                          )
+                        : InkWell(
+                            onTap: () {
                               isDownloading
+                                  ? null
+                                  : downloadProjectReport(id, 'Visual');
+                            },
+                            child: Chip(
+                              avatar: isDownloading
                                   ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    ),
-                                  )
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                      ),
+                                    )
                                   : const Icon(
-                                    Icons.file_download_done_outlined,
-                                    color: Colors.blue,
-                                  ),
-                          labelPadding: const EdgeInsets.all(2),
-                          label: const Text(
-                            'Download Report ',
-                            style: TextStyle(color: Colors.blue),
-                            selectionColor: Colors.transparent,
-                          ),
-                          shadowColor: Colors.white,
-                          backgroundColor: Colors.transparent,
-                          elevation: 0,
-                          autofocus: true,
-                        ),
-                      ),
-                ],
-              ),
-            ),
+                                      Icons.file_download_done_outlined,
+                                      color: Colors.blue),
+                              labelPadding: const EdgeInsets.all(2),
+                              label: const Text(
+                                'Download Report ',
+                                style: TextStyle(color: Colors.blue),
+                                selectionColor: Colors.transparent,
+                              ),
+                              shadowColor: Colors.white,
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              autofocus: true,
+                            )),
+                  ],
+                )),
           ),
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: Text(
-                      maxLines: 2,
-                      description,
-                      style: const TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        fontSize: 16,
+                padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        maxLines: 2,
+                        description,
+                        style: const TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.left,
                       ),
-                      textAlign: TextAlign.left,
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ],
+                )),
           ),
 
           const Divider(
@@ -875,16 +753,18 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   }
 
   PopupMenuItem _buildPopupMenuItem(
-    String title,
-    IconData iconData,
-    int position,
-  ) {
+      String title, IconData iconData, int position) {
     return PopupMenuItem(
       value: position,
       child: Row(
         children: [
-          Icon(iconData, color: Colors.blue),
-          const SizedBox(width: 15),
+          Icon(
+            iconData,
+            color: Colors.blue,
+          ),
+          const SizedBox(
+            width: 15,
+          ),
           Text(title),
         ],
       ),
@@ -893,9 +773,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   _onMenuItemSelected(int value) async {
     if (value == 1) {
-      downloadProjectReport(currentProject.id, 'Invasive');
+      downloadProjectReport(currentProject.id as String, 'Invasive');
     } else {
-      downloadProjectReport(currentProject.id, 'InvasiveOnly');
+      downloadProjectReport(currentProject.id as String, 'InvasiveOnly');
     }
   }
 
@@ -909,21 +789,23 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
         TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: "Buildings (${buildings.length})", height: 32),
-            Tab(text: "Project Locations (${locations.length})", height: 32),
+            Tab(
+              text: "Buildings (${buildings.length})",
+              height: 32,
+            ),
+            Tab(
+              text: "Project Locations (${locations.length})",
+              height: 32,
+            ),
           ],
           labelColor: Colors.black,
         ),
         SizedBox(
-          height: 250,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
+            height: 250,
+            child: TabBarView(controller: _tabController, children: [
               locationsWidget('building'),
               locationsWidget('location'),
-            ],
-          ),
-        ),
+            ])),
       ],
       // ),
     );
@@ -937,265 +819,248 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       isEmpty = buildings.isEmpty;
     }
     return Padding(
-      padding: const EdgeInsets.all(4),
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Visibility(
-            visible: !isInvasiveMode,
-            child: Align(
-              alignment: Alignment.topRight,
-              child: InkWell(
-                onTap: () {
-                  addNewChild(currentProject.name as String);
-                },
-                child: Chip(
-                  avatar: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.blue,
-                  ),
-                  labelPadding: const EdgeInsets.all(2),
-                  label: Text(
-                    'Add $type',
-                    style: const TextStyle(color: Colors.blue, fontSize: 15),
-                    selectionColor: Colors.transparent,
-                  ),
-                  shadowColor: Colors.white,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  autofocus: true,
-                ),
+        padding: const EdgeInsets.all(4),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Visibility(
+              visible: !isInvasiveMode,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: InkWell(
+                    onTap: () {
+                      addNewChild(currentProject.name as String);
+                    },
+                    child: Chip(
+                      avatar: const Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.blue,
+                      ),
+                      labelPadding: const EdgeInsets.all(2),
+                      label: Text(
+                        'Add $type',
+                        style:
+                            const TextStyle(color: Colors.blue, fontSize: 15),
+                        selectionColor: Colors.transparent,
+                      ),
+                      shadowColor: Colors.white,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      autofocus: true,
+                    )),
               ),
             ),
-          ),
-          isEmpty
-              ? Center(
-                child: Text(
-                  'No $type, Add project $type.',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              )
-              : type == 'location'
-              ? Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: locations.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return horizontalScrollChildren(context, index);
-                  },
-                ),
-              )
-              : Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: buildings.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return horizontalScrollChildrenBuildings(context, index);
-                  },
-                ),
-              ),
-        ],
-      ),
-    );
+            isEmpty
+                ? Center(
+                    child: Text(
+                    'No $type, Add project $type.',
+                    style: const TextStyle(fontSize: 16),
+                  ))
+                : type == 'location'
+                    ? Expanded(
+                        child: ListView.builder(
+                            shrinkWrap: true,
+                            scrollDirection: Axis.horizontal,
+                            itemCount: locations.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return horizontalScrollChildren(context, index);
+                            }))
+                    : Expanded(
+                        child: ListView.builder(
+                            shrinkWrap: true,
+                            scrollDirection: Axis.horizontal,
+                            itemCount: buildings.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return horizontalScrollChildrenBuildings(
+                                  context, index);
+                            }))
+          ],
+        ));
   }
 
   //Todo create widget for locations
   Widget horizontalScrollChildren(BuildContext context, int index) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width / 2,
-      height: 180,
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                gotoDetails(
-                  locations[index]!.id,
-                  currentProject.name as String,
-                  locations[index]!.name as String,
-                );
-              },
-              child: Container(
-                height: 140,
-                width: 192,
-                decoration: BoxDecoration(
-                  color: isInvasiveMode ? Colors.orange : Colors.blue,
-                  // image: networkImage(currentProject.url as String),
-                  borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 1.0, color: Colors.blue),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: cachedNetworkImage(locations[index]!.url),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                child: Text(
-                  overflow: TextOverflow.ellipsis,
-                  locations[index]!.name as String,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+        width: MediaQuery.of(context).size.width / 2,
+        height: 180,
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  gotoDetails(
+                      locations[index]!.id as String,
+                      currentProject.name as String,
+                      locations[index]!.name as String);
+                },
+                child: Container(
+                  height: 140,
+                  width: 192,
+                  decoration: BoxDecoration(
+                      color: isInvasiveMode ? Colors.orange : Colors.blue,
+                      // image: networkImage(currentProject.url as String),
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(8.0)),
+                      boxShadow: const [
+                        BoxShadow(blurRadius: 1.0, color: Colors.blue)
+                      ]),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: cachedNetworkImage(locations[index]!.url),
                   ),
-                  textAlign: TextAlign.left,
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        locations[index]!.description as String,
-                        style: const TextStyle(
-                          overflow: TextOverflow.ellipsis,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  child: Text(
+                    overflow: TextOverflow.ellipsis,
+                    locations[index]!.name as String,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                    textAlign: TextAlign.left,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            locations[index]!.description as String,
+                            style: const TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              fontSize: 13,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+            ],
+          ),
+        ));
   }
 
   Widget horizontalScrollChildrenBuildings(BuildContext context, int index) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width / 2,
-      height: 180,
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                gotoDetails(
-                  buildings[index]!.id,
-                  currentProject.name as String,
-                  buildings[index]!.name as String,
-                );
-              },
-              child: Container(
-                height: 140,
-                width: 192,
-                decoration: BoxDecoration(
-                  color: isInvasiveMode ? Colors.orange : Colors.blue,
-                  // image: networkImage(currentProject.url as String),
-                  borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 1.0, color: Colors.blue),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: cachedNetworkImage(buildings[index]!.url),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                child: Text(
-                  buildings[index]!.name as String,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+        width: MediaQuery.of(context).size.width / 2,
+        height: 180,
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  gotoDetails(
+                      buildings[index]!.id as String,
+                      currentProject.name as String,
+                      buildings[index]!.name as String);
+                },
+                child: Container(
+                  height: 140,
+                  width: 192,
+                  decoration: BoxDecoration(
+                      color: isInvasiveMode ? Colors.orange : Colors.blue,
+                      // image: networkImage(currentProject.url as String),
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(8.0)),
+                      boxShadow: const [
+                        BoxShadow(blurRadius: 1.0, color: Colors.blue)
+                      ]),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: cachedNetworkImage(buildings[index]!.url),
                   ),
-                  textAlign: TextAlign.left,
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        buildings[index]!.description as String,
-                        style: const TextStyle(
-                          overflow: TextOverflow.ellipsis,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  child: Text(
+                    buildings[index]!.name as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                    textAlign: TextAlign.left,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            buildings[index]!.description as String,
+                            style: const TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              fontSize: 13,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+            ],
+          ),
+        ));
   }
 
   bool isDownloading = false;
-  void downloadProjectReport(ObjectId id, String reportType) async {
+  void downloadProjectReport(String id, String reportType) async {
     setState(() {
       isDownloading = true;
     });
-
-    var result = await projectsBloc.downloadProjectReport(
-      currentProject.name as String,
-      id.toString(),
-      'pdf',
-      appSettings.reportImageQuality,
-      appSettings.imageinRowCount,
-      reportType,
-      appSettings.companyName,
-    );
+    final repo = RepositoryProvider.of<Repository>(context);
+    var result = await repo.downloadProjectReport(
+        currentProject.name as String,
+        id,
+        'pdf',
+        appSettings.reportImageQuality,
+        appSettings.imageinRowCount,
+        reportType,
+        appSettings.companyName);
     if (!mounted) {
       return;
     }
     if (result is ErrorResponse) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-            'Failed to download the report, please try again.${result.message}',
-          ),
-        ),
-      );
+              'Failed to download the report, please try again.${result.message}')));
     } else if (result is SuccessResponse) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Report downloaded successfully.'),
-          action: SnackBarAction(
-            label: 'View Report',
-            onPressed: () => gotoReportView(result.message),
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text(
+          'Report downloaded successfully.',
         ),
-      );
+        action: SnackBarAction(
+            label: 'View Report',
+            onPressed: () => gotoReportView(result.message)),
+      ));
       //gotoReportView(result.message);
     }
     setState(() {
@@ -1219,14 +1084,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     if (!mounted) {
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) {
-          return HTMLViewerPage(htmlText, '', filePath);
-        },
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return HTMLViewerPage(htmlText, '', filePath);
+    }));
   }
 
   void assignProject() async {
@@ -1246,28 +1106,22 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       title: 'Assigned Users',
       items: allUsers,
       selectedItems: assignedUsers,
-      onChanged:
-          (value) => setState(() {
-            assignedUsers = value;
-            //update the project assignment.
-            bool result = realmProjServices.updateAssignment(
-              projectId,
-              assignedUsers,
-            );
-            if (result) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Project assignment updated successfully'),
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Failed to update the project assignment.'),
-                ),
-              );
-            }
-          }),
+      onChanged: (value) => setState(() {
+        assignedUsers = value;
+        // update the project assignment via repository
+        () async {
+          final repo = RepositoryProvider.of<ProjectRepository>(context);
+          final bool result =
+              await repo.updateAssignment(projectId, assignedUsers);
+          if (result) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Project assignment updated successfully')));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Failed to update the project assignment.')));
+          }
+        }();
+      }),
     );
   }
 }

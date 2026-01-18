@@ -11,14 +11,10 @@ class DynamicRepository {
   final UsersBloc _usersBloc;
 
   DynamicRepository(
-    this._databaseProvider,
-    this._imageRepository,
-    this._usersBloc,
-  );
+      this._databaseProvider, this._imageRepository, this._usersBloc);
 
   Future<String> createDynamicSection(
-    DynamicVisualSection dynamicSection,
-  ) async {
+      DynamicVisualSection dynamicSection) async {
     try {
       final id = CouchbaseDocument.generateId();
       final doc = MutableDocument.withId(id, dynamicSection.toDocument());
@@ -45,10 +41,8 @@ class DynamicRepository {
     }
   }
 
-  Future<String> createOrUpdateDynamicSection(
-    DynamicVisualSection section, {
-    String? docId,
-  }) async {
+  Future<String> createOrUpdateDynamicSection(DynamicVisualSection section,
+      {String? docId}) async {
     try {
       final id = docId ?? CouchbaseDocument.generateId();
       final doc = MutableDocument.withId(id, section.toDocument());
@@ -84,12 +78,8 @@ class DynamicRepository {
     );
   }
 
-  Future<bool> addDynamicImagesUrl(
-    String sectionName,
-    String sectionId,
-    DynamicVisualSection currentDynamicSection,
-    List<String> urls,
-  ) async {
+  Future<bool> addDynamicImagesUrl(String sectionName, String sectionId,
+      DynamicVisualSection currentDynamicSection, List<String> urls) async {
     try {
       for (var url in urls) {
         final image = DeckImage(
@@ -118,29 +108,22 @@ class DynamicRepository {
   }
 
   Future<DynamicVisualSection?> getDynamicSectionByParentId(
-    String parentId,
-  ) async {
+      String parentId) async {
     try {
       final query = QueryBuilder.createAsync()
           .select(SelectResult.all())
           .from(
-            DataSource.collection(
-              _databaseProvider.dynamicSectionCollection,
-            ).as('DynamicSection'),
-          )
-          .where(
-            Expression.property(
-              'parentid',
-            ).equalTo(Expression.string(parentId)),
-          );
+              DataSource.collection(_databaseProvider.dynamicSectionCollection)
+                  .as('DynamicSection'))
+          .where(Expression.property('parentid')
+              .equalTo(Expression.string(parentId)));
       final result = await query.execute();
       final results = await result.allResults();
       if (results.isEmpty) {
         return await getNewDynamicSection(parentId);
       }
-      final model = DynamicVisualSection.fromDocument(
-        results.first.toPlainMap(),
-      );
+      final model =
+          DynamicVisualSection.fromDocument(results.first.toPlainMap());
       //model.id = results.first.id;
       return model;
     } catch (e) {
@@ -167,7 +150,10 @@ class DynamicRepository {
       dynamicSection.createdat ??= creationtime;
       dynamicSection.editedat = DateTime.now().toString();
       final id = CouchbaseDocument.generateId();
-      final doc = MutableDocument.withId(id, dynamicSection.toDocument());
+      final doc = MutableDocument.withId(
+        id,
+        dynamicSection.toDocument(),
+      );
       await _databaseProvider.dynamicSectionCollection.saveDocument(doc);
       return true;
     } catch (e) {
@@ -177,14 +163,15 @@ class DynamicRepository {
   }
 
   Future<bool> removeDynamicImageUrl(
-    DynamicVisualSection localDynamicSection,
-    String url,
-  ) async {
+      DynamicVisualSection localDynamicSection, String url) async {
     try {
       localDynamicSection.images.remove(url);
       // caller should provide sectionId if needed; generate a new id here
       final id = CouchbaseDocument.generateId();
-      final doc = MutableDocument.withId(id, localDynamicSection.toDocument());
+      final doc = MutableDocument.withId(
+        id,
+        localDynamicSection.toDocument(),
+      );
       await _databaseProvider.dynamicSectionCollection.saveDocument(doc);
       return true;
     } catch (e) {

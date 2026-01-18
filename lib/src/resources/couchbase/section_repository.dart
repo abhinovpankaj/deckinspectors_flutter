@@ -24,8 +24,8 @@ class SectionRepository {
 
   Future<void> createVisualSection(VisualSection visualSection) async {
     try {
-      final doc =
-          MutableDocument.withId(visualSection.id, visualSection.toDocument());
+      final doc = MutableDocument.withId(
+          visualSection.id as String, visualSection.toDocument());
       await _databaseProvider.visualSectionCollection.saveDocument(doc);
     } catch (e) {
       debugPrint('Error creating visual section: $e');
@@ -36,7 +36,9 @@ class SectionRepository {
     try {
       final doc = await _databaseProvider.visualSectionCollection.document(id);
       if (doc != null) {
-        return VisualSection.fromDocument(doc.toPlainMap());
+        final model = VisualSection.fromDocument(doc.toPlainMap());
+
+        return model;
       }
       return null;
     } catch (e) {
@@ -49,7 +51,7 @@ class SectionRepository {
   Future<void> createOrUpdateVisualSection(VisualSection section) async {
     try {
       final doc = MutableDocument.withId(
-        section.id,
+        section.id as String,
         section.toDocument(),
       );
       await _databaseProvider.visualSectionCollection.saveDocument(doc);
@@ -62,9 +64,9 @@ class SectionRepository {
     try {
       // remove from parent project children
       await _subprojectRepository.deleteProjectChildren(
-          visualSection.id, visualSection.parentid ?? '');
+          visualSection.id as String, visualSection.parentid);
       final doc = await _databaseProvider.visualSectionCollection
-          .document(visualSection.id);
+          .document(visualSection.id as String);
       if (doc != null) {
         await _databaseProvider.visualSectionCollection.deleteDocument(doc);
       }
@@ -80,7 +82,6 @@ class SectionRepository {
     try {
       for (int i = 0; i < localPaths.length; i++) {
         final image = DeckImage(
-          id: CouchbaseDocument.generateId(),
           localUrl: localPaths[i],
           remoteUrl: onlinePaths[i],
           isuploaded: true,
@@ -148,7 +149,7 @@ class SectionRepository {
       // update parent with the section detail
       _locationRepository.updateLocationSection(
           visualSection.parenttype,
-          visualSection.id,
+          visualSection.id as String,
           visualSection.parentid,
           visualSection.name,
           visualSection.visualreview,
@@ -158,7 +159,7 @@ class SectionRepository {
           visualSection.images.length);
 
       final doc = MutableDocument.withId(
-        visualSection.id,
+        visualSection.id as String,
         visualSection.toDocument(),
       );
       await _databaseProvider.visualSectionCollection.saveDocument(doc);
@@ -172,7 +173,6 @@ class SectionRepository {
 
   Future<InvasiveSection> getNewInvasiveSection(String sectionId) async {
     return InvasiveSection(
-      id: CouchbaseDocument.generateId(),
       parentid: sectionId,
       invasiveDescription: "",
       postinvasiverepairsrequired: false,
@@ -182,7 +182,6 @@ class SectionRepository {
 
   Future<ConclusiveSection> getNewConclusiveSection(String sectionId) async {
     return ConclusiveSection(
-      id: CouchbaseDocument.generateId(),
       parentid: sectionId,
       conclusiveconsiderations: "",
       eeeconclusive: "",
@@ -199,7 +198,6 @@ class SectionRepository {
     try {
       for (var url in urls) {
         final image = DeckImage(
-          id: CouchbaseDocument.generateId(),
           localUrl: url,
           remoteUrl: '',
           isuploaded: false,
@@ -212,8 +210,9 @@ class SectionRepository {
         await _imageRepository.saveImage(image);
       }
       currentInvasiveSection.invasiveimages.addAll(urls);
+
       final doc = MutableDocument.withId(
-        currentInvasiveSection.id,
+        currentInvasiveSection.id as String,
         currentInvasiveSection.toDocument(),
       );
       await _databaseProvider.invasiveSectionCollection.saveDocument(doc);
@@ -229,7 +228,6 @@ class SectionRepository {
     try {
       for (var url in urls) {
         final image = DeckImage(
-          id: CouchbaseDocument.generateId(),
           localUrl: url,
           remoteUrl: '',
           isuploaded: false,
@@ -242,8 +240,9 @@ class SectionRepository {
         await _imageRepository.saveImage(image);
       }
       currentConclusiveSection.conclusiveimages.addAll(urls);
+
       final doc = MutableDocument.withId(
-        currentConclusiveSection.id,
+        currentConclusiveSection.id as String,
         currentConclusiveSection.toDocument(),
       );
       await _databaseProvider.conclusiveSectionCollection.saveDocument(doc);
@@ -268,7 +267,9 @@ class SectionRepository {
       if (results.isEmpty) {
         return await getNewInvasiveSection(sectionId);
       }
-      return InvasiveSection.fromDocument(results.first.toPlainMap());
+      final model = InvasiveSection.fromDocument(results.first.toPlainMap());
+
+      return model;
     } catch (e) {
       debugPrint('Error fetching invasive section: $e');
       return null;
@@ -289,7 +290,9 @@ class SectionRepository {
       if (results.isEmpty) {
         return await getNewConclusiveSection(sectionId);
       }
-      return ConclusiveSection.fromDocument(results.first.toPlainMap());
+      final model = ConclusiveSection.fromDocument(results.first.toPlainMap());
+      //model.id = results.first.id;
+      return model;
     } catch (e) {
       debugPrint('Error fetching conclusive section: $e');
       return null;
@@ -305,8 +308,9 @@ class SectionRepository {
       currentInvasiveSection.postinvasiverepairsrequired =
           postInvasiveRepairsRequired;
       currentInvasiveSection.invasiveDescription = description;
+
       final doc = MutableDocument.withId(
-        currentInvasiveSection.id,
+        currentInvasiveSection.id as String,
         currentInvasiveSection.toDocument(),
       );
       await _databaseProvider.invasiveSectionCollection.saveDocument(doc);
@@ -334,8 +338,9 @@ class SectionRepository {
       currentConclusiveSection.eeeconclusive = eeeConclusive;
       currentConclusiveSection.lbcconclusive = lbcConclusive;
       currentConclusiveSection.conclusiveconsiderations = description;
+
       final doc = MutableDocument.withId(
-        currentConclusiveSection.id,
+        currentConclusiveSection.id as String,
         currentConclusiveSection.toDocument(),
       );
       await _databaseProvider.conclusiveSectionCollection.saveDocument(doc);
@@ -350,8 +355,9 @@ class SectionRepository {
       ConclusiveSection localConclusiveSection, String url) async {
     try {
       localConclusiveSection.conclusiveimages.remove(url);
+
       final doc = MutableDocument.withId(
-        localConclusiveSection.id,
+        localConclusiveSection.id as String,
         localConclusiveSection.toDocument(),
       );
       await _databaseProvider.conclusiveSectionCollection.saveDocument(doc);
@@ -366,8 +372,9 @@ class SectionRepository {
       InvasiveSection localInvasiveSection, String url) async {
     try {
       localInvasiveSection.invasiveimages.remove(url);
+
       final doc = MutableDocument.withId(
-        localInvasiveSection.id,
+        localInvasiveSection.id as String,
         localInvasiveSection.toDocument(),
       );
       await _databaseProvider.invasiveSectionCollection.saveDocument(doc);

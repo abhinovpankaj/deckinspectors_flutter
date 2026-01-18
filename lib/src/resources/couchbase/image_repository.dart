@@ -13,8 +13,9 @@ class ImageRepository {
 
   Future<void> saveImage(DeckImage image) async {
     try {
+      final id = CouchbaseDocument.generateId();
       final doc = MutableDocument.withId(
-        image.id,
+        id,
         image.toDocument(),
       );
       await _databaseProvider.deckImageCollection.saveDocument(doc);

@@ -39,9 +39,10 @@ class SubprojectRepository {
   Future<String> deleteSubProject(SubProject subProject) async {
     try {
       // remove from parent project children
-      await deleteProjectChildren(subProject.id, subProject.parentid ?? '');
-      final doc =
-          await _databaseProvider.subProjectCollection.document(subProject.id);
+      await deleteProjectChildren(
+          subProject.id as String, subProject.parentid ?? '');
+      final doc = await _databaseProvider.subProjectCollection
+          .document(subProject.id as String);
       if (doc != null) {
         await _databaseProvider.subProjectCollection.deleteDocument(doc);
       }
@@ -55,7 +56,11 @@ class SubprojectRepository {
   Future<SubProject?> getSubProject(String id) async {
     try {
       final doc = await _databaseProvider.subProjectCollection.document(id);
-      if (doc != null) return SubProject.fromDocument(doc.toPlainMap());
+      if (doc != null) {
+        final model = SubProject.fromDocument(doc.toPlainMap());
+
+        return model;
+      }
       return null;
     } catch (e) {
       debugPrint('Error getting subproject: $e');
@@ -68,7 +73,6 @@ class SubprojectRepository {
       if (_databaseProvider.isAppOfflineMode() ||
           !appSettings.activeConnection) {
         final image = DeckImage(
-          id: CouchbaseDocument.generateId(),
           localUrl: url,
           remoteUrl: '',
           isuploaded: false,
@@ -82,14 +86,13 @@ class SubprojectRepository {
       }
 
       // update parent project child url
-      if (subProject.parentid != null) {
-        await _projectRepository.updateChildUrl(
-            subProject.id, subProject.parentid!, url);
-      }
+      await _projectRepository.updateChildUrl(
+          subProject.id as String, subProject.parentid, url);
 
       subProject.url = url;
-      final doc =
-          MutableDocument.withId(subProject.id, subProject.toDocument());
+
+      final doc = MutableDocument.withId(
+          subProject.id as String, subProject.toDocument());
       await _databaseProvider.subProjectCollection.saveDocument(doc);
 
       return true;
@@ -139,7 +142,8 @@ class SubprojectRepository {
   }
 
   Future<void> createOrUpdateSubProject(SubProject subProject) async {
-    final doc = MutableDocument.withId(subProject.id, subProject.toDocument());
+    final doc = MutableDocument.withId(
+        subProject.id as String, subProject.toDocument());
     await _databaseProvider.subProjectCollection.saveDocument(doc);
   }
 
@@ -150,7 +154,6 @@ class SubprojectRepository {
           await _databaseProvider.subProjectCollection.document(parentId);
       if (parentDoc == null) return;
       final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
-
       final found = subProject.children.where((c) => c.id == childId);
       if (found.isNotEmpty) {
         final child = found.first;
@@ -188,16 +191,16 @@ class SubprojectRepository {
 
       // update parent project's children
       await _projectRepository.updateProjectChildren(
-        subProject.id,
-        subProject.parentid ?? '',
+        subProject.id as String,
+        subProject.parentid,
         subProject.isInvasive,
         subProject.name ?? '',
         subProject.type,
         subProject.description ?? '',
       );
 
-      final doc =
-          MutableDocument.withId(subProject.id, subProject.toDocument());
+      final doc = MutableDocument.withId(
+          subProject.id as String, subProject.toDocument());
       await _databaseProvider.subProjectCollection.saveDocument(doc);
       return true;
     } catch (e) {

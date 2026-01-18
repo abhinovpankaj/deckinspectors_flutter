@@ -61,13 +61,36 @@ class ProjectRepository {
     }
   }
 
+  /// Fetch a single project by its ID
+  Future<Project?> fetchProjectById(String projectId) async {
+    try {
+      final doc = await _databaseProvider.projectCollection.document(projectId);
+      if (doc == null) return null;
+      final model = Project.fromDocument(doc.toPlainMap());
+      return model;
+    } catch (e) {
+      debugPrint('Error fetching project by id: $e');
+      return null;
+    }
+  }
+
+  /// Update a project (simple wrapper for createOrUpdateProject)
+  Future<bool> updateProject(Project project) async {
+    try {
+      await createOrUpdateProject(project);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating project: $e');
+      return false;
+    }
+  }
+
   /// Update project URL and optionally queue an image doc when offline
   Future<bool> updateProjectUrl(Project project, String url) async {
     try {
       if (_databaseProvider.isAppOfflineMode() ||
           !appSettings.activeConnection) {
         final image = DeckImage(
-          id: CouchbaseDocument.generateId(),
           localUrl: url,
           remoteUrl: '',
           isuploaded: false,
@@ -136,7 +159,9 @@ class ProjectRepository {
 
   /// Save or update project document helper
   Future<void> createOrUpdateProject(Project project) async {
-    final doc = MutableDocument.withId(project.id, project.toDocument());
+    final id = project.id ?? CouchbaseDocument.generateId();
+    project.id = id;
+    final doc = MutableDocument.withId(id, project.toDocument());
     await _databaseProvider.projectCollection.saveDocument(doc);
   }
 
@@ -187,7 +212,6 @@ class ProjectRepository {
           await _databaseProvider.projectCollection.document(parentId);
       if (parentDoc == null) return;
       final project = Project.fromDocument(parentDoc.toPlainMap());
-
       project.children.removeWhere((c) => c.id == childId);
 
       await createOrUpdateProject(project);
@@ -215,6 +239,19 @@ class ProjectRepository {
       }
     } catch (e) {
       debugPrint('Error updating child url: $e');
+    }
+  }
+
+  /// Delete a project document by id
+  Future<void> deleteProject(String projectId) async {
+    try {
+      final doc = await _databaseProvider.projectCollection.document(projectId);
+      if (doc != null) {
+        await _databaseProvider.projectCollection.deleteDocument(doc);
+      }
+    } catch (e) {
+      debugPrint('Error deleting project: $e');
+      rethrow;
     }
   }
 

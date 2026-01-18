@@ -1,13 +1,14 @@
 import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
-import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 //import 'package:E3InspectionsMultiTenant/src/ui/breadcrumb_navigation.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/couchbase/couchbase_models.dart';
-
-import '../resources/couchbase/couchbase_project_services.dart';
+import '../resources/couchbase/subproject_repository.dart';
+import '../bloc/subproject_bloc.dart';
+import '../bloc/subproject_event.dart';
+import '../bloc/subproject_state.dart';
 import 'addedit_location.dart';
 import 'addedit_subproject.dart';
 
@@ -22,12 +23,12 @@ class SubProjectDetailsPage extends StatefulWidget {
     this.id,
     this.prevPageName,
     this.userfullName, {
-    super.key,
-  });
+    Key? key,
+  }) : super(key: key);
   @override
   State<SubProjectDetailsPage> createState() => _SubProjectDetailsPageState();
   static MaterialPageRoute getRoute(
-    ObjectId id,
+    String id,
     String prevPageName,
     String userName,
     String pageName,
@@ -44,7 +45,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
   //Tab Controls
   late TabController _tabController;
   String userFullName = "";
-  late ObjectId buildingId;
+  late String buildingId;
 
   late SubProject currentBuilding;
   late List<Child?> buildinglocations;
@@ -55,16 +56,13 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
 
   Location getLocation(String type) {
     return Location(
-      ObjectId(),
-      buildingId,
-      false,
-      usersBloc.userDetails.companyidentifer as String,
-      name: "",
-      description: "",
+      parentid: buildingId,
+      parenttype: 'subproject',
+      name: '',
+      description: '',
       createdby: userFullName,
       type: type,
-      url: "",
-      parenttype: 'subproject',
+      url: '',
     );
   }
 
@@ -134,7 +132,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
     }
   }
 
-  void gotoDetails(ObjectId id, String type, String pageName) {
+  void gotoDetails(String id, String type, String pageName) {
     Navigator.push(
       context,
       LocationPage.getRoute(
@@ -152,58 +150,52 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmLocalServices>(
-      context,
-      listen: false,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leadingWidth: 120,
-        leading: ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-          label: const Text(
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            'Back',
-            style: TextStyle(color: Colors.blue),
+    return BlocProvider(
+      create:
+          (context) => SubProjectBloc(
+            subprojectRepository: RepositoryProvider.of<SubprojectRepository>(
+              context,
+            ),
+          )..add(LoadSubProjectEvent(widget.id)),
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leadingWidth: 120,
+          leading: ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+            label: const Text(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              'Back',
+              style: TextStyle(color: Colors.blue),
+            ),
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+            ),
           ),
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.blue,
+          elevation: 0,
+          title: const Text(
+            'Building',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.normal,
+            ),
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue,
-        elevation: 0,
-        title: const Text(
-          'Building',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
-        ),
-      ),
-      // floatingActionButton: Padding(
-      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-      //   child: BreadCrumbNavigator(),
-      // ),
-      body: StreamBuilder<RealmObjectChanges<SubProject>>(
-        //projectsBloc.projects
-        stream: realmServices.getSubProject(buildingId)!.changes,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final data = snapshot.data;
-
-            if (data == null) {
-              return Center(
-                child: Text(
-                  '${snapshot.error} occurred',
-                  style: const TextStyle(fontSize: 18),
-                ),
-              );
-
-              // if we got our data
-            } else {
-              currentBuilding = data.object;
+        // floatingActionButton: Padding(
+        //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+        //   child: BreadCrumbNavigator(),
+        // ),
+        body: BlocBuilder<SubProjectBloc, SubProjectState>(
+          builder: (context, state) {
+            if (state is SubProjectLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is SubProjectLoaded) {
+              currentBuilding = state.subProject;
               return SingleChildScrollView(
                 child: Column(
                   children: [
@@ -216,12 +208,12 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
                   ],
                 ),
               );
+            } else if (state is SubProjectFailure) {
+              return Center(child: Text(state.error));
             }
-          }
-
-          // Displaying LoadingSpinner to indicate waiting state
-          return const Center(child: CircularProgressIndicator());
-        },
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }
@@ -362,20 +354,26 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
               .toList();
     }
     buildinglocations.sort((l1, l2) {
-      final a = int.tryParse(l1!.sequenceNo ?? '');
-      final b = int.tryParse(l2!.sequenceNo ?? '');
-      if (a != null && b != null) return a.compareTo(b);
-      if (a != null) return -1;
-      if (b != null) return 1;
-      return l1.id.toString().compareTo(l2.id.toString());
+      if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+        if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
+          return -1;
+        } else {
+          return 1;
+        }
+      } else {
+        return l1.id.toString().compareTo(l2!.id.toString());
+      }
     });
     apartments.sort((l1, l2) {
-      final a = int.tryParse(l1!.sequenceNo ?? '');
-      final b = int.tryParse(l2!.sequenceNo ?? '');
-      if (a != null && b != null) return a.compareTo(b);
-      if (a != null) return -1;
-      if (b != null) return 1;
-      return l1.id.toString().compareTo(l2.id.toString());
+      if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+        if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
+          return -1;
+        } else {
+          return 1;
+        }
+      } else {
+        return l1.id.toString().compareTo(l2!.id.toString());
+      }
     });
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -491,7 +489,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
             GestureDetector(
               onTap: () {
                 gotoDetails(
-                  buildinglocations[index]!.id,
+                  buildinglocations[index]!.id!,
                   'Common Location',
                   buildinglocations[index]!.name as String,
                 );
@@ -569,7 +567,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
             GestureDetector(
               onTap: () {
                 gotoDetails(
-                  apartments[index]!.id,
+                  apartments[index]!.id!,
                   'Apartment',
                   apartments[index]!.name as String,
                 );

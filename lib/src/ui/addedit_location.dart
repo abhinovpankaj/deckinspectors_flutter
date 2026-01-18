@@ -137,7 +137,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
             Navigator.pushReplacement(
               context,
               LocationPage.getRoute(
-                currentLocation.id,
+                currentLocation.id as String,
                 currentLocation.parenttype,
                 pageType,
                 fullUserName,

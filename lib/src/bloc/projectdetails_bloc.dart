@@ -11,14 +11,16 @@ class ProjectDetailsBloc
     extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
   final ProjectRepository projectRepository;
   final Repository globalRepository;
-  ProjectDetailsBloc(
-      {required this.projectRepository, required this.globalRepository})
-      : super(ProjectDetailsInitial()) {
+  ProjectDetailsBloc({
+    required this.projectRepository,
+    required this.globalRepository,
+  }) : super(ProjectDetailsInitial()) {
     on<LoadProjectDetails>((event, emit) async {
       emit(ProjectDetailsLoading());
       try {
-        final project =
-            await projectRepository.fetchProjectById(event.projectId);
+        final project = await projectRepository.fetchProjectById(
+          event.projectId,
+        );
         emit(ProjectDetailsLoaded(project as Project));
       } catch (e) {
         emit(const ProjectDetailsError('Failed to load project details'));
@@ -27,7 +29,7 @@ class ProjectDetailsBloc
     on<UpdateProjectDetails>((event, emit) async {
       emit(ProjectDetailsLoading());
       try {
-        final success = await projectRepository.updateProject(event.project);
+        final success = await projectRepository.addupdateProject(event.project);
         if (success) {
           emit(ProjectDetailsSaved());
         } else {

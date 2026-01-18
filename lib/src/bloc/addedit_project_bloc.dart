@@ -11,7 +11,7 @@ class AddEditProjectBloc
   final ProjectRepository projectRepository;
 
   AddEditProjectBloc({required this.projectRepository})
-      : super(AddEditProjectInitial()) {
+    : super(AddEditProjectInitial()) {
     on<LoadProject>(_onLoadProject);
     on<UpdateProjectField>(_onUpdateProjectField);
     on<SaveProject>(_onSaveProject);
@@ -20,12 +20,15 @@ class AddEditProjectBloc
   }
 
   Future<void> _onLoadProject(
-      LoadProject event, Emitter<AddEditProjectState> emit) async {
+    LoadProject event,
+    Emitter<AddEditProjectState> emit,
+  ) async {
     emit(AddEditProjectLoading());
     try {
       if (event.projectId != null && event.projectId!.isNotEmpty) {
-        final project =
-            await projectRepository.fetchProjectById(event.projectId!);
+        final project = await projectRepository.fetchProjectById(
+          event.projectId!,
+        );
         if (project != null) {
           emit(AddEditProjectLoaded(project: project));
           return;
@@ -39,7 +42,9 @@ class AddEditProjectBloc
   }
 
   Future<void> _onUpdateProjectField(
-      UpdateProjectField event, Emitter<AddEditProjectState> emit) async {
+    UpdateProjectField event,
+    Emitter<AddEditProjectState> emit,
+  ) async {
     // This handler allows UI to update fields locally; keep current loaded project
     final current = state;
     if (current is AddEditProjectLoaded) {
@@ -72,23 +77,27 @@ class AddEditProjectBloc
   }
 
   Future<void> _onSaveProject(
-      SaveProject event, Emitter<AddEditProjectState> emit) async {
+    SaveProject event,
+    Emitter<AddEditProjectState> emit,
+  ) async {
     emit(AddEditProjectSaving());
     try {
       var saveResult = await projectRepository.addupdateProject(
-          event.project,
-          event.name,
-          event.address,
-          event.description,
-          event.userName,
-          event.longitude,
-          event.latitude,
-          event.formId,
-          event.isNewProject);
+        event.project,
+        event.name,
+        event.address,
+        event.description,
+        event.userName,
+        event.longitude,
+        event.latitude,
+        event.formId,
+        event.isNewProject,
+      );
 
-      !saveResult
+      saveResult
           ? emit(
-              const AddEditProjectFailure(error: "failed to save the project"))
+            const AddEditProjectFailure(error: "failed to save the project"),
+          )
           : emit(AddEditProjectSuccess());
     } catch (e) {
       emit(AddEditProjectFailure(error: e.toString()));
@@ -96,20 +105,25 @@ class AddEditProjectBloc
   }
 
   Future<void> _onReset(
-      ResetAddEditProject event, Emitter<AddEditProjectState> emit) async {
+    ResetAddEditProject event,
+    Emitter<AddEditProjectState> emit,
+  ) async {
     emit(AddEditProjectInitial());
   }
 
   Future<void> _onDeleteProject(
-      DeleteProject event, Emitter<AddEditProjectState> emit) async {
+    DeleteProject event,
+    Emitter<AddEditProjectState> emit,
+  ) async {
     emit(AddEditProjectDeleting());
     try {
       if (event.projectId != null && event.projectId!.isNotEmpty) {
         await projectRepository.deleteProject(event.projectId!);
         emit(AddEditProjectSuccess());
       } else {
-        emit(const AddEditProjectFailure(
-            error: 'Invalid project ID for deletion'));
+        emit(
+          const AddEditProjectFailure(error: 'Invalid project ID for deletion'),
+        );
       }
     } catch (e) {
       emit(AddEditProjectFailure(error: e.toString()));

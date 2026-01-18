@@ -2,23 +2,32 @@ import 'dart:io';
 
 //import 'package:deckinspectors/src/ui/breadcrumb_navigation.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/home.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/project_details.dart';
-import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart';
+// import 'package:E3InspectionsMultiTenant/src/ui/home.dart';
+// import 'package:E3InspectionsMultiTenant/src/ui/project_details.dart';
+// import 'package:E3InspectionsMultiTenant/src/ui/singlelevelproject_details.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 //import 'package:get/get.dart';
 
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import '../bloc/images_bloc.dart';
+import '../bloc/addedit_project_bloc.dart';
+import '../bloc/addedit_project_event.dart';
+import '../bloc/addedit_project_state.dart';
+import '../bloc/projects_bloc.dart';
+import '../bloc/projects_event.dart';
+import '../resources/couchbase/project_repository.dart';
+import '../resources/couchbase/database_provider.dart';
+import '../resources/couchbase/image_repository.dart';
 
 import '../models/couchbase/couchbase_models.dart';
 import '../models/success_response.dart';
-import '../resources/couchbase/couchbase_project_services.dart';
+// import '../resources/couchbase/couchbase_project_services.dart';
 import 'capture_image.dart';
-import 'googlemaps_view.dart'; // Ensure this file contains the GoogleMapView widget
+import 'googlemaps_view.dart';
 
 class AddEditProjectPage extends StatefulWidget {
   final Project newProject;
@@ -30,15 +39,26 @@ class AddEditProjectPage extends StatefulWidget {
     this.newProject,
     this.isNewProject,
     this.userFullName, {
-    super.key,
-  });
+    Key? key,
+  }) : super(key: key);
   static MaterialPageRoute getRoute(
     Project project,
     bool isNew,
     String userName,
   ) => MaterialPageRoute(
     settings: const RouteSettings(name: 'Edit Project'),
-    builder: (context) => AddEditProjectPage(project, isNew, userName),
+    builder: (context) {
+      final dbProvider = DatabaseProvider();
+      final imageRepo = ImageRepository(dbProvider);
+      final projectRepository = ProjectRepository(dbProvider, imageRepo);
+      return BlocProvider(
+        create:
+            (_) =>
+                AddEditProjectBloc(projectRepository: projectRepository)
+                  ..add(LoadProject(projectId: project.id)),
+        child: AddEditProjectPage(project, isNew, userName),
+      );
+    },
   );
   @override
   State<AddEditProjectPage> createState() => _AddEditProjectPageState();
@@ -90,7 +110,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   bool showAssetPic = true;
-  late RealmLocalServices realmProjServices;
+  // late RealmProjectServices realmProjServices;
   bool isNewProject = true;
   late String userFullName;
   late Project currentProject;
@@ -106,7 +126,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Saving Project...')));
 
-      bool result;
+      // Removed unused result variable
 
       // if (currentProject.id == null) {
       //   result = await projectsBloc.addProject(currentProject);
@@ -117,68 +137,31 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       //   result = await projectsBloc.updateProject(currentProject);
       // }
 
-      result = realmProjServices.addupdateProject(
-        currentProject,
-        _nameController.text,
-        _addressController.text,
-        _descriptionController.text,
-        userFullName,
-        longitude,
-        lattitude,
-        selectedValue?.id,
-        isNewProject,
-      );
+      // TODO: Integrate ProjectRepository/BLoC for add/update project
+      // Example: context.read<AddEditProjectBloc>().add(SaveProject(...));
+      // On success, show snackbar and navigate as below.
+      // Populate project fields from the form
+      currentProject.name = _nameController.text;
+      currentProject.description = _descriptionController.text;
+      currentProject.address = _addressController.text;
+      currentProject.latitude = lattitude;
+      currentProject.longitude = longitude;
+      currentProject.projecttype =
+          isProjectSingleLevel ? 'singlelevel' : 'multilevel';
+      currentProject.formId = formId;
+      currentProject.lasteditedby = userFullName;
+      currentProject.editedat = DateTime.now().toIso8601String();
 
-      if (!mounted) {
-        return;
+      // Ensure id and created metadata for new projects
+      if (currentProject.id == '') {
+        //currentProject.id = CouchbaseDocument.generateId();
+        currentProject.createdby = userFullName;
+        currentProject.createdat = DateTime.now().toIso8601String();
       }
-      if (result) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Project saved successfully.')),
-        );
-        if (isNewProject) {
-          if (currentProject.projecttype == 'singlelevel') {
-            Navigator.pushReplacement(
-              context,
-              SingleProjectDetailsPage.getRoute(
-                currentProject.id,
-                userFullName,
-                false,
-                currentProject.name as String,
-              ),
-            );
-            // .then((value) => setState(() {}));
-          } else {
-            Navigator.pushReplacement(
-              context,
-              ProjectDetailsPage.getRoute(
-                currentProject.id,
-                userFullName,
-                false,
-                currentProject.name as String,
-              ),
-            );
-            // .then((value) => setState(() {
 
-            // })
-            //);
-          }
-        } else {
-          Navigator.pop(context);
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save the project.')),
-        );
-      }
-      //upload image if changed
-      if (currentProject.url == null) {
-        return;
-      }
-      if (imageURL != currentProject.url) {
-        Object result;
-
-        result = await imagesBloc.uploadImage(
+      // If image changed, upload and update project url
+      if (imageURL != currentProject.url && imageURL.isNotEmpty) {
+        final Object result = await imagesBloc.uploadImage(
           imageURL,
           currentProject.name as String,
           userFullName,
@@ -188,21 +171,44 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         );
 
         if (result is ImageResponse) {
-          //update the gallery
-
-          await GallerySaver.saveImage(result.originalPath as String);
-
-          realmProjServices.updateProjectUrl(
-            currentProject,
-            result.url as String,
-          );
+          // Save local copy if available
+          if (result.originalPath != null && result.originalPath!.isNotEmpty) {
+            try {
+              await GallerySaver.saveImage(result.originalPath as String);
+            } catch (_) {}
+          }
+          // Prefer remote url if provided, otherwise local path
+          currentProject.url = result.url ?? result.originalPath ?? imageURL;
         }
+      }
+
+      // Persist project via AddEditProjectBloc by dispatching SaveProject
+      try {
+        final addEditBloc = context.read<AddEditProjectBloc>();
+        addEditBloc.add(
+          SaveProject(
+            project: currentProject,
+            name: currentProject.name as String,
+            address: currentProject.address as String,
+            description: currentProject.description as String,
+            userName: userFullName,
+            longitude: currentProject.longitude,
+            latitude: currentProject.latitude,
+            formId: currentProject.formId,
+            isNewProject: isNewProject,
+          ),
+        );
+        // UI will respond to BlocListener for success/failure
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save project: $e')));
       }
     }
   }
 
   String imageURL = 'assets/images/icon.png';
-  ObjectId? formId;
+  String? formId;
   TextEditingController dateInput = TextEditingController();
   final TextEditingController _nameController = TextEditingController(text: '');
   //late TextEditingController _activeController;
@@ -234,18 +240,40 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   LocationForm? selectedValue;
   @override
   Widget build(BuildContext context) {
-    realmProjServices = Provider.of<RealmLocalServices>(context, listen: false);
-    var forms = realmProjServices.getAllForms();
+    return BlocListener<AddEditProjectBloc, AddEditProjectState>(
+      listener: (context, state) {
+        if (state is AddEditProjectSaving) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Saving project...')));
+        } else if (state is AddEditProjectSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Project saved successfully')),
+          );
+          try {
+            // refresh projects list if available
+            final projectsBloc = context.read<ProjectsBloc>();
+            projectsBloc.add(LoadProjectsEvent());
+          } catch (_) {}
+          Navigator.pop(context, true);
+        } else if (state is AddEditProjectFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save project: ${state.error}')),
+          );
+        }
+      },
+      child: _buildForm(context),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    // realmProjServices =
+    // Provider.of<RealmProjectServices>(context, listen: false);
+    // TODO: Replace with ProjectRepository/BLoC
+    // var forms = realmProjServices.getAllForms();
 
     List<DropdownMenuItem<LocationForm>> dropdownItems = [];
-    if (forms.isNotEmpty) {
-      dropdownItems =
-          forms
-              .map<DropdownMenuItem<LocationForm>>(
-                (form) => DropdownMenuItem(value: form, child: Text(form.name)),
-              )
-              .toList();
-    }
+    // TODO: Integrate ProjectRepository/BLoC for forms
     dropdownItems.add(
       const DropdownMenuItem(value: null, child: Text("E3 Form")),
     );
@@ -362,8 +390,8 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                       elevation: 1,
                     ),
                     onPressed: () {
-                      var initlattitude = currentProject.latitude ?? 28.7;
-                      var initlongitude = currentProject.longitude ?? 70.7;
+                      var initlattitude = currentProject.latitude;
+                      var initlongitude = currentProject.longitude;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -608,27 +636,19 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   void deleteProject() async {
-    // var result = await projectsBloc.deleteProjectPermanently(
-    //     currentProject, id as String);
-    // if (!mounted) {
-    //   return;
-    // }
-    var result = realmProjServices.deleteProject(currentProject);
-    if (result == 'success') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project deleted successfully.')),
-      );
-      Navigator.pop(context);
-      Navigator.pushReplacement(
+    try {
+      final projectsBloc = context.read<AddEditProjectBloc>();
+      if (currentProject.id != '') {
+        projectsBloc.add(DeleteProject(projectId: currentProject.id!));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Project deleted successfully.')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
         context,
-        MaterialPageRoute(
-          builder: (context) => const HomePage(key: Key('Home')),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to deleted project.')),
-      );
+      ).showSnackBar(SnackBar(content: Text('Failed to delete project: $e')));
     }
   }
 }

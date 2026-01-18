@@ -166,6 +166,11 @@ class CouchbaseServices with ChangeNotifier {
     isOffline = true;
     notifyListeners();
   }
+
+  void toggleOnlineState(bool newState) {
+    isOffline = !newState;
+    notifyListeners();
+  }
 }
 
 enum AuthenticationStatus {
