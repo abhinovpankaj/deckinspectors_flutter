@@ -46,14 +46,23 @@ class ProjectDetailsPage extends StatefulWidget {
     String id,
     String userName,
     bool isInvasive,
-    String pageName,
-  ) => MaterialPageRoute(
+    String pageName, {
+    required ProjectRepository projectRepository,
+    required Repository globalRepository,
+  }) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
-        (context) => ProjectDetailsPage(
-          id: id,
-          userFullName: userName,
-          isInvasiveMode: isInvasive,
+        (context) => BlocProvider(
+          create:
+              (_) => ProjectDetailsBloc(
+                projectRepository: projectRepository,
+                globalRepository: globalRepository,
+              )..add(LoadProjectDetails(id)),
+          child: ProjectDetailsPage(
+            id: id,
+            userFullName: userName,
+            isInvasiveMode: isInvasive,
+          ),
         ),
   );
 }
@@ -245,137 +254,124 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => ProjectDetailsBloc(
-            projectRepository: RepositoryProvider.of<ProjectRepository>(
-              context,
-            ),
-            globalRepository: RepositoryProvider.of<Repository>(context),
-          )..add(LoadProjectDetails(projectId)),
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leadingWidth: 140,
-          leading: ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-            label: const Text('Home', style: TextStyle(color: Colors.blue)),
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-            ),
-          ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
-          elevation: 0,
-          title: const Text(
-            'Project',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.normal,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leadingWidth: 140,
+        leading: ElevatedButton.icon(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+          label: const Text('Home', style: TextStyle(color: Colors.blue)),
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
           ),
         ),
-        // floatingActionButton: Padding(
-        //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-        //   child: BreadCrumbNavigator(),
-        // ),
-        body: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
-          builder: (context, state) {
-            if (state is ProjectDetailsLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state is ProjectDetailsLoaded) {
-              currentProject = state.project;
-
-              if (isInvasiveMode) {
-                locations =
-                    currentProject.children
-                        .where(
-                          (element) =>
-                              element.type == 'projectlocation' &&
-                              element.isInvasive,
-                        )
-                        .toList();
-
-                buildings =
-                    currentProject.children
-                        .where(
-                          (element) =>
-                              element.type == 'subproject' &&
-                              element.isInvasive,
-                        )
-                        .toList();
-              } else {
-                locations =
-                    currentProject.children
-                        .where((element) => element.type == 'projectlocation')
-                        .toList();
-
-                buildings =
-                    currentProject.children
-                        .where((element) => element.type == 'subproject')
-                        .toList();
-              }
-
-              buildings.sort((l1, l2) {
-                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
-                    return -1;
-                  } else {
-                    return 1;
-                  }
-                } else {
-                  return l1.id.toString().compareTo(l2!.id.toString());
-                }
-              });
-
-              locations.sort((l1, l2) {
-                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
-                    return -1;
-                  } else {
-                    return 1;
-                  }
-                } else {
-                  return l1.id.toString().compareTo(l2!.id.toString());
-                }
-              });
-
-              var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
-              if (shortDate != null) {
-                createdAt = DateFormat.yMMMEd().format(shortDate);
-              } else {
-                createdAt = "";
-              }
-
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    projectDetails(
-                      currentProject.name ?? '',
-                      currentProject.url ?? '',
-                      currentProject.id as String,
-                      currentProject.description ?? '',
-                      currentProject.editedat ?? '',
-                      currentProject.address ?? '',
-                    ),
-                    projectChildrenTab(context),
-                  ],
-                ),
-              );
-            }
-
-            if (state is ProjectDetailsError) {
-              return Center(child: Text(state.message));
-            }
-
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.blue,
+        elevation: 0,
+        title: const Text(
+          'Project',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+        ),
+      ),
+      // floatingActionButton: Padding(
+      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+      //   child: BreadCrumbNavigator(),
+      // ),
+      body: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
+        builder: (context, state) {
+          if (state is ProjectDetailsLoading) {
             return const Center(child: CircularProgressIndicator());
-          },
-        ),
+          }
+
+          if (state is ProjectDetailsLoaded) {
+            currentProject = state.project;
+
+            if (isInvasiveMode) {
+              locations =
+                  currentProject.children
+                      .where(
+                        (element) =>
+                            element.type == 'projectlocation' &&
+                            element.isInvasive,
+                      )
+                      .toList();
+
+              buildings =
+                  currentProject.children
+                      .where(
+                        (element) =>
+                            element.type == 'subproject' && element.isInvasive,
+                      )
+                      .toList();
+            } else {
+              locations =
+                  currentProject.children
+                      .where((element) => element.type == 'projectlocation')
+                      .toList();
+
+              buildings =
+                  currentProject.children
+                      .where((element) => element.type == 'subproject')
+                      .toList();
+            }
+
+            buildings.sort((l1, l2) {
+              if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                  return -1;
+                } else {
+                  return 1;
+                }
+              } else {
+                return l1.id.toString().compareTo(l2!.id.toString());
+              }
+            });
+
+            locations.sort((l1, l2) {
+              if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                  return -1;
+                } else {
+                  return 1;
+                }
+              } else {
+                return l1.id.toString().compareTo(l2!.id.toString());
+              }
+            });
+
+            var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
+            if (shortDate != null) {
+              createdAt = DateFormat.yMMMEd().format(shortDate);
+            } else {
+              createdAt = "";
+            }
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  projectDetails(
+                    currentProject.name ?? '',
+                    currentProject.url ?? '',
+                    currentProject.id as String,
+                    currentProject.description ?? '',
+                    currentProject.editedat ?? '',
+                    currentProject.address ?? '',
+                  ),
+                  projectChildrenTab(context),
+                ],
+              ),
+            );
+          }
+
+          if (state is ProjectDetailsError) {
+            return Center(child: Text(state.message));
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }

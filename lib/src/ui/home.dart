@@ -7,6 +7,11 @@ import 'settings.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
 import '../resources/couchbase/project_repository.dart';
+import '../resources/couchbase/subproject_repository.dart';
+import '../resources/couchbase/location_repository.dart';
+import '../bloc/users_bloc.dart';
+import '../bloc/settings_bloc.dart';
+import '../resources/repository.dart';
 import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
 
@@ -27,14 +32,43 @@ class _HomePageState extends State<HomePage> {
     final dbProvider = DatabaseProvider();
     final imageRepo = ImageRepository(dbProvider);
     final projectRepository = ProjectRepository(dbProvider, imageRepo);
+    final subprojectRepository = SubprojectRepository(
+      dbProvider,
+      projectRepository,
+      imageRepo,
+      usersBloc,
+      appSettings,
+    );
+    final locationRepository = LocationRepository(
+      dbProvider,
+      projectRepository,
+      subprojectRepository,
+      imageRepo,
+      usersBloc,
+      appSettings,
+    );
+
+    final globalRepository = Repository();
 
     final pages = [
-      BlocProvider(
-        create:
-            (_) =>
-                ProjectsBloc(projectRepository: projectRepository)
-                  ..add(LoadProjectsEvent()),
-        child: const Center(child: ProjectsPage()),
+      RepositoryProvider<ProjectRepository>.value(
+        value: projectRepository,
+        child: RepositoryProvider<SubprojectRepository>.value(
+          value: subprojectRepository,
+          child: RepositoryProvider<LocationRepository>.value(
+            value: locationRepository,
+            child: RepositoryProvider<Repository>.value(
+              value: globalRepository,
+              child: BlocProvider(
+                create:
+                    (_) =>
+                        ProjectsBloc(projectRepository: projectRepository)
+                          ..add(LoadProjectsEvent()),
+                child: const Center(child: ProjectsPage()),
+              ),
+            ),
+          ),
+        ),
       ),
       //Center(child: OfflineModePage()),
       const Center(child: ReportsPage()),

@@ -9,6 +9,7 @@ import '../resources/couchbase/image_repository.dart';
 import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
 import '../bloc/projects_state.dart';
+import '../resources/repository.dart';
 import 'addedit_project.dart';
 import 'cachedimage_widget.dart';
 import 'project_details.dart';
@@ -82,16 +83,34 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   void gotoProjectDetails(String projectId, String projName) {
     //setState(() {});
+    final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
+    final globalRepo = RepositoryProvider.of<Repository>(context);
     Navigator.push(
       context,
-      ProjectDetailsPage.getRoute(projectId, userFullName, false, projName),
+      ProjectDetailsPage.getRoute(
+        projectId,
+        userFullName,
+        false,
+        projName,
+        projectRepository: projectRepo,
+        globalRepository: globalRepo,
+      ),
     ).then((value) => setState(() => {}));
   }
 
   void gotoInvasiveProjectDetails(String projectId, String projName) {
+    final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
+    final globalRepo = RepositoryProvider.of<Repository>(context);
     Navigator.push(
       context,
-      ProjectDetailsPage.getRoute(projectId, userFullName, true, projName),
+      ProjectDetailsPage.getRoute(
+        projectId,
+        userFullName,
+        true,
+        projName,
+        projectRepository: projectRepo,
+        globalRepository: globalRepo,
+      ),
     ).then((value) => setState(() => {}));
   }
 
