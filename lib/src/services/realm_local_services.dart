@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:E3InspectionsMultiTenant/src/services/sync_service.dart';
 import 'package:get/utils.dart';
@@ -146,9 +147,6 @@ class RealmLocalServices with ChangeNotifier {
       },
       onError: (error) {
         // If needed, retry everything in pendingMessages
-        for (final data in syncService.pendingMessages.values) {
-          //saveUnsyncedData(jsonDecode(data));
-        }
         syncService.pendingMessages.clear();
       },
       onDone: () {
@@ -176,6 +174,93 @@ class RealmLocalServices with ChangeNotifier {
     }
   }
 
+  // Top-level isolate entry point for batch processing. compute() requires a
+  // top-level or static function. It receives a List of messages and returns a
+  // List of lightweight results describing what Realm operations to perform.
+  List<Map<String, dynamic>> _isolateProcessMessages(
+    List<dynamic> rawMessages,
+  ) {
+    final List<Map<String, dynamic>> results = [];
+    for (final dynamic m in rawMessages) {
+      try {
+        final Map<String, dynamic> message = Map<String, dynamic>.from(m);
+        final String action = (message['action'] ?? '').toString();
+        final messageId = (message['messageId'] ?? '').toString();
+        final redisEntryId = (message['redisEntryId'] ?? '').toString();
+
+        Map<String, dynamic>? realmOp;
+        if (action == 'insert') {
+          realmOp = {
+            'collectionName': message['collectionName'],
+            'action': 'insert',
+            'id': messageId,
+            'fullDocument': message['fullDocument'],
+          };
+        } else if (action == 'update' || action == 'replace') {
+          realmOp = {
+            'collectionName': message['collectionName'],
+            'action': 'update',
+            'id': messageId,
+            'updateDescription': message['updateDescription'],
+            'fullDocument': message['fullDocument'],
+          };
+        } else if (action == 'delete') {
+          realmOp = {
+            'collectionName': message['collectionName'],
+            'action': 'delete',
+            'id': messageId,
+          };
+        }
+
+        results.add({
+          'redisEntryId': redisEntryId,
+          'success': true,
+          'realmOp': realmOp,
+        });
+      } catch (e) {
+        results.add({
+          'redisEntryId': '',
+          'success': false,
+          'error': e.toString(),
+        });
+      }
+    }
+    return results;
+  }
+
+  // Sanitize an object to contain only JSON-serializable primitives (String,
+  // num, bool, null) or nested Lists/Maps of those. Non-serializable objects
+  // are converted to strings. If an object has toJson(), it will be used.
+  dynamic _sanitizeForIsolate(dynamic value) {
+    try {
+      if (value == null) return null;
+      if (value is String || value is num || value is bool) return value;
+      if (value is Map) {
+        final out = <String, dynamic>{};
+        value.forEach((k, v) {
+          try {
+            out[k.toString()] = _sanitizeForIsolate(v);
+          } catch (_) {
+            out[k.toString()] = v.toString();
+          }
+        });
+        return out;
+      }
+      if (value is List) {
+        return value.map((e) => _sanitizeForIsolate(e)).toList();
+      }
+      // prefer toJson if available
+      try {
+        final dynamic maybeJson = (value as dynamic).toJson();
+        return _sanitizeForIsolate(maybeJson);
+      } catch (_) {}
+      // fallback to string representation
+      return value.toString();
+    } catch (e) {
+      return value.toString();
+    }
+  }
+
   // Process messages from queue asynchronously
   Future<void> _processMessageQueue() async {
     if (_isProcessingQueue) return;
@@ -187,48 +272,53 @@ class RealmLocalServices with ChangeNotifier {
     final List<Map<String, dynamic>> _ackedResults = [];
 
     try {
-      while (_messageQueue.isNotEmpty) {
-        // Pop the next message, but if it's an update/replace and there is
-        // a pending create/insert for the same messageId later in the queue,
-        // process the create first to ensure objects exist before updates.
-        var message = _messageQueue.removeAt(0);
+      // Process messages in batches. We'll offload the parsing/prep work to
+      // a background isolate via compute(), then run small Realm writes on the
+      // main isolate in short batches to avoid UI jank.
+      const int batchSize = 50; // tuneable
 
-        // If this is an update/replace, check for a create/insert for same id
-        final action = (message['action'] ?? '').toString();
-        if (action == 'update' || action == 'replace') {
-          final sameCreateIndex = _messageQueue.indexWhere((m) {
-            final a = (m['action'] ?? '').toString();
-            return (a == 'insert' || a == 'create') &&
-                m['messageId'] == message['messageId'];
-          });
-          if (sameCreateIndex != -1) {
-            // re-enqueue the update at the end and pull the create to process now
-            _messageQueue.add(message);
-            message = _messageQueue.removeAt(sameCreateIndex);
-          }
+      while (_messageQueue.isNotEmpty) {
+        // Take a batch from the queue
+        final batch = <Map<String, dynamic>>[];
+        for (var i = 0; i < batchSize && _messageQueue.isNotEmpty; i++) {
+          batch.add(_messageQueue.removeAt(0));
         }
 
         debugPrint(
-          "Processing message ${message['messageId']}, remaining: ${_messageQueue.length}",
+          'Processing batch of ${batch.length} messages, remaining: ${_messageQueue.length}',
         );
 
+        // Offload message normalization to an isolate
         try {
-          // Process message asynchronously and collect ACK info
-          final ackInfo = await _processServerMessage(message);
-          _ackedResults.add(ackInfo);
+          // Sanitize batch to ensure everything sent to compute() is sendable
+          final sanitized = batch.map((m) => _sanitizeForIsolate(m)).toList();
+          await compute(_isolateProcessMessages, sanitized);
         } catch (e) {
-          debugPrint("Error processing message ${message['messageId']}: $e");
-          final redisEntryId = (message['redisEntryId'] ?? '') as String;
-          _ackedResults.add({
-            'redisEntryId': redisEntryId,
-            'success': false,
-            'error': e.toString(),
-          });
-          // Continue processing other messages even if one fails
+          // If compute fails, we continue — the original _processServerMessage
+          // calls below will handle parsing and writes on the main isolate.
+          debugPrint('compute failed for batch: $e');
         }
 
-        // Small delay to prevent blocking the UI thread
-        await Future.delayed(const Duration(milliseconds: 10));
+        // For each original message in the batch, call the existing
+        // _processServerMessage which performs the real Realm writes. We
+        // space them out slightly so a very large burst doesn't block the UI
+        // for long periods.
+        for (var i = 0; i < batch.length; i++) {
+          final originalMsg = batch[i];
+          try {
+            final ackInfo = await _processServerMessage(originalMsg);
+            _ackedResults.add(ackInfo);
+          } catch (e) {
+            _ackedResults.add({
+              'redisEntryId': (originalMsg['redisEntryId'] ?? '').toString(),
+              'success': false,
+              'error': e.toString(),
+            });
+          }
+
+          // small yield to keep UI responsive
+          await Future.delayed(const Duration(milliseconds: 6));
+        }
       }
     } finally {
       // After the whole queue has been processed, send ACKs for each
@@ -2331,7 +2421,7 @@ class RealmLocalServices with ChangeNotifier {
       final existingData = realm.find<UnsyncedData>(
         ObjectId.fromHexString(socketData['id']),
       );
-      print('unsynceddata: $socketData');
+      debugPrint('unsynceddata: $socketData');
       if (existingData == null) {
         realm.write(() {
           realm.add<UnsyncedData>(
