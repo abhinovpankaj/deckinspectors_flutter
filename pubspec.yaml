@@ -89,11 +89,16 @@ dependencies:
   map_launcher: ^3.5.0
   maps_launcher: ^3.0.0+1
   gallery_saver_plus: ^3.2.9
-  cbl_flutter: ^3.3.5
+  # Use the community edition platform implementation for Couchbase Lite.
+  # The `cbl` package provides the Dart API; `cbl_flutter_ce` registers
+  # the native platform implementation. Replace with `cbl_flutter_ee`
+  # if you have the enterprise edition.
+  cbl_flutter_ce: ^3.3.5
   equatable: ^2.0.8
   flutter_bloc: ^9.1.1
   geolocator: ^10.1.1
   url_launcher: ^6.3.2
+  cbl_flutter: ^3.3.5
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   awesome_notifications
+  cbl_flutter_ce
   connectivity_plus
   file_selector_windows
   flutter_webrtc

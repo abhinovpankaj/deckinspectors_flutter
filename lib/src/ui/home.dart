@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'projects.dart';
 import 'reports_screen.dart';
 import 'settings.dart';
+import '../resources/couchbase/database_provider.dart';
+import '../resources/couchbase/image_repository.dart';
+import '../resources/couchbase/project_repository.dart';
+import '../bloc/projects_bloc.dart';
+import '../bloc/projects_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,15 +20,26 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  final pages = [
-    const Center(child: ProjectsPage()),
-    //Center(child: OfflineModePage()),
-    const Center(child: ReportsPage()),
-    const Center(child: SettingsPage()),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    // Create repositories here so we can provide the ProjectsBloc to the
+    // embedded ProjectsPage when HomePage is used as the app's shell.
+    final dbProvider = DatabaseProvider();
+    final imageRepo = ImageRepository(dbProvider);
+    final projectRepository = ProjectRepository(dbProvider, imageRepo);
+
+    final pages = [
+      BlocProvider(
+        create:
+            (_) =>
+                ProjectsBloc(projectRepository: projectRepository)
+                  ..add(LoadProjectsEvent()),
+        child: const Center(child: ProjectsPage()),
+      ),
+      //Center(child: OfflineModePage()),
+      const Center(child: ReportsPage()),
+      const Center(child: SettingsPage()),
+    ];
     return Scaffold(
       body: SafeArea(child: pages[_currentIndex]),
       bottomNavigationBar: BottomNavigationBar(

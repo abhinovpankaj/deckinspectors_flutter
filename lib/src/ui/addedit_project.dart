@@ -235,8 +235,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           );
           try {
             // refresh projects list if available
-            final projectsBloc = context.read<ProjectsBloc>();
-            projectsBloc.add(LoadProjectsEvent());
+            // Do not assume a ProjectsBloc is available in this route's context.
+            // The caller (ProjectsPage) already handles refreshing when this
+            // route returns true via the `.then(...)` callback.
           } catch (_) {}
           Navigator.pop(context, true);
         } else if (state is AddEditProjectFailure) {
