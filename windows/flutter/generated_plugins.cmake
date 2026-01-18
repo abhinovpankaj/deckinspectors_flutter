@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  awesome_notifications
   connectivity_plus
   file_selector_windows
   flutter_webrtc
@@ -13,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   printing
   realm
   share_plus
+  speech_to_text_windows
   syncfusion_pdfviewer_windows
   url_launcher_windows
 )

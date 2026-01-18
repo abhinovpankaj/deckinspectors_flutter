@@ -10,6 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+import '../resources/couchbase/couchbase_services.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
@@ -23,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   bool showPassword = false;
   bool isLoading = false;
   bool? _isChecked = false;
-  //late AppServices appServices;
+  late CouchbaseServices couchbaseServices;
   Future<void> _loadUserDetails() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -71,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // Sign In Function
   Future<void> login() async {
-    //appServices = Provider.of<AppServices>(context, listen: false);
+    couchbaseServices = Provider.of<CouchbaseServices>(context, listen: false);
     if (_usernameController.text.isNotEmpty &&
         _passwordController.text.isNotEmpty) {
       setState(() {
@@ -142,7 +144,11 @@ class _LoginPageState extends State<LoginPage> {
       }
       if (loginResult.username!.isNotEmpty && loginResult.accesstype != "web") {
         if (!mounted) return;
-
+        if (activeConnection) {
+          couchbaseServices.logInUser();
+        } else {
+          couchbaseServices.notifyinCaseofOfflineMode();
+        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),

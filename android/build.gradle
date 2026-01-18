@@ -100,3 +100,41 @@ subprojects {
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
+
+// Workaround: some third-party plugin modules (from pub.dev) may lack the
+// required `namespace` property for Android Gradle Plugin 7+/8+. This can
+// cause configuration failures when AGP tries to create library variants.
+// Here we provide a safe fallback: for any Android library project that
+// doesn't declare a namespace, set a default namespace so the build can
+// configure. This avoids editing files in the pub cache.
+subprojects {
+    afterEvaluate { project ->
+        try {
+            if (project.plugins.hasPlugin('com.android.library')) {
+                def androidExt = project.extensions.findByName('android')
+                if (androidExt != null) {
+                    // If the library hasn't set a namespace, set a default one.
+                    // Use the root app's application id as a reasonable default.
+                    def hasNamespace = false
+                    try {
+                        hasNamespace = androidExt.hasProperty('namespace') && androidExt.namespace != null
+                    } catch (ignored) {
+                        // some AGP versions throw when querying namespace; ignore
+                    }
+                    if (!hasNamespace) {
+                        project.extensions.configure(org.gradle.api.plugins.ExtensionAware, {
+                            // configure via the Android library extension if possible
+                        })
+                        try {
+                            project.android.namespace = 'com.e3inspections.multitenant'
+                            println "[build.gradle] Set default namespace for ${project.name} to com.e3inspections.multitenant"
+                        } catch (err) {
+                            // best-effort only; if this fails, let AGP report original error
+                            println "[build.gradle] Failed to set namespace for ${project.name}: ${err.message}"
+                        }
+                    }
+                }
+            }
+        } catch (ignored) {}
+    }
+}

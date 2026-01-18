@@ -5,23 +5,21 @@ import 'package:E3InspectionsMultiTenant/src/bloc/images_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/capture_multipic_raspi.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
-
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 import 'package:image_editor_plus/image_editor_plus.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
+//import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
-// import 'package:udp/udp.dart';
-import '../bloc/users_bloc.dart';
+import 'package:udp/udp.dart';
 import '../models/exteriorelements.dart';
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 
 import '../models/success_response.dart';
 import 'package:path/path.dart' as path;
-import '../services/realm_local_services.dart';
+import '../resources/couchbase/couchbase_project_services.dart';
 import '../services/signalling.service.dart';
 import 'breadcrumb_navigation.dart';
 //import 'capture_multipic_esp_32.dart';
@@ -73,7 +71,7 @@ class SectionPage extends StatefulWidget {
 }
 
 class _SectionPageState extends State<SectionPage> {
-  late RealmLocalServices realmServices;
+  late CouchbaseProjectServices couchbaseServices;
 
   @override
   Widget build(BuildContext context) {
@@ -345,14 +343,16 @@ class _SectionPageState extends State<SectionPage> {
       invasiveReviewRequired =
           currentVisualSection.furtherinvasivereviewrequired;
       hasSignsOfLeak = currentVisualSection.visualsignsofleak;
-      if (currentVisualSection.images.isNotEmpty) {
-        final List<String> imgs = [];
-        if (appSettings.activeConnection) {
-          imgs.addAll(currentVisualSection.images.map((e) => e));
-        } else {
-          for (var imgpath in currentVisualSection.images) {
-            imgs.add(realmServices.getlocalPath(imgpath));
-          }
+    }
+    if (currentVisualSection.images.isNotEmpty) {
+      if (appSettings.activeConnection) {
+        capturedImages.addAll(currentVisualSection.images);
+        //call upload local images
+
+        //realmServices.uploadLocalImages();
+      } else {
+        for (var imgpath in currentVisualSection.images) {
+          capturedImages.add(realmServices.getlocalPath(imgpath));
         }
         capturedImages.value = imgs;
       }
@@ -571,16 +571,25 @@ class _SectionPageState extends State<SectionPage> {
         context,
         MaterialPageRoute(builder: (context) => const CameraScreen()),
       ).then((value) {
-        if (value != null && value.isNotEmpty) {
-          // value is List<String> paths
-          final newList = List<String>.from(capturedImages.value);
-          newList.addAll(value);
-          capturedImages.value = newList;
-          setState(() {
-            unitUnavailable = false;
-            isFormUpdated = true;
-          });
-        }
+        setState(() {
+          if (value != null) {
+            capturedImages.addAll(value);
+            if (value.isNotEmpty) {
+              setState(() {
+                // currentVisualSection.realm.write(() {
+                //   currentVisualSection.images
+                //       .addAll(value.map((e) => e.path).toList());
+                // });
+                //unitUnavailable = false;
+                isFormUpdated = true;
+              });
+            }
+            // for (var element in capturedImages) {
+            //   //currentVisualSection.images ??= RealmList<String>[];
+            //   currentVisualSection.images.add(element);
+            // }
+          }
+        });
       });
     } else if (value == 3) {
       await Navigator.push(
@@ -1720,22 +1729,7 @@ class _SectionPageState extends State<SectionPage> {
     updated.removeAt(index);
     capturedImages.value = updated;
     setState(() {
-      isFormUpdated = true;
+      capturedImages.removeAt(index);
     });
-    photosToRemove.add(removed);
-    // () async {
-    //   try {
-    //     realmServices.removeImageUrl(currentVisualSection, removed);
-    //   } catch (e, st) {
-    //     debugPrint('removePhoto: removeImageUrl failed: $e');
-    //     debugPrint(st.toString());
-    //   }
-    // }();
   }
 }
-
-enum VisualReview { good, fair, bad }
-
-enum ConditionalAssessment { pass, fail, futureinspection }
-
-enum ExpectancyYears { one, four, seven, sevenplus }

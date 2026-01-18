@@ -7,15 +7,17 @@ import 'package:E3InspectionsMultiTenant/src/bloc/settings_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/bloc/users_bloc.dart';
 import 'package:E3InspectionsMultiTenant/src/models/error_response.dart';
 import 'package:E3InspectionsMultiTenant/src/models/success_response.dart';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/couchbase_project_services.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 //import 'package:E3InspectionsMultiTenant/src/ui/pdfviewer.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/showprojecttype_widget.dart';
 import 'package:flutter_material_pickers/helpers/show_checkbox_picker.dart';
 import 'package:flutter_material_pickers/models/select_all_config.dart';
+import 'package:map_launcher/map_launcher.dart';
+//import 'package:maps_launcher/maps_launcher.dart';
 
 import 'package:provider/provider.dart';
-import 'package:realm/realm.dart';
-import '../models/realm/realm_schemas.dart';
+import '../models/couchbase/couchbase_models.dart';
 
 import '../services/realm_local_services.dart';
 import 'addedit_subproject.dart';
@@ -405,6 +407,56 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     return DateFormat(dateFormat).format(docDateTime);
   }
 
+  Future<Coords?> _getCurrentCoords() async {
+    try {
+      // Check if location services are enabled.
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location services are disabled.')),
+        );
+        return null;
+      }
+
+      // Check and request permission if needed.
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permissions are denied.')),
+          );
+          return null;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location permissions are permanently denied. Enable from settings.',
+            ),
+          ),
+        );
+        return null;
+      }
+
+      // Get current position
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      return Coords(position.latitude, position.longitude);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to get current location: ${e.toString()}'),
+        ),
+      );
+      return null;
+    }
+  }
+
   // Start navigation in external maps app. Tries platform-specific URL schemes
   // that start turn-by-turn navigation. Falls back to web URLs.
   Future<void> _startNavigation(double lat, double lng) async {
@@ -481,7 +533,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     String editedat,
     String address,
   ) {
-    realmProjServices = Provider.of<RealmLocalServices>(context, listen: false);
+    realmProjServices = Provider.of<RealmProjectServices>(
+      context,
+      listen: false,
+    );
     return Padding(
       padding: const EdgeInsets.all(0.0),
       child: Column(
@@ -555,8 +610,33 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                         }
                       }
 
-                      // Start navigation via URL schemes so turn-by-turn starts
-                      await _startNavigation(lat, lng);
+                      final coords = Coords(lat, lng);
+
+                      // Try to obtain current device coordinates to pass as origin.
+                      final Coords? originCoords = await _getCurrentCoords();
+
+                      if (Platform.isIOS) {
+                        // Start navigation via URL schemes so turn-by-turn starts
+                        await _startNavigation(
+                          coords.latitude,
+                          coords.longitude,
+                        );
+                      } else if (Platform.isAndroid) {
+                        // Start navigation via URL schemes so turn-by-turn starts
+                        await _startNavigation(
+                          coords.latitude,
+                          coords.longitude,
+                        );
+                      } else {
+                        // fallback for other platforms
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Platform not supported for navigation.',
+                            ),
+                          ),
+                        );
+                      }
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Couchbase Server - provides the backend database
+  couchbase:
+    image: couchbase:7.2
+    container_name: couchbase-server
+    ports:
+      - "8091-8094:8091-8094"  # Admin UI and APIs
+      - "11210:11210"          # Data service
+    environment:
+      - CLUSTER_NAME=inspection-cluster
+      - CLUSTER_INDEX_PATH=/opt/couchbase/var/lib/couchbase/indexes
+      - CLUSTER_EVENTING_PATH=/opt/couchbase/var/lib/couchbase/eventing
+    volumes:
+      - couchbase_data:/opt/couchbase/var
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/ui/index.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Sync Gateway - synchronizes data between Couchbase and mobile clients
+  sync-gateway:
+    image: couchbase/sync-gateway:3.1
+    container_name: sync-gateway
+    ports:
+      - "4984:4984"  # Public API
+      - "4985:4985"  # Admin API
+    volumes:
+      - ./sync-gateway-config.json:/etc/sync_gateway/config.json
+      - sync_gateway_data:/opt/sync_gateway
+    command:
+      - /etc/sync_gateway/config.json
+    depends_on:
+      couchbase:
+        condition: service_healthy
+    environment:
+      - GOMAXPROCS=4
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4984/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  couchbase_data:
+    driver: local
+  sync_gateway_data:
+    driver: local
+
+networks:
+  default:
+    name: inspection-network
+    driver: bridge

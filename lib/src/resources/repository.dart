@@ -4,6 +4,7 @@ import 'package:E3InspectionsMultiTenant/src/models/project_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/section_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/subproject_model.dart';
 import 'package:E3InspectionsMultiTenant/src/models/users_response.dart';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/database_provider.dart';
 import 'package:E3InspectionsMultiTenant/src/resources/project_api_provider.dart';
 import 'package:E3InspectionsMultiTenant/src/resources/user_provider.dart';
 import 'package:E3InspectionsMultiTenant/src/services/realm_local_services.dart';
@@ -43,9 +44,9 @@ class Repository {
     return projectsApiProvider.deleteProjectPermanently(id);
   }
 
-//local fetches
+  //local fetches
 
-//Locations
+  //Locations
   final locationApiProvider = LocationsApiProvider();
 
   Future<Object> getLocation(String id) {
@@ -110,27 +111,71 @@ class Repository {
 
   final imageApiProvider = ImagesApiProvider();
 
-  Future<Object> uploadImage(String path, String containerName, String uploader,
-      String id, String parentType, String entityName) {
-    if (RealmLocalServices.offlineModeOn || !appSettings.activeConnection) {
+  Future<Object> uploadImage(
+    String path,
+    String containerName,
+    String uploader,
+    String id,
+    String parentType,
+    String entityName,
+  ) {
+    if (DatabaseProvider.offlineModeOn || !appSettings.activeConnection) {
       return imageApiProvider.uploadImageLocally(
-          path, containerName, uploader, id, parentType, entityName);
+        path,
+        containerName,
+        uploader,
+        id,
+        parentType,
+        entityName,
+      );
     } else {
       return imageApiProvider.uploadImage(
-          path, containerName, uploader, id, parentType, entityName);
+        path,
+        containerName,
+        uploader,
+        id,
+        parentType,
+        entityName,
+      );
     }
   }
 
-  Future<Object> saveImageLocal(String path, String containerName,
-      String uploader, String id, String parentType, String entityName) {
+  Future<Object> saveImageLocal(
+    String path,
+    String containerName,
+    String uploader,
+    String id,
+    String parentType,
+    String entityName,
+  ) {
     return imageApiProvider.uploadImageLocally(
-        path, containerName, uploader, id, parentType, entityName);
+      path,
+      containerName,
+      uploader,
+      id,
+      parentType,
+      entityName,
+    );
   }
 
-  Future<Object> downloadProjectReport(String name, String id, String fileType,
-      int quality, int imageFactor, String reportType, String companyName) {
+  Future<Object> downloadProjectReport(
+    String name,
+    String id,
+    String fileType,
+    int quality,
+    int imageFactor,
+    String reportType,
+    String companyName,
+  ) {
     return projectsApiProvider.downloadReport(
-        name, id, fileType, quality, imageFactor, reportType, companyName);
+      name,
+      id,
+      fileType,
+      quality,
+      imageFactor,
+      reportType,
+      companyName,
+    );
   }
 
   Future<UsersResponse> getAllUsers(String token) {

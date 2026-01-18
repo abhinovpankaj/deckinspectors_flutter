@@ -1,0 +1,208 @@
+import 'package:cbl/cbl.dart';
+import 'package:flutter/material.dart';
+
+import '../../bloc/settings_bloc.dart';
+import '../../bloc/users_bloc.dart';
+import '../../models/couchbase/couchbase_models.dart';
+import 'database_provider.dart';
+import 'image_repository.dart';
+import 'project_repository.dart';
+
+class SubprojectRepository {
+  final DatabaseProvider _databaseProvider;
+  final ProjectRepository _projectRepository;
+  final ImageRepository _imageRepository;
+  final UsersBloc _usersBloc;
+  final AppSettings appSettings;
+
+  SubprojectRepository(this._databaseProvider, this._projectRepository,
+      this._imageRepository, this._usersBloc, this.appSettings);
+  final String subprojectDocumentType = 'subproject';
+  final String attributeDocumentType = 'documentType';
+
+  Future<void> deleteProjectChildren(String childId, String parentId) async {
+    try {
+      final parentDoc =
+          await _databaseProvider.projectCollection.document(parentId);
+      if (parentDoc == null) return;
+      final project = Project.fromDocument(parentDoc.toPlainMap());
+
+      project.children.removeWhere((c) => c.id == childId);
+
+      await _projectRepository.createOrUpdateProject(project);
+      //notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting project child: $e');
+    }
+  }
+
+  Future<String> deleteSubProject(SubProject subProject) async {
+    try {
+      // remove from parent project children
+      await deleteProjectChildren(subProject.id, subProject.parentid ?? '');
+      final doc =
+          await _databaseProvider.subProjectCollection.document(subProject.id);
+      if (doc != null) {
+        await _databaseProvider.subProjectCollection.deleteDocument(doc);
+      }
+      return 'success';
+    } catch (e) {
+      debugPrint('Error deleting subproject: $e');
+      return 'failed';
+    }
+  }
+
+  Future<SubProject?> getSubProject(String id) async {
+    try {
+      final doc = await _databaseProvider.subProjectCollection.document(id);
+      if (doc != null) return SubProject.fromDocument(doc.toPlainMap());
+      return null;
+    } catch (e) {
+      debugPrint('Error getting subproject: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updateSubProjectUrl(SubProject subProject, String url) async {
+    try {
+      if (_databaseProvider.isAppOfflineMode() ||
+          !appSettings.activeConnection) {
+        final image = DeckImage(
+          id: CouchbaseDocument.generateId(),
+          localUrl: url,
+          remoteUrl: '',
+          isuploaded: false,
+          parentid: subProject.id,
+          parenttype: 'subProject',
+          sectiontype: 'subProjectimage',
+          sectionname: subProject.name,
+          uploadedBy: _usersBloc.userDetails.username,
+        );
+        await _imageRepository.saveImage(image);
+      }
+
+      // update parent project child url
+      if (subProject.parentid != null) {
+        await _projectRepository.updateChildUrl(
+            subProject.id, subProject.parentid!, url);
+      }
+
+      subProject.url = url;
+      final doc =
+          MutableDocument.withId(subProject.id, subProject.toDocument());
+      await _databaseProvider.subProjectCollection.saveDocument(doc);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error updating subproject url: $e');
+      return false;
+    }
+  }
+
+  Future<void> updateSubProjectChildren(
+    String childId,
+    String parentId,
+    bool isInvasive,
+    String name,
+    String type,
+    String description,
+  ) async {
+    try {
+      final parentDoc =
+          await _databaseProvider.subProjectCollection.document(parentId);
+      if (parentDoc == null) return;
+      final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
+
+      subProject.isInvasive = isInvasive;
+      final found = subProject.children.where((c) => c.id == childId);
+      if (found.isEmpty) {
+        subProject.children.add(Child(
+          id: childId,
+          name: name,
+          type: type,
+          description: description,
+          url: '',
+          isInvasive: isInvasive,
+        ));
+      } else {
+        final foundChild = found.first;
+        foundChild.name = name;
+        foundChild.description = description;
+        foundChild.isInvasive = isInvasive;
+      }
+
+      await createOrUpdateSubProject(subProject);
+      //notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating subproject children: $e');
+    }
+  }
+
+  Future<void> createOrUpdateSubProject(SubProject subProject) async {
+    final doc = MutableDocument.withId(subProject.id, subProject.toDocument());
+    await _databaseProvider.subProjectCollection.saveDocument(doc);
+  }
+
+  Future<void> updateChildUrl(
+      String childId, String parentId, String url) async {
+    try {
+      final parentDoc =
+          await _databaseProvider.subProjectCollection.document(parentId);
+      if (parentDoc == null) return;
+      final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
+
+      final found = subProject.children.where((c) => c.id == childId);
+      if (found.isNotEmpty) {
+        final child = found.first;
+        child.url = url;
+        await createOrUpdateSubProject(subProject);
+        //notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating child url: $e');
+    }
+  }
+
+  Future<bool> addupdateSubProject(
+    SubProject subProject,
+    String name,
+    String description,
+    bool isNewBuilding,
+    String fullUserName,
+  ) async {
+    try {
+      final creationtime = DateTime.now().toString();
+      String loggedInUser = _usersBloc.userDetails.username ?? '';
+      subProject.name = name;
+      subProject.description = description;
+      if (isNewBuilding) {
+        subProject.createdby = fullUserName;
+        if (!subProject.assignedto.contains(loggedInUser)) {
+          subProject.assignedto.add(loggedInUser);
+        }
+      } else {
+        subProject.lasteditedby = fullUserName;
+      }
+      subProject.createdat ??= creationtime;
+      subProject.editedat = DateTime.now().toString();
+
+      // update parent project's children
+      await _projectRepository.updateProjectChildren(
+        subProject.id,
+        subProject.parentid ?? '',
+        subProject.isInvasive,
+        subProject.name ?? '',
+        subProject.type,
+        subProject.description ?? '',
+      );
+
+      final doc =
+          MutableDocument.withId(subProject.id, subProject.toDocument());
+      await _databaseProvider.subProjectCollection.saveDocument(doc);
+      return true;
+    } catch (e) {
+      debugPrint('Error adding/updating subproject: $e');
+      return false;
+    }
+  }
+}

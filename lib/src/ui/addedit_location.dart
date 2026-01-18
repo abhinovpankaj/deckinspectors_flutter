@@ -1,13 +1,14 @@
 import 'dart:io';
+import 'package:E3InspectionsMultiTenant/src/resources/couchbase/location_repository.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/cachedimage_widget.dart';
 import 'package:E3InspectionsMultiTenant/src/ui/location.dart';
 import 'package:flutter/material.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:provider/provider.dart';
-import '../bloc/images_bloc.dart';
-import '../models/realm/realm_schemas.dart';
-import '../models/success_response.dart';
-import '../services/realm_local_services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/locations_bloc.dart';
+import '../bloc/locations_event.dart';
+import '../bloc/locations_state.dart';
+import '../models/couchbase/couchbase_models.dart';
 import 'capture_image.dart';
 
 class AddEditLocationPage extends StatefulWidget {
@@ -32,11 +33,21 @@ class AddEditLocationPage extends StatefulWidget {
     bool isNew,
     String userName,
     String prevPage,
-  ) => MaterialPageRoute(
-    settings: RouteSettings(name: isNew ? 'Add Location' : 'Edit Location'),
-    builder:
-        (context) => AddEditLocationPage(location, isNew, userName, prevPage),
-  );
+  ) {
+    return MaterialPageRoute(
+      settings: RouteSettings(name: isNew ? 'Add Location' : 'Edit Location'),
+      builder: (context) {
+        final locationRepository = Provider.of<LocationRepository>(
+          context,
+          listen: false,
+        );
+        return BlocProvider(
+          create: (_) => LocationsBloc(locationRepository: locationRepository),
+          child: AddEditLocationPage(location, isNew, userName, prevPage),
+        );
+      },
+    );
+  }
 }
 
 class _AddEditLocationPageState extends State<AddEditLocationPage> {
@@ -93,43 +104,41 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
 
-  save(BuildContext context, RealmLocalServices realmServices) async {
+  void saveWithBloc(BuildContext context) {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      // If the form is valid, display a snackbar. In the real world,
-      // you'd often call a server or save the information in a database.
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Saving $pageType...')));
-      //location details
-      String name, description, id, parenttype, type;
-      name = _nameController.text;
+      final name = _nameController.text;
+      final description = _descriptionController.text;
+      // Update currentLocation with new values
+      currentLocation.name = name;
+      currentLocation.description = description;
 
-      description = _descriptionController.text;
-      try {
-        var result = realmServices.addupdateLocation(
-          currentLocation,
-          name,
-          description,
-          fullUserName,
-          isNewLocation,
-        );
+      context.read<LocationsBloc>().add(
+        SaveLocationEvent(
+          location: currentLocation,
+          name: name,
+          isNew: isNewLocation,
+          fullUserName: fullUserName,
+          description: description,
+        ),
+      );
+    }
+  }
 
-        if (!mounted) {
-          return;
-        }
-        if (result) {
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LocationsBloc, LocationsState>(
+      listener: (context, state) {
+        if (state is LocationSaveSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('$pageType saved successfully.')),
           );
-
-          //Navigator.pop(context, currentLocation.url);
           if (isNewLocation) {
             Navigator.pushReplacement(
               context,
               LocationPage.getRoute(
                 currentLocation.id,
-                currentLocation.parenttype as String,
+                currentLocation.parenttype,
                 pageType,
                 fullUserName,
                 currentLocation.name as String,
@@ -138,249 +147,190 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
           } else {
             Navigator.pop(context);
           }
-        } else {
+        } else if (state is LocationSaveFailure) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error)));
+        } else if (state is LocationDeleteSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to save the ${currentLocation.type}'),
+            SnackBar(content: Text('$pageType deleted successfully.')),
+          );
+          Navigator.of(context)
+            ..pop()
+            ..pop(currentLocation);
+        } else if (state is LocationDeleteFailure) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error)));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leadingWidth: 120,
+          leading: ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+            label: const Text(
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              'Back',
+              style: TextStyle(color: Colors.blue),
             ),
-          );
-        }
-
-        id = currentLocation.id.toString();
-
-        parenttype = currentLocation.parenttype as String;
-        type = currentLocation.type as String;
-        if (currentLocation.url == null) {
-          return;
-        }
-        if (imageURL != currentLocation.url) {
-          var result = await imagesBloc.uploadImage(
-            imageURL,
-            name,
-            fullUserName,
-            id,
-            parenttype,
-            type,
-          );
-
-          if (result is ImageResponse) {
-            await GallerySaver.saveImage(result.originalPath as String);
-
-            realmServices.updateLocationUrl(
-              currentLocation,
-              result.url as String,
-            );
-          }
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to save the ${currentLocation.type} ${e.toString()}',
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
             ),
           ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final realmServices = Provider.of<RealmLocalServices>(
-      context,
-      listen: false,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leadingWidth: 120,
-        leading: ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-          label: const Text(
-            overflow: TextOverflow.ellipsis,
-            maxLines: 2,
-            'Back',
-            style: TextStyle(color: Colors.blue),
-          ),
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue,
-        elevation: 0,
-        actions: [
-          InkWell(
-            onTap: () {
-              save(context, realmServices);
-            },
-            child: const Chip(
-              avatar: Icon(Icons.save_outlined, color: Colors.black),
-              labelPadding: EdgeInsets.all(2),
-              label: Text(
-                'Save',
-                style: TextStyle(color: Colors.black),
-                selectionColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.blue,
+          elevation: 0,
+          actions: [
+            InkWell(
+              onTap: () {
+                saveWithBloc(context);
+              },
+              child: const Chip(
+                avatar: Icon(Icons.save_outlined, color: Colors.black),
+                labelPadding: EdgeInsets.all(2),
+                label: Text(
+                  'Save',
+                  style: TextStyle(color: Colors.black),
+                  selectionColor: Colors.white,
+                ),
+                shadowColor: Colors.blue,
+                backgroundColor: Colors.blue,
+                elevation: 10,
+                autofocus: true,
               ),
-              shadowColor: Colors.blue,
-              backgroundColor: Colors.blue,
-              elevation: 10,
-              autofocus: true,
+            ),
+          ],
+          title: Text(
+            pageTitle,
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.normal,
             ),
           ),
-        ],
-        title: Text(
-          pageTitle,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.normal,
-          ),
         ),
-      ),
-      // floatingActionButton: Padding(
-      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-      //   child: BreadCrumbNavigator(),
-      // ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * .9,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(pageType),
-                  const SizedBox(height: 8),
-                  inputWidgetwithValidation(
-                    '$pageType name',
-                    'Please enter ${currentLocation.type} name',
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Description'),
-                  const SizedBox(height: 8),
-
-                  inputWidgetNoValidation('Description', 3),
-
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide.none,
-                      // the height is 50, the width is full
-                      minimumSize: const Size.fromHeight(40),
-                      backgroundColor: Colors.white,
-                      shadowColor: Colors.blue,
-                      elevation: 0,
+        body: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * .9,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(pageType),
+                    const SizedBox(height: 8),
+                    inputWidgetwithValidation(
+                      '$pageType name',
+                      'Please enter {currentLocation.type} name',
                     ),
-                    onPressed: () async {
-                      showAssetPic = false;
-                      var xfile = await captureImage(context);
-                      if (xfile != null) {
-                        setState(() {
-                          imageURL = xfile.path;
-                        });
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.camera_outlined,
-                      color: Colors.blueAccent,
-                    ),
-                    label: const Text(
-                      'Add image',
-                      style: TextStyle(color: Colors.blueAccent),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 220,
-                    child: Card(
-                      borderOnForeground: false,
-                      elevation: 4,
-                      child: GestureDetector(
-                        onTap: () async {
-                          //add logic to open camera.
-                          showAssetPic = false;
-                          var xfile = await captureImage(context);
-                          if (xfile != null) {
-                            setState(() {
-                              imageURL = xfile.path;
-                            });
-                          }
-                        },
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(8.0),
-                            ),
-                            boxShadow: [
-                              BoxShadow(blurRadius: 1.0, color: Colors.blue),
-                            ],
-                          ),
-                          child:
-                              showAssetPic
-                                  ? currentLocation.url == ""
-                                      ? Image.asset(
-                                        "assets/images/icon.png",
-                                        fit: BoxFit.fill,
-                                        width: double.infinity,
-                                        height: 250,
-                                      )
-                                      : Image.file(
-                                        File(imageURL),
-                                        fit: BoxFit.fill,
-                                        width: double.infinity,
-                                        height: 250,
-                                      )
-                                  : cachedNetworkImage(imageURL),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  if (!isNewLocation)
+                    const SizedBox(height: 16),
+                    const Text('Description'),
+                    const SizedBox(height: 8),
+                    inputWidgetNoValidation('Description', 3),
+                    const SizedBox(height: 16),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
-                        // the height is 50, the width is full
                         minimumSize: const Size.fromHeight(40),
                         backgroundColor: Colors.white,
                         shadowColor: Colors.blue,
                         elevation: 0,
                       ),
-                      onPressed: () {
-                        deleteLocation(context, realmServices);
+                      onPressed: () async {
+                        showAssetPic = false;
+                        var xfile = await captureImage(context);
+                        if (xfile != null) {
+                          setState(() {
+                            imageURL = xfile.path;
+                          });
+                        }
                       },
                       icon: const Icon(
-                        Icons.delete_outline_outlined,
-                        color: Colors.redAccent,
+                        Icons.camera_outlined,
+                        color: Colors.blueAccent,
                       ),
-                      label: Text(
-                        'Delete $pageType',
-                        style: const TextStyle(color: Colors.red),
+                      label: const Text(
+                        'Add image',
+                        style: TextStyle(color: Colors.blueAccent),
                       ),
                     ),
-                  const SizedBox(height: 40),
-                  // Padding(
-
-                  //   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  //   child: ElevatedButton(
-                  //     onPressed: () {
-                  //       // Validate returns true if the form is valid, or false otherwise.
-                  //       if (_formKey.currentState!.validate()) {
-                  //         // If the form is valid, display a snackbar. In the real world,
-                  //         // you'd often call a server or save the information in a database.
-                  //         ScaffoldMessenger.of(context).showSnackBar(
-                  //           const SnackBar(content: Text('Processing Data')),
-                  //         );
-                  //       }
-                  //     },
-                  //     child: const Text('Submit'),
-                  //   ),
-                  // ),
-                ],
+                    SizedBox(
+                      height: 220,
+                      child: Card(
+                        borderOnForeground: false,
+                        elevation: 4,
+                        child: GestureDetector(
+                          onTap: () async {
+                            showAssetPic = false;
+                            var xfile = await captureImage(context);
+                            if (xfile != null) {
+                              setState(() {
+                                imageURL = xfile.path;
+                              });
+                            }
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8.0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(blurRadius: 1.0, color: Colors.blue),
+                              ],
+                            ),
+                            child:
+                                showAssetPic
+                                    ? currentLocation.url == ""
+                                        ? Image.asset(
+                                          "assets/images/icon.png",
+                                          fit: BoxFit.fill,
+                                          width: double.infinity,
+                                          height: 250,
+                                        )
+                                        : Image.file(
+                                          File(imageURL),
+                                          fit: BoxFit.fill,
+                                          width: double.infinity,
+                                          height: 250,
+                                        )
+                                    : cachedNetworkImage(imageURL),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!isNewLocation)
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide.none,
+                          minimumSize: const Size.fromHeight(40),
+                          backgroundColor: Colors.white,
+                          shadowColor: Colors.blue,
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          context.read<LocationsBloc>().add(
+                            DeleteLocationEvent(currentLocation),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline_outlined,
+                          color: Colors.redAccent,
+                        ),
+                        label: Text(
+                          'Delete $pageType',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
@@ -430,37 +380,5 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
     );
   }
 
-  void deleteLocation(
-    BuildContext context,
-    RealmLocalServices realmServices,
-  ) async {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Deleting $pageType...')));
-    //id,type, name, parentId, parentType, isVisible
-    // var result = await locationsBloc.deleteLocation(
-    //     currentLocation.id as String,
-    //     currentLocation.type,
-    //     currentLocation.name as String,
-    //     currentLocation.parentid as String,
-    //     currentLocation.parenttype as String,
-    //     false);
-
-    // if (!mounted) {
-    //   return;
-    // }
-    var result = realmServices.deleteLocation(currentLocation);
-    if (result == 'success') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$pageType deleted successfully.')),
-      );
-      Navigator.of(context)
-        ..pop()
-        ..pop(currentLocation);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete the ${currentLocation.type}')),
-      );
-    }
-  }
+  // deleteLocation logic is now handled by LocationsBloc and BlocListener
 }

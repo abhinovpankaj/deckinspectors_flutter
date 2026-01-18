@@ -26,6 +26,18 @@ class UsersBloc {
     return response;
   }
 
+  getCurrentUser() {
+    return {
+      'username': userDetails.username,
+      'token': userDetails.token,
+      'firstName': userDetails.firstname,
+      'lastName': userDetails.lastname,
+      'email': userDetails.email,
+      'role': userDetails.role,
+      'companyIdentifier': userDetails.companyidentifer,
+    };
+  }
+
   Future<bool> logout(String username) async {
     username = username;
     //print('called login api');

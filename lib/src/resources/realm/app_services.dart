@@ -1,8 +1,6 @@
 // import 'package:flutter/material.dart';
 // import 'package:realm/realm.dart';
 
-// import '../../app.dart';
-
 // class AppServices with ChangeNotifier {
 //   String id;
 //   Uri baseUrl;
@@ -44,18 +42,6 @@
 //     notifyListeners();
 //   }
 
-// // Future<void> setRole(User loggedInUser) async {
-// //     final realm = Realm(Configuration.flexibleSync(loggedInUser, [Role.schema, Item.schema]));
-// //     String subscriptionName = "rolesSubscription";
-// //     realm.subscriptions.update((mutableSubscriptions) => mutableSubscriptions.add(realm.all<Role>(), name: subscriptionName));
-// //     await realm.subscriptions.waitForSynchronization();
-// //     realm.write(() => realm.add(Role(ObjectId(), loggedInUser.id, isAdmin: false)));
-// //     await realm.syncSession.waitForUpload();
-// //     realm.subscriptions.update((mutableSubscriptions) => mutableSubscriptions.removeByName(subscriptionName));
-// //     await realm.subscriptions.waitForSynchronization();
-// //     await realm.syncSession.waitForDownload();
-// //     realm.close();
-// //   }
 //   Future<void> logOut() async {
 //     await currentUser?.logOut();
 //     currentUser = null;

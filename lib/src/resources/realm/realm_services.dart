@@ -14,9 +14,7 @@
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:wakelock_plus/wakelock_plus.dart';
 
-// import '../../app.dart';
 // import '../../bloc/notificationcontroller.dart';
-// import '../../models/users_response.dart';
 
 // class RealmProjectServices with ChangeNotifier {
 //   static const String queryAssignedProjects = "getAssignedProjectsSubscription";
