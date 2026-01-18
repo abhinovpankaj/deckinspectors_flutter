@@ -10,8 +10,6 @@ import '../bloc/images_bloc.dart';
 import '../bloc/addedit_project_bloc.dart';
 import '../bloc/addedit_project_event.dart';
 import '../bloc/addedit_project_state.dart';
-import '../bloc/projects_bloc.dart';
-import '../bloc/projects_event.dart';
 import '../resources/couchbase/project_repository.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
@@ -22,6 +20,7 @@ import '../models/success_response.dart';
 import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
+import 'project_details.dart';
 
 class AddEditProjectPage extends StatefulWidget {
   final Project newProject;
@@ -114,16 +113,6 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   double longitude = 34.8;
   save(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // If the form is valid, display a snackbar. In the real world,
-      // you'd often call a server or save the information in a database.
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Saving Project...')));
-
-      // TODO: Integrate ProjectRepository/BLoC for add/update project
-      // Example: context.read<AddEditProjectBloc>().add(SaveProject(...));
-      // On success, show snackbar and navigate as below.
-      // Populate project fields from the form
       currentProject.name = _nameController.text;
       currentProject.description = _descriptionController.text;
       currentProject.address = _addressController.text;
@@ -233,13 +222,28 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Project saved successfully')),
           );
+          // After successful save, navigate to ProjectDetailsPage for the
+          // saved project. The repository sets the `id` on the passed project
+          // object, so `currentProject.id` should contain the document id.
+          final projId = currentProject.id ?? '';
           try {
-            // refresh projects list if available
-            // Do not assume a ProjectsBloc is available in this route's context.
-            // The caller (ProjectsPage) already handles refreshing when this
-            // route returns true via the `.then(...)` callback.
-          } catch (_) {}
-          Navigator.pop(context, true);
+            // if (projId.isNotEmpty) {
+            //   Navigator.pushReplacement(
+            //     context,
+            //     ProjectDetailsPage.getRoute(
+            //       projId,
+            //       userFullName,
+            //       false,
+            //       currentProject.name ?? '',
+            //     ),
+            //   );
+            // } else {
+            //   Navigator.pop(context, true);
+            // }
+            Navigator.pop(context, true);
+          } catch (_) {
+            Navigator.pop(context, true);
+          }
         } else if (state is AddEditProjectFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to save project: ${state.error}')),

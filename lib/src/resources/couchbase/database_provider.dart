@@ -100,13 +100,32 @@ class DatabaseProvider {
         directory: cblDatabaseDirectory.path,
       );
 
-      //calculate database name based on current logged in users team name
+      // calculate database name based on current logged in user's team name
       final companyName = user.companyIdentifier?.toLowerCase().trim();
-      currentInspectionDatabaseName =
-          "${companyName}_$defaultInspectionDatabaseName";
+      final newDatabaseName = "${companyName}_$defaultInspectionDatabaseName";
+
+      // If the database is already opened for the same company, skip re-opening.
+      if (e3inspectionsDatabase != null &&
+          currentInspectionDatabaseName == newDatabaseName) {
+        debugPrint(
+          '${DateTime.now()} [DatabaseProvider] info: databases already initialized for $newDatabaseName',
+        );
+        return;
+      }
+
+      // If a different company DB is open, close it before opening the new one.
+      if (e3inspectionsDatabase != null &&
+          currentInspectionDatabaseName != newDatabaseName) {
+        try {
+          await e3inspectionsDatabase?.close();
+        } catch (_) {}
+        e3inspectionsDatabase = null;
+      }
+
+      currentInspectionDatabaseName = newDatabaseName;
 
       /* create or open a database to share between team members to store
-      projects, assets, and user profiles */
+        projects, assets, and user profiles */
       e3inspectionsDatabase = await Database.openAsync(
         currentInspectionDatabaseName,
         dbConfig,
@@ -274,15 +293,11 @@ class DatabaseProvider {
       } catch (_) {
         // ignore if underlying implementation doesn't support custom/file logs
       }
-
-      // Configure file logging if available
       try {
-        if (dbLog.file != null) {
-          dbLog.file.config = LogFileConfiguration(
-            directory: cblLogsDirectory.path,
-            usePlainText: true,
-          );
-        }
+        dbLog.file.config = LogFileConfiguration(
+          directory: cblLogsDirectory.path,
+          usePlainText: true,
+        );
       } catch (_) {}
     } catch (e) {
       debugPrint('Error configuring Couchbase logging: $e');

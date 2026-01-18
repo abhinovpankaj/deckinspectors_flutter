@@ -77,7 +77,6 @@ dependencies:
   device_info_plus: ^11.5.0
   udp: ^5.0.3
   flutter_mjpeg: ^2.0.4
-  flutter_vlc_player: ^7.4.2
   web_socket_channel: ^3.0.1
   tar: ^1.0.4
   screenshot: ^3.0.0

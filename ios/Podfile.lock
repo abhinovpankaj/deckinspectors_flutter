@@ -1,8 +1,16 @@
 PODS:
+  - awesome_notifications (0.9.3):
+    - Flutter
+    - IosAwnCore (~> 0.9.3)
   - camera_avfoundation (0.0.1):
+    - Flutter
+  - cbl_flutter_ce (0.0.1):
     - Flutter
   - connectivity_plus (0.0.1):
     - Flutter
+  - CwlCatchException (2.2.1):
+    - CwlCatchExceptionSupport (~> 2.2.1)
+  - CwlCatchExceptionSupport (2.2.1)
   - device_info_plus (0.0.1):
     - Flutter
   - DKImagePickerController/Core (4.3.9):
@@ -40,20 +48,11 @@ PODS:
     - DKImagePickerController/PhotoGallery
     - Flutter
   - Flutter (1.0.0)
-  - flutter_vlc_player (3.0.3):
-    - Flutter
-    - MobileVLCKit (~> 3.6.1b1)
   - flutter_webrtc (0.12.6):
     - Flutter
     - WebRTC-SDK (= 125.6422.06)
   - gallery_saver_plus (0.0.1):
     - Flutter
-  - geocoding_ios (1.0.5):
-    - Flutter
-    - WebRTC-SDK (= 125.6422.05)
-  - FMDB (2.7.5):
-    - FMDB/standard (= 2.7.5)
-  - FMDB/standard (2.7.5)
   - geocoding_ios (1.0.5):
     - Flutter
   - geolocator_apple (1.2.0):
@@ -72,12 +71,11 @@ PODS:
     - GoogleMaps/Base
   - image_picker_ios (0.0.1):
     - Flutter
-  - IosAwnCore (0.8.0)
+  - IosAwnCore (0.9.3)
   - map_launcher (0.0.1):
     - Flutter
   - maps_launcher (0.0.1):
     - Flutter
-  - MobileVLCKit (3.6.1b1)
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -91,25 +89,24 @@ PODS:
     - Flutter
   - realm (20.0.1):
     - Flutter
-  - SDWebImage (5.21.0):
-    - SDWebImage/Core (= 5.21.0)
-  - SDWebImage/Core (5.21.0)
+  - SDWebImage (5.21.5):
+    - SDWebImage/Core (= 5.21.5)
+  - SDWebImage/Core (5.21.5)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - speech_to_text (0.0.1):
+  - speech_to_text (7.2.0):
+    - CwlCatchException
     - Flutter
     - FlutterMacOS
-    - Try
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
   - SwiftyGif (5.4.5)
   - syncfusion_flutter_pdfviewer (0.0.1):
     - Flutter
-  - Try (2.1.1)
   - url_launcher_ios (0.0.1):
     - Flutter
   - wakelock_plus (0.0.1):
@@ -120,15 +117,17 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - awesome_notifications (from `.symlinks/plugins/awesome_notifications/ios`)
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
+  - cbl_flutter_ce (from `.symlinks/plugins/cbl_flutter_ce/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
-  - flutter_vlc_player (from `.symlinks/plugins/flutter_vlc_player/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
+  - gallery_saver_plus (from `.symlinks/plugins/gallery_saver_plus/ios`)
   - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
-  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
+  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - google_maps_flutter_ios (from `.symlinks/plugins/google_maps_flutter_ios/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - map_launcher (from `.symlinks/plugins/map_launcher/ios`)
@@ -150,19 +149,24 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - CwlCatchException
+    - CwlCatchExceptionSupport
     - DKImagePickerController
     - DKPhotoGallery
     - Google-Maps-iOS-Utils
     - GoogleMaps
-    - MobileVLCKit
+    - IosAwnCore
     - SDWebImage
     - SwiftyGif
-    - Try
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
+  awesome_notifications:
+    :path: ".symlinks/plugins/awesome_notifications/ios"
   camera_avfoundation:
     :path: ".symlinks/plugins/camera_avfoundation/ios"
+  cbl_flutter_ce:
+    :path: ".symlinks/plugins/cbl_flutter_ce/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/ios"
   device_info_plus:
@@ -171,10 +175,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
     :path: Flutter
-  flutter_vlc_player:
-    :path: ".symlinks/plugins/flutter_vlc_player/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
+  gallery_saver_plus:
+    :path: ".symlinks/plugins/gallery_saver_plus/ios"
   geocoding_ios:
     :path: ".symlinks/plugins/geocoding_ios/ios"
   geolocator_apple:
@@ -217,44 +221,45 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: dd002b0330f4981e1bbcb46ae9b62829237459a4
+  awesome_notifications: 66d28ab7174ca2823b04d275cb043e0a4a3eb9cf
+  camera_avfoundation: adb0207d868b2d873e895371d88448399ab78d87
+  cbl_flutter_ce: b5cea5b595e5673db642f46284530594b910cce0
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
+  CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
+  CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
   device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_vlc_player: 68553dec38187c14a7800e6d27a30bf9b25b53bc
-  flutter_webrtc: 4f730f3d58a28b0afdea039c8bf4a0f616a6b20c
-  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
+  flutter_webrtc: 90260f83024b1b96d239a575ea4e3708e79344d1
+  gallery_saver_plus: c4b59c605df1049a02d036ef81d82972b6dfd606
   geocoding_ios: eafacae6ad11a1eb56681f7d11df602a5fd49416
-  geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
-  google_maps_flutter_ios: d1318b4ff711612cab16862d7a87e31a7403d458
-  GoogleMaps: 20d7b12be49a14287f797e88e0e31bc4156aaeb4
-  image_gallery_saver: cb43cc43141711190510e92c460eb1655cd343cb
-  image_picker_ios: 4a8aadfbb6dc30ad5141a2ce3832af9214a705b5
-  IosAwnCore: ed1b2b6d84962a758354dbacd9ce525c72ce28a9
+  geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
+  Google-Maps-iOS-Utils: 66d6de12be1ce6d3742a54661e7a79cb317a9321
+  google_maps_flutter_ios: e31555a04d1986ab130f2b9f24b6cdc861acc6d3
+  GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
+  image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
+  IosAwnCore: b8601fbb37f7b3560f31b84ebf55a72f65812e05
   map_launcher: 5fde49ac9a52672bf99da746599f507b4490d7b5
   maps_launcher: 2e5b6a2d664ec6c27f82ffa81b74228d770ab203
-  MobileVLCKit: 2d9c7c373393ae43086aeeff890bf0b1afc15c5c
   package_info_plus: 115f4ad11e0698c8c1c5d8a689390df880f47e85
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   pdfx: 7b876b09de8b7a0bf444a4f82b439ffcff4ee1ec
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   printing: 233e1b73bd1f4a05615548e9b5a324c98588640b
-  realm: 392673561bd4ca073268575bf3bfe4e0a484dd9a
-  SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
+  realm: 25a0406687dcd07d62d95de727506799eac9a0c4
+  SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
-  speech_to_text: 627d3fd2194770b51abb324ba45c2d39398f24a8
+  speech_to_text: 87bf9298952e8d9073be1b6aade6d5758db5170c
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   syncfusion_flutter_pdfviewer: bb9998884b864cfedf72628df3503bdf57e397c0
-  Try: 5ef669ae832617b3cee58cb2c6f99fb767a4ff96
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
-  wakelock_plus: 8b09852c8876491e4b6d179e17dfe2a0b5f60d47
-  WebRTC-SDK: 1990a1a595bd0b59c17485ce13ff17f575732c12
-  webview_flutter_wkwebview: 2e2d318f21a5e036e2c3f26171342e95908bd60a
+  wakelock_plus: 78ec7c5b202cab7761af8e2b2b3d0671be6c4ae1
+  WebRTC-SDK: 79942c006ea64f6fb48d7da8a4786dfc820bc1db
+  webview_flutter_wkwebview: a4af96a051138e28e29f60101d094683b9f82188
 
 PODFILE CHECKSUM: 1959d098c91d8a792531a723c4a9d7e9f6a01e38
 

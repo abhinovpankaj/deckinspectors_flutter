@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../resources/couchbase/project_repository.dart';
 import 'addedit_project_event.dart';
 import 'addedit_project_state.dart';
+// projects bloc wiring removed — presentation layer will trigger reloads
 
 class AddEditProjectBloc
     extends Bloc<AddEditProjectEvent, AddEditProjectState> {
@@ -94,11 +95,11 @@ class AddEditProjectBloc
         event.isNewProject,
       );
 
-      saveResult
-          ? emit(
-            const AddEditProjectFailure(error: "failed to save the project"),
-          )
-          : emit(AddEditProjectSuccess());
+      if (!saveResult) {
+        emit(const AddEditProjectFailure(error: "failed to save the project"));
+      } else {
+        emit(AddEditProjectSuccess());
+      }
     } catch (e) {
       emit(AddEditProjectFailure(error: e.toString()));
     }

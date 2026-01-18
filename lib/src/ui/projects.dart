@@ -70,7 +70,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
     Navigator.push(
       context,
       AddEditProjectPage.getRoute(getProject(), true, userFullName),
-    ).then((value) => setState(() => {}));
+    ).then((value) {
+      if (value == true) {
+        try {
+          context.read<ProjectsBloc>().add(LoadProjectsEvent());
+        } catch (_) {}
+        setState(() {});
+      }
+    });
   }
 
   void gotoProjectDetails(String projectId, String projName) {

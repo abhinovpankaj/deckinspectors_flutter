@@ -58,6 +58,7 @@ class Project extends CouchbaseDocument {
   String get docType => 'Project';
   @override
   Map<String, dynamic> toDocument() => {
+    'documentType': 'project',
     'type': 'Project',
     'name': name,
     'projecttype': projecttype,

@@ -21,7 +21,13 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     emit(ProjectsLoading());
     try {
       // Fetch all projects from the repository (implement this method as needed)
-      final projects = await projectRepository.fetchAllProjects();
+      final projects = await projectRepository.fetchAssignedProjects();
+      //sort projects by latest createdat date
+      projects.sort((a, b) {
+        final aDate = DateTime.tryParse(a.createdat ?? '') ?? DateTime(1970);
+        final bDate = DateTime.tryParse(b.createdat ?? '') ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
       emit(ProjectsLoaded(projects));
     } catch (e) {
       emit(ProjectsError(e.toString()));
@@ -54,7 +60,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       } catch (_) {}
 
       await projectRepository.createOrUpdateProject(event.project);
-      final projects = await projectRepository.fetchAllProjects();
+      final projects = await projectRepository.fetchAssignedProjects();
       emit(ProjectsLoaded(projects));
     } catch (e) {
       emit(ProjectsError(e.toString()));
@@ -88,7 +94,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     emit(ProjectsLoading());
     try {
       await projectRepository.deleteProject(event.projectId);
-      final projects = await projectRepository.fetchAllProjects();
+      final projects = await projectRepository.fetchAssignedProjects();
       emit(ProjectsLoaded(projects));
     } catch (e) {
       emit(ProjectsError(e.toString()));
