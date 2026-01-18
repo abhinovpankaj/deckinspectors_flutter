@@ -13,19 +13,36 @@ class ProjectRepository {
     try {
       final loggedInUser = usersBloc.userDetails.username;
       final query = QueryBuilder.createAsync()
-          .select(SelectResult.all())
-          .from(DataSource.collection(_databaseProvider.projectCollection)
-              .as('Project'))
-          .where(Expression.property(attributeDocumentType)
-              .equalTo(Expression.string(projectDocumentType))
-              .and(ArrayFunction.contains(Expression.property('assignedto'),
-                  value: Expression.string(loggedInUser))));
+          .select(
+            SelectResult.expression(Meta.id).as('docId'),
+            SelectResult.all(),
+          )
+          .from(
+            DataSource.collection(
+              _databaseProvider.projectCollection,
+            ).as('Project'),
+          )
+          .where(
+            Expression.property(attributeDocumentType)
+                .equalTo(Expression.string(projectDocumentType))
+                .and(
+                  ArrayFunction.contains(
+                    Expression.property('assignedto'),
+                    value: Expression.string(loggedInUser),
+                  ),
+                ),
+          );
+
       final result = await query.execute();
       final results = await result.allResults();
-      return results
-          .map((result) =>
-              Project.fromDocument(result.dictionary('Project')!.toPlainMap()))
-          .toList();
+
+      return results.map((row) {
+        final map = row.dictionary('Project')!.toPlainMap();
+        final project = Project.fromDocument(map);
+        final id = row.string('docId');
+        if (id != null && id.isNotEmpty) project.id = id;
+        return project;
+      }).toList();
     } catch (e) {
       debugPrint('Error fetching assigned projects: $e');
       return [];
@@ -45,15 +62,24 @@ class ProjectRepository {
     try {
       final query = QueryBuilder.createAsync()
           .select(SelectResult.all())
-          .from(DataSource.collection(_databaseProvider.projectCollection)
-              .as('Project'))
-          .where(Expression.property(attributeDocumentType)
-              .equalTo(Expression.string(projectDocumentType)));
+          .from(
+            DataSource.collection(
+              _databaseProvider.projectCollection,
+            ).as('Project'),
+          )
+          .where(
+            Expression.property(
+              attributeDocumentType,
+            ).equalTo(Expression.string(projectDocumentType)),
+          );
       final result = await query.execute();
       final results = await result.allResults();
       return results
-          .map((result) =>
-              Project.fromDocument(result.dictionary('Project')!.toPlainMap()))
+          .map(
+            (result) => Project.fromDocument(
+              result.dictionary('Project')!.toPlainMap(),
+            ),
+          )
           .toList();
     } catch (e) {
       debugPrint('Error fetching all projects: $e');
@@ -66,7 +92,7 @@ class ProjectRepository {
     try {
       final doc = await _databaseProvider.projectCollection.document(projectId);
       if (doc == null) return null;
-      final model = Project.fromDocument(doc.toPlainMap());
+      final model = Project.fromDocument(doc.toPlainMap(), id: doc.id);
       return model;
     } catch (e) {
       debugPrint('Error fetching project by id: $e');
@@ -175,22 +201,25 @@ class ProjectRepository {
     String description,
   ) async {
     try {
-      final parentDoc =
-          await _databaseProvider.projectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.projectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final project = Project.fromDocument(parentDoc.toPlainMap());
 
       project.isInvasive = isInvasive;
       final found = project.children.where((c) => c.id == childId);
       if (found.isEmpty) {
-        project.children.add(Child(
-          id: childId,
-          name: name,
-          type: type,
-          description: description,
-          url: '',
-          isInvasive: isInvasive,
-        ));
+        project.children.add(
+          Child(
+            id: childId,
+            name: name,
+            type: type,
+            description: description,
+            url: '',
+            isInvasive: isInvasive,
+          ),
+        );
       } else {
         final foundChild = found.first;
         foundChild.name = name;
@@ -208,8 +237,9 @@ class ProjectRepository {
   /// Remove a child from a parent project
   Future<void> deleteProjectChildren(String childId, String parentId) async {
     try {
-      final parentDoc =
-          await _databaseProvider.projectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.projectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final project = Project.fromDocument(parentDoc.toPlainMap());
       project.children.removeWhere((c) => c.id == childId);
@@ -223,10 +253,14 @@ class ProjectRepository {
 
   /// Update a child's url inside a project
   Future<void> updateChildUrl(
-      String childId, String parentId, String url) async {
+    String childId,
+    String parentId,
+    String url,
+  ) async {
     try {
-      final parentDoc =
-          await _databaseProvider.projectCollection.document(parentId);
+      final parentDoc = await _databaseProvider.projectCollection.document(
+        parentId,
+      );
       if (parentDoc == null) return;
       final project = Project.fromDocument(parentDoc.toPlainMap());
 
@@ -257,7 +291,9 @@ class ProjectRepository {
 
   /// Update assignment list for a project
   Future<bool> updateAssignment(
-      String projectId, List<String> assignees) async {
+    String projectId,
+    List<String> assignees,
+  ) async {
     try {
       final doc = await _databaseProvider.projectCollection.document(projectId);
       if (doc == null) return false;

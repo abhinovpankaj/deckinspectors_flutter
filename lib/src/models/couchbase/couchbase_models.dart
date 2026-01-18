@@ -80,8 +80,8 @@ class Project extends CouchbaseDocument {
     'formId': formId,
   };
 
-  factory Project.fromDocument(Map<String, dynamic> doc) {
-    return Project(
+  factory Project.fromDocument(Map<String, dynamic> doc, {String? id}) {
+    final project = Project(
       name: doc['name'],
       projecttype: doc['projecttype'],
       description: doc['description'],
@@ -109,6 +109,8 @@ class Project extends CouchbaseDocument {
       formId: doc['formId'],
       isInvasive: doc['isInvasive'] ?? false,
     );
+    if (id != null) project.id = id;
+    return project;
   }
 
   // no id on model level; repositories supply document ids
