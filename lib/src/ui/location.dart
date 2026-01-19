@@ -38,7 +38,15 @@ class LocationPage extends StatefulWidget {
     builder:
         (context) => RepositoryProvider<LocationRepository>.value(
           value: locationRepository,
-          child: LocationPage(id, parentType, locationType, userName),
+          child: BlocProvider(
+            create:
+                (context) => LocationBloc(
+                  locationRepository: RepositoryProvider.of<LocationRepository>(
+                    context,
+                  ),
+                )..add(LoadLocationEvent(id)),
+            child: LocationPage(id, parentType, locationType, userName),
+          ),
         ),
   );
 }
@@ -62,73 +70,63 @@ class _LocationPageState extends State<LocationPage> {
   String? formId;
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => LocationBloc(
-            locationRepository: RepositoryProvider.of<LocationRepository>(
-              context,
-            ),
-          )..add(LoadLocationEvent(locationId)),
-      child: BlocBuilder<LocationBloc, LocationState>(
-        builder: (context, state) {
-          if (state is LocationLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          if (state is LocationLoaded) {
-            currentLocation = state.location;
-            formId = currentLocation.parentid;
-            return Scaffold(
-              appBar: AppBar(
-                automaticallyImplyLeading: false,
-                leadingWidth: 120,
-                leading: ElevatedButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-                  label: const Text(
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    'Back',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: Colors.transparent,
-                  ),
-                ),
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.blue,
-                elevation: 0,
-                title: Text(
-                  locationType,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-              body: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    locationDetails(currentLocation),
-                    locationsWidget(context),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (state is LocationError) {
-            return Scaffold(body: Center(child: Text(state.message)));
-          }
-
+    return BlocBuilder<LocationBloc, LocationState>(
+      builder: (context, state) {
+        if (state is LocationLoading) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
-        },
-      ),
+        }
+
+        if (state is LocationLoaded) {
+          currentLocation = state.location;
+          formId = currentLocation.parentid;
+          return Scaffold(
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              leadingWidth: 120,
+              leading: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+                label: const Text(
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  'Back',
+                  style: TextStyle(color: Colors.blue),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Colors.transparent,
+                ),
+              ),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue,
+              elevation: 0,
+              title: Text(
+                locationType,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  locationDetails(currentLocation),
+                  locationsWidget(context),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (state is LocationError) {
+          return Scaffold(body: Center(child: Text(state.message)));
+        }
+
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     );
   }
 
@@ -667,7 +665,12 @@ class _LocationPageState extends State<LocationPage> {
       if (value == true) {
         try {
           context.read<LocationBloc>().add(LoadLocationEvent(locationId));
-        } catch (_) {}
+        } catch (exception) {
+          debugPrint(
+            'Error reloading location after edit.'
+            '$exception',
+          );
+        }
       }
     });
   }
