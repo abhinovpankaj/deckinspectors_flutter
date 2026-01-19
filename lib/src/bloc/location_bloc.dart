@@ -9,10 +9,14 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
   LocationBloc({required this.locationRepository}) : super(LocationInitial()) {
     on<LoadLocationEvent>(_onLoadLocation);
     on<RefreshLocationEvent>(_onRefreshLocation);
+    on<SaveLocationEvent>(_onSaveLocation);
+    on<DeleteLocationEvent>(_onDeleteLocation);
   }
 
   Future<void> _onLoadLocation(
-      LoadLocationEvent event, Emitter<LocationState> emit) async {
+    LoadLocationEvent event,
+    Emitter<LocationState> emit,
+  ) async {
     emit(LocationLoading());
     try {
       final loc = await locationRepository.fetchLocationById(event.locationId);
@@ -27,7 +31,48 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
   }
 
   Future<void> _onRefreshLocation(
-      RefreshLocationEvent event, Emitter<LocationState> emit) async {
+    RefreshLocationEvent event,
+    Emitter<LocationState> emit,
+  ) async {
     add(LoadLocationEvent(event.locationId));
+  }
+
+  Future<void> _onSaveLocation(
+    SaveLocationEvent event,
+    Emitter<LocationState> emit,
+  ) async {
+    emit(LocationSaving());
+    try {
+      final ok = await locationRepository.addupdateLocation(
+        event.location,
+        event.name,
+        event.description,
+        event.fullUserName,
+        event.isNew,
+      );
+      if (ok) {
+        emit(LocationSaveSuccess());
+      } else {
+        emit(const LocationSaveFailure('Failed to save location'));
+      }
+    } catch (e) {
+      emit(LocationSaveFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteLocation(
+    DeleteLocationEvent event,
+    Emitter<LocationState> emit,
+  ) async {
+    try {
+      final res = await locationRepository.deleteLocation(event.location);
+      if (res == 'success') {
+        emit(LocationDeleteSuccess());
+      } else {
+        emit(const LocationDeleteFailure('Failed to delete location'));
+      }
+    } catch (e) {
+      emit(LocationDeleteFailure(e.toString()));
+    }
   }
 }

@@ -120,7 +120,12 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
         currentBuilding.name as String,
         subprojectRepository: subprojectRepo,
       ),
-    ).then((value) => setState(() {}));
+    ).then((value) {
+      if (value == true) {
+        context.read<SubProjectBloc>().add(LoadSubProjectEvent(widget.id));
+      }
+      setState(() {});
+    });
   }
 
   void addNewChild(String name) {

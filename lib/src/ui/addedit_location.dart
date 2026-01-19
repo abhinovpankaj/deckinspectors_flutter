@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/locations_bloc.dart';
-import '../bloc/locations_event.dart';
-import '../bloc/locations_state.dart';
+import '../bloc/location_bloc.dart';
+import '../bloc/location_event.dart';
+import '../bloc/location_state.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/location_repository.dart';
 import 'cachedimage_widget.dart';
@@ -40,8 +40,7 @@ class AddEditLocationPage extends StatefulWidget {
         return RepositoryProvider<LocationRepository>.value(
           value: locationRepository,
           child: BlocProvider(
-            create:
-                (_) => LocationsBloc(locationRepository: locationRepository),
+            create: (_) => LocationBloc(locationRepository: locationRepository),
             child: AddEditLocationPage(location, isNew, userName, prevPage),
           ),
         );
@@ -113,7 +112,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
       currentLocation.name = name;
       currentLocation.description = description;
 
-      context.read<LocationsBloc>().add(
+      context.read<LocationBloc>().add(
         SaveLocationEvent(
           location: currentLocation,
           name: name,
@@ -127,7 +126,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LocationsBloc, LocationsState>(
+    return BlocListener<LocationBloc, LocationState>(
       listener: (context, state) {
         if (state is LocationSaveSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -149,7 +148,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
               ),
             );
           } else {
-              Navigator.pop(context, true);
+            Navigator.pop(context, true);
           }
         } else if (state is LocationSaveFailure) {
           ScaffoldMessenger.of(
@@ -319,7 +318,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                           elevation: 0,
                         ),
                         onPressed: () {
-                          context.read<LocationsBloc>().add(
+                          context.read<LocationBloc>().add(
                             DeleteLocationEvent(currentLocation),
                           );
                         },
@@ -384,5 +383,5 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
     );
   }
 
-  // deleteLocation logic is now handled by LocationsBloc and BlocListener
+  // deleteLocation logic is now handled by LocationBloc and BlocListener
 }

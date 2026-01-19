@@ -666,7 +666,7 @@ class _LocationPageState extends State<LocationPage> {
     ).then((value) {
       if (value == true) {
         try {
-          context.read<LocationBloc>().add(RefreshLocationEvent(locationId));
+          context.read<LocationBloc>().add(LoadLocationEvent(locationId));
         } catch (_) {}
       }
     });

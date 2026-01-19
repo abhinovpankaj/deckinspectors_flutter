@@ -73,6 +73,8 @@ class ProjectDetailsPage extends StatefulWidget {
             create:
                 (_) => ProjectDetailsBloc(
                   projectRepository: projectRepository,
+                  subprojectRepository: subprojectRepository,
+                  locationRepository: locationRepository,
                   globalRepository: globalRepository,
                 )..add(LoadProjectDetails(id)),
             child: ProjectDetailsPage(

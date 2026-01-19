@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +45,9 @@ class LocationRepository {
     try {
       final doc = await _databaseProvider.locationCollection.document(id);
       if (doc == null) return null;
-      return Location.fromDocument(doc.toPlainMap());
+      final model = Location.fromDocument(doc.toPlainMap());
+      model.id = doc.id;
+      return model;
     } catch (e) {
       debugPrint('Error fetching location by id: $e');
       return null;
@@ -420,5 +424,21 @@ class LocationRepository {
     } catch (e) {
       debugPrint(e.toString());
     }
+  }
+
+  /// Stream of document IDs that have changed in the location collection
+  Future<Stream<String>> watchLocationCollectionDocumentIds() async {
+    final controller = StreamController<String>.broadcast();
+    final listenerToken = await _databaseProvider.locationCollection
+        .addChangeListener((change) {
+          for (final docId in change.documentIds) {
+            controller.add(docId);
+          }
+        });
+    controller.onCancel = () {
+      _databaseProvider.locationCollection.removeChangeListener(listenerToken);
+      controller.close();
+    };
+    return controller.stream;
   }
 }

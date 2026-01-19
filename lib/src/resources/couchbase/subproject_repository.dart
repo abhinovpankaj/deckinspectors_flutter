@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
 
@@ -244,5 +246,23 @@ class SubprojectRepository {
       debugPrint('Error adding/updating subproject: $e');
       return false;
     }
+  }
+
+  /// Stream of document IDs that have changed in the subproject collection
+  Future<Stream<String>> watchSubprojectCollectionDocumentIds() async {
+    final controller = StreamController<String>.broadcast();
+    final listenerToken = await _databaseProvider.subProjectCollection
+        .addChangeListener((change) {
+          for (final docId in change.documentIds) {
+            controller.add(docId);
+          }
+        });
+    controller.onCancel = () {
+      _databaseProvider.subProjectCollection.removeChangeListener(
+        listenerToken,
+      );
+      controller.close();
+    };
+    return controller.stream;
   }
 }

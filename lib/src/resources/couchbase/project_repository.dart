@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
 
@@ -58,7 +60,8 @@ class ProjectRepository {
   final String auditDocumentType = 'audit';
   final String attributeDocumentType = 'documentType';
   //add a method to fetch all projects
-  Future<List<Project>> fetchAllProjects() async {
+  //Future<List<Project>> fetchAllProjects() async {
+  Future<AsyncListenStream<QueryChange<ResultSet>>?>? fetchAllProjects() async {
     try {
       final query = QueryBuilder.createAsync()
           .select(SelectResult.all())
@@ -72,19 +75,20 @@ class ProjectRepository {
               attributeDocumentType,
             ).equalTo(Expression.string(projectDocumentType)),
           );
-      final result = await query.execute();
-      final results = await result.allResults();
-      return results
-          .map(
-            (result) => Project.fromDocument(
-              result.dictionary('Project')!.toPlainMap(),
-            ),
-          )
-          .toList();
+      // final result = await query.execute();
+      // final results = await result.allResults();
+      // return results
+      //     .map(
+      //       (result) => Project.fromDocument(
+      //         result.dictionary('Project')!.toPlainMap(),
+      //       ),
+      //     )
+      //     .toList();
+      return query.changes();
     } catch (e) {
       debugPrint('Error fetching all projects: $e');
-      return [];
     }
+    return null;
   }
 
   /// Fetch a single project by its ID
@@ -101,7 +105,6 @@ class ProjectRepository {
     }
   }
 
-  /// Update a project (simple wrapper for createOrUpdateProject)
   Future<bool> updateProject(Project project) async {
     try {
       await createOrUpdateProject(project);
@@ -240,12 +243,7 @@ class ProjectRepository {
       debugPrint('Project $parentId children now: ${project.children.length}');
       // verify saved document contents
       try {
-        final saved = await _databaseProvider.projectCollection.document(
-          parentId,
-        );
-        debugPrint(
-          'Saved doc children after save: ${saved?.toPlainMap()['children']}',
-        );
+        await _databaseProvider.projectCollection.document(parentId);
       } catch (e) {
         debugPrint('Error reading saved doc after save: $e');
       }
@@ -332,5 +330,21 @@ class ProjectRepository {
       debugPrint('Error updating assignment: $e');
       return false;
     }
+  }
+
+  /// Stream of document IDs that have changed in the project collection
+  Future<Stream<String>> watchProjectCollectionDocumentIds() async {
+    final controller = StreamController<String>.broadcast();
+    final listenerToken = await _databaseProvider.projectCollection
+        .addChangeListener((change) {
+          for (final docId in change.documentIds) {
+            controller.add(docId);
+          }
+        });
+    controller.onCancel = () {
+      _databaseProvider.projectCollection.removeChangeListener(listenerToken);
+      controller.close();
+    };
+    return controller.stream;
   }
 }

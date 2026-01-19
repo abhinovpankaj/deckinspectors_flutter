@@ -90,7 +90,7 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Building saved successfully.')),
           );
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
         } else if (state is SubProjectFailure) {
           ScaffoldMessenger.of(
             context,
