@@ -6,6 +6,9 @@ import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/project_repository.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
+import '../resources/couchbase/subproject_repository.dart';
+import '../resources/couchbase/location_repository.dart';
+import '../bloc/settings_bloc.dart';
 import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
 import '../bloc/projects_state.dart';
@@ -23,12 +26,41 @@ class ProjectsPage extends StatefulWidget {
       final dbProvider = DatabaseProvider();
       final imageRepo = ImageRepository(dbProvider);
       final projectRepository = ProjectRepository(dbProvider, imageRepo);
-      return BlocProvider(
-        create:
-            (_) =>
-                ProjectsBloc(projectRepository: projectRepository)
-                  ..add(LoadProjectsEvent()),
-        child: const ProjectsPage(),
+      final subprojectRepository = SubprojectRepository(
+        dbProvider,
+        projectRepository,
+        imageRepo,
+        usersBloc,
+        appSettings,
+      );
+      final locationRepository = LocationRepository(
+        dbProvider,
+        projectRepository,
+        subprojectRepository,
+        imageRepo,
+        usersBloc,
+        appSettings,
+      );
+      final globalRepository = Repository();
+      return MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<ProjectRepository>.value(value: projectRepository),
+          RepositoryProvider<SubprojectRepository>.value(
+            value: subprojectRepository,
+          ),
+          RepositoryProvider<LocationRepository>.value(
+            value: locationRepository,
+          ),
+          RepositoryProvider<ImageRepository>.value(value: imageRepo),
+          RepositoryProvider<Repository>.value(value: globalRepository),
+        ],
+        child: BlocProvider(
+          create:
+              (_) =>
+                  ProjectsBloc(projectRepository: projectRepository)
+                    ..add(LoadProjectsEvent()),
+          child: const ProjectsPage(),
+        ),
       );
     },
   );
@@ -85,6 +117,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     //setState(() {});
     final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
     final globalRepo = RepositoryProvider.of<Repository>(context);
+    final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
       ProjectDetailsPage.getRoute(
@@ -94,6 +128,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
         projName,
         projectRepository: projectRepo,
         globalRepository: globalRepo,
+        subprojectRepository: subprojectRepo,
+        locationRepository: locationRepo,
       ),
     ).then((value) {
       try {
@@ -106,6 +142,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void gotoInvasiveProjectDetails(String projectId, String projName) {
     final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
     final globalRepo = RepositoryProvider.of<Repository>(context);
+    final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
       ProjectDetailsPage.getRoute(
@@ -115,6 +153,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
         projName,
         projectRepository: projectRepo,
         globalRepository: globalRepo,
+        subprojectRepository: subprojectRepo,
+        locationRepository: locationRepo,
       ),
     ).then((value) {
       try {

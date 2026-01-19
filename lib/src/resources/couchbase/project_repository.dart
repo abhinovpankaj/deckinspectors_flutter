@@ -92,6 +92,7 @@ class ProjectRepository {
     try {
       final doc = await _databaseProvider.projectCollection.document(projectId);
       if (doc == null) return null;
+
       final model = Project.fromDocument(doc.toPlainMap(), id: doc.id);
       return model;
     } catch (e) {
@@ -201,11 +202,18 @@ class ProjectRepository {
     String description,
   ) async {
     try {
+      debugPrint(
+        'updateProjectChildren called childId=$childId parentId=$parentId',
+      );
       final parentDoc = await _databaseProvider.projectCollection.document(
         parentId,
       );
       if (parentDoc == null) return;
-      final project = Project.fromDocument(parentDoc.toPlainMap());
+      final project = Project.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
+      debugPrint('Existing children count: ${project.children.length}');
 
       project.isInvasive = isInvasive;
       final found = project.children.where((c) => c.id == childId);
@@ -220,6 +228,7 @@ class ProjectRepository {
             isInvasive: isInvasive,
           ),
         );
+        debugPrint('Added child $childId to project $parentId');
       } else {
         final foundChild = found.first;
         foundChild.name = name;
@@ -228,6 +237,18 @@ class ProjectRepository {
       }
 
       await createOrUpdateProject(project);
+      debugPrint('Project $parentId children now: ${project.children.length}');
+      // verify saved document contents
+      try {
+        final saved = await _databaseProvider.projectCollection.document(
+          parentId,
+        );
+        debugPrint(
+          'Saved doc children after save: ${saved?.toPlainMap()['children']}',
+        );
+      } catch (e) {
+        debugPrint('Error reading saved doc after save: $e');
+      }
       //notifyListeners();
     } catch (e) {
       debugPrint('Error updating project children: $e');
@@ -241,7 +262,10 @@ class ProjectRepository {
         parentId,
       );
       if (parentDoc == null) return;
-      final project = Project.fromDocument(parentDoc.toPlainMap());
+      final project = Project.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
       project.children.removeWhere((c) => c.id == childId);
 
       await createOrUpdateProject(project);
@@ -262,7 +286,10 @@ class ProjectRepository {
         parentId,
       );
       if (parentDoc == null) return;
-      final project = Project.fromDocument(parentDoc.toPlainMap());
+      final project = Project.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
 
       final found = project.children.where((c) => c.id == childId);
       if (found.isNotEmpty) {

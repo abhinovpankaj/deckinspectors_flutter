@@ -18,12 +18,13 @@ class LocationRepository {
   final AppSettings _appSettings;
 
   LocationRepository(
-      this._databaseProvider,
-      this._projectRepository,
-      this._subprojectRepository,
-      this._imageRepository,
-      this._usersBloc,
-      this._appSettings);
+    this._databaseProvider,
+    this._projectRepository,
+    this._subprojectRepository,
+    this._imageRepository,
+    this._usersBloc,
+    this._appSettings,
+  );
   final String locationDocumentType = 'location';
   final String attributeDocumentType = 'documentType';
 
@@ -50,16 +51,22 @@ class LocationRepository {
   }
 
   Future<void> updateImageUploadStatus(
-      Location parentLocation, String sectionId, bool status) async {
-    var found = parentLocation.sections
-        .where((element) => element.id == sectionId)
-        .toList();
+    Location parentLocation,
+    String sectionId,
+    bool status,
+  ) async {
+    var found =
+        parentLocation.sections
+            .where((element) => element.id == sectionId)
+            .toList();
     if (found.isNotEmpty) {
       found.first.isuploading = status;
       try {
         // Update the parentLocation's sections list
         final doc = MutableDocument.withId(
-            parentLocation.id as String, parentLocation.toDocument());
+          parentLocation.id as String,
+          parentLocation.toDocument(),
+        );
         await _databaseProvider.locationCollection.saveDocument(doc);
       } catch (e) {
         debugPrint('Error updating image upload status in Couchbase Lite: $e');
@@ -86,15 +93,23 @@ class LocationRepository {
 
       if (currentLocation.parenttype == 'project') {
         await _projectRepository.updateChildUrl(
-            currentLocation.id as String, currentLocation.parentid, url);
+          currentLocation.id as String,
+          currentLocation.parentid,
+          url,
+        );
       } else {
         await _subprojectRepository.updateChildUrl(
-            currentLocation.id as String, currentLocation.parentid, url);
+          currentLocation.id as String,
+          currentLocation.parentid,
+          url,
+        );
       }
 
       currentLocation.url = url;
       final doc = MutableDocument.withId(
-          currentLocation.id as String, currentLocation.toDocument());
+        currentLocation.id as String,
+        currentLocation.toDocument(),
+      );
       await _databaseProvider.locationCollection.saveDocument(doc);
       return true;
     } catch (e) {
@@ -107,14 +122,19 @@ class LocationRepository {
     try {
       if (location.parenttype == 'project') {
         await _projectRepository.deleteProjectChildren(
-            location.id as String, location.parentid);
+          location.id as String,
+          location.parentid,
+        );
       } else {
         await _projectRepository.deleteProjectChildren(
-            location.id as String, location.parentid);
+          location.id as String,
+          location.parentid,
+        );
       }
 
-      final doc = await _databaseProvider.locationCollection
-          .document(location.id as String);
+      final doc = await _databaseProvider.locationCollection.document(
+        location.id as String,
+      );
       if (doc != null) {
         await _databaseProvider.locationCollection.deleteDocument(doc);
       }
@@ -144,6 +164,9 @@ class LocationRepository {
       }
       location.createdat ??= creationtime;
       location.editedat = DateTime.now().toString();
+      // ensure id exists before updating parent or saving
+      final id = location.id ?? CouchbaseDocument.generateId();
+      location.id = id;
 
       if (location.parenttype == 'project') {
         await _projectRepository.updateProjectChildren(
@@ -165,8 +188,10 @@ class LocationRepository {
         );
       }
 
-      final doc =
-          MutableDocument.withId(location.id as String, location.toDocument());
+      final doc = MutableDocument.withId(
+        location.id as String,
+        location.toDocument(),
+      );
       await _databaseProvider.locationCollection.saveDocument(doc);
       return true;
     } catch (e) {
@@ -194,16 +219,18 @@ class LocationRepository {
         final parentProject = Project.fromDocument(doc.toPlainMap());
         var found = parentProject.sections.where((element) => element.id == id);
         if (found.isEmpty) {
-          parentProject.sections.add(Section(
-            sectionId: id,
-            isInvasive: furtherinvasivereviewrequired,
-            name: name,
-            visualreview: visualreview,
-            visualsignsofleak: visualsignsofleak,
-            furtherinvasivereviewrequired: furtherinvasivereviewrequired,
-            conditionalassessment: conditionalassessment,
-            count: length,
-          ));
+          parentProject.sections.add(
+            Section(
+              sectionId: id,
+              isInvasive: furtherinvasivereviewrequired,
+              name: name,
+              visualreview: visualreview,
+              visualsignsofleak: visualsignsofleak,
+              furtherinvasivereviewrequired: furtherinvasivereviewrequired,
+              conditionalassessment: conditionalassessment,
+              count: length,
+            ),
+          );
         } else {
           var foundChild = found.first;
           foundChild.name = name;
@@ -216,27 +243,33 @@ class LocationRepository {
           foundChild.isInvasive = furtherinvasivereviewrequired;
         }
         final updatedDoc = MutableDocument.withId(
-            parentProject.id as String, parentProject.toDocument());
+          parentProject.id as String,
+          parentProject.toDocument(),
+        );
         await _databaseProvider.projectCollection.saveDocument(updatedDoc);
       }
     } else {
-      var location =
-          await _databaseProvider.locationCollection.document(parentid);
+      var location = await _databaseProvider.locationCollection.document(
+        parentid,
+      );
       if (location != null) {
         final parentLocation = Location.fromDocument(location.toPlainMap());
-        var found =
-            parentLocation.sections.where((element) => element.id == id);
+        var found = parentLocation.sections.where(
+          (element) => element.id == id,
+        );
         if (found.isEmpty) {
-          parentLocation.sections.add(Section(
-            sectionId: id,
-            isInvasive: furtherinvasivereviewrequired,
-            name: name,
-            visualreview: visualreview,
-            visualsignsofleak: visualsignsofleak,
-            furtherinvasivereviewrequired: furtherinvasivereviewrequired,
-            conditionalassessment: conditionalassessment,
-            count: length,
-          ));
+          parentLocation.sections.add(
+            Section(
+              sectionId: id,
+              isInvasive: furtherinvasivereviewrequired,
+              name: name,
+              visualreview: visualreview,
+              visualsignsofleak: visualsignsofleak,
+              furtherinvasivereviewrequired: furtherinvasivereviewrequired,
+              conditionalassessment: conditionalassessment,
+              count: length,
+            ),
+          );
         } else {
           var foundChild = found.first;
           foundChild.name = name;
@@ -249,79 +282,107 @@ class LocationRepository {
           foundChild.isInvasive = furtherinvasivereviewrequired;
         }
         //set invasive property of location.
-        parentLocation.isInvasive = parentLocation.sections
-            .any((element) => element.furtherinvasivereviewrequired == true);
+        parentLocation.isInvasive = parentLocation.sections.any(
+          (element) => element.furtherinvasivereviewrequired == true,
+        );
         //update parents
         if (parentLocation.parenttype == 'project') {
-          var projDoc = await _databaseProvider.projectCollection
-              .document(parentLocation.parentid);
+          var projDoc = await _databaseProvider.projectCollection.document(
+            parentLocation.parentid,
+          );
           if (projDoc != null) {
             final parentProject = Project.fromDocument(projDoc.toPlainMap());
-            var childLocation = parentProject.children
-                .where((element) => element.id == parentLocation.id);
+            var childLocation = parentProject.children.where(
+              (element) => element.id == parentLocation.id,
+            );
             if (childLocation.isNotEmpty) {
               childLocation.first.isInvasive = parentLocation.isInvasive;
-              parentProject.isInvasive = parentProject.children
-                  .any((element) => element.isInvasive == true);
+              parentProject.isInvasive = parentProject.children.any(
+                (element) => element.isInvasive == true,
+              );
               final updatedDoc = MutableDocument.withId(
-                  parentProject.id as String, parentProject.toDocument());
-              await _databaseProvider.projectCollection
-                  .saveDocument(updatedDoc);
+                parentProject.id as String,
+                parentProject.toDocument(),
+              );
+              await _databaseProvider.projectCollection.saveDocument(
+                updatedDoc,
+              );
             }
           }
         }
         if (parentLocation.parenttype == 'subproject') {
-          var subDoc = await _databaseProvider.subProjectCollection
-              .document(parentLocation.parentid);
+          var subDoc = await _databaseProvider.subProjectCollection.document(
+            parentLocation.parentid,
+          );
           if (subDoc != null) {
-            final parentSubProject =
-                SubProject.fromDocument(subDoc.toPlainMap());
-            var childLocation = parentSubProject.children
-                .where((element) => element.id == parentLocation.id);
+            final parentSubProject = SubProject.fromDocument(
+              subDoc.toPlainMap(),
+            );
+            var childLocation = parentSubProject.children.where(
+              (element) => element.id == parentLocation.id,
+            );
             if (childLocation.isNotEmpty) {
               childLocation.first.isInvasive = parentLocation.isInvasive;
-              parentSubProject.isInvasive = parentSubProject.children
-                  .any((element) => element.isInvasive == true);
+              parentSubProject.isInvasive = parentSubProject.children.any(
+                (element) => element.isInvasive == true,
+              );
               final updatedSubDoc = MutableDocument.withId(
-                  parentSubProject.id as String, parentSubProject.toDocument());
-              await _databaseProvider.subProjectCollection
-                  .saveDocument(updatedSubDoc);
+                parentSubProject.id as String,
+                parentSubProject.toDocument(),
+              );
+              await _databaseProvider.subProjectCollection.saveDocument(
+                updatedSubDoc,
+              );
             }
             // update parent project
-            var projDoc = await _databaseProvider.projectCollection
-                .document(parentSubProject.parentid);
+            var projDoc = await _databaseProvider.projectCollection.document(
+              parentSubProject.parentid,
+            );
             if (projDoc != null) {
               final parentProject = Project.fromDocument(projDoc.toPlainMap());
-              var childLocation = parentProject.children
-                  .where((element) => element.id == parentSubProject.id);
+              var childLocation = parentProject.children.where(
+                (element) => element.id == parentSubProject.id,
+              );
               if (childLocation.isNotEmpty) {
                 childLocation.first.isInvasive = parentSubProject.isInvasive;
-                parentProject.isInvasive = parentProject.children
-                    .any((element) => element.isInvasive == true);
+                parentProject.isInvasive = parentProject.children.any(
+                  (element) => element.isInvasive == true,
+                );
                 final updatedDoc = MutableDocument.withId(
-                    parentProject.id as String, parentProject.toDocument());
-                await _databaseProvider.projectCollection
-                    .saveDocument(updatedDoc);
+                  parentProject.id as String,
+                  parentProject.toDocument(),
+                );
+                await _databaseProvider.projectCollection.saveDocument(
+                  updatedDoc,
+                );
               }
             }
           }
         }
         final updatedLocDoc = MutableDocument.withId(
-            parentLocation.id as String, parentLocation.toDocument());
+          parentLocation.id as String,
+          parentLocation.toDocument(),
+        );
         await _databaseProvider.locationCollection.saveDocument(updatedLocDoc);
       }
     }
   }
 
-  Future<void> updateImageCount(String parentType, String id, String parentid,
-      int length, String url) async {
+  Future<void> updateImageCount(
+    String parentType,
+    String id,
+    String parentid,
+    int length,
+    String url,
+  ) async {
     try {
       if (parentType == 'project') {
         var doc = await _databaseProvider.projectCollection.document(parentid);
         if (doc != null) {
           final parentProject = Project.fromDocument(doc.toPlainMap());
-          var found =
-              parentProject.sections.where((element) => element.id == id);
+          var found = parentProject.sections.where(
+            (element) => element.id == id,
+          );
           if (found.isNotEmpty) {
             var foundChild = found.first;
             foundChild.count = length;
@@ -329,7 +390,9 @@ class LocationRepository {
               foundChild.coverUrl = url;
             }
             final updatedDoc = MutableDocument.withId(
-                parentProject.id as String, parentProject.toDocument());
+              parentProject.id as String,
+              parentProject.toDocument(),
+            );
             await _databaseProvider.projectCollection.saveDocument(updatedDoc);
           }
         }
@@ -337,8 +400,9 @@ class LocationRepository {
         var doc = await _databaseProvider.locationCollection.document(parentid);
         if (doc != null) {
           final parentLocation = Location.fromDocument(doc.toPlainMap());
-          var found =
-              parentLocation.sections.where((element) => element.id == id);
+          var found = parentLocation.sections.where(
+            (element) => element.id == id,
+          );
           if (found.isNotEmpty) {
             var foundChild = found.first;
             foundChild.count = length;
@@ -346,7 +410,9 @@ class LocationRepository {
               foundChild.coverUrl = url;
             }
             final updatedDoc = MutableDocument.withId(
-                parentLocation.id as String, parentLocation.toDocument());
+              parentLocation.id as String,
+              parentLocation.toDocument(),
+            );
             await _databaseProvider.locationCollection.saveDocument(updatedDoc);
           }
         }

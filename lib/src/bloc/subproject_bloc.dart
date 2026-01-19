@@ -47,14 +47,14 @@ class SubProjectBloc extends Bloc<SubProjectEvent, SubProjectState> {
         event.fullUserName,
       );
       if (ok) {
-        final reloaded = await subprojectRepository.getSubProject(
-          event.subProject.id ?? '',
-        );
-        if (reloaded != null) {
-          emit(SubProjectLoaded(reloaded));
-        } else {
-          emit(SubProjectSuccess());
-        }
+        // final reloaded = await subprojectRepository.getSubProject(
+        //   event.subProject.id ?? '',
+        // );
+        // if (reloaded != null) {
+        //   emit(SubProjectLoaded(reloaded));
+        // } else {
+        emit(SubProjectSuccess());
+        //}
       } else {
         emit(const SubProjectFailure('Failed to save subproject'));
       }

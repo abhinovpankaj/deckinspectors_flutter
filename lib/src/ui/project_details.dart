@@ -7,14 +7,14 @@ import 'package:flutter_material_pickers/models/select_all_config.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/projectdetails_bloc.dart';
-import '../bloc/projects_bloc.dart';
-import '../bloc/projects_event.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../models/error_response.dart';
 import '../models/success_response.dart';
 import '../resources/couchbase/project_repository.dart';
+import '../resources/couchbase/subproject_repository.dart';
+import '../resources/couchbase/location_repository.dart';
 import '../resources/repository.dart';
 import 'addedit_subproject.dart';
 import 'cachedimage_widget.dart';
@@ -51,19 +51,35 @@ class ProjectDetailsPage extends StatefulWidget {
     String pageName, {
     required ProjectRepository projectRepository,
     required Repository globalRepository,
+    required SubprojectRepository subprojectRepository,
+    required LocationRepository locationRepository,
   }) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
-        (context) => BlocProvider(
-          create:
-              (_) => ProjectDetailsBloc(
-                projectRepository: projectRepository,
-                globalRepository: globalRepository,
-              )..add(LoadProjectDetails(id)),
-          child: ProjectDetailsPage(
-            id: id,
-            userFullName: userName,
-            isInvasiveMode: isInvasive,
+        (context) => MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ProjectRepository>.value(
+              value: projectRepository,
+            ),
+            RepositoryProvider<Repository>.value(value: globalRepository),
+            RepositoryProvider<SubprojectRepository>.value(
+              value: subprojectRepository,
+            ),
+            RepositoryProvider<LocationRepository>.value(
+              value: locationRepository,
+            ),
+          ],
+          child: BlocProvider(
+            create:
+                (_) => ProjectDetailsBloc(
+                  projectRepository: projectRepository,
+                  globalRepository: globalRepository,
+                )..add(LoadProjectDetails(id)),
+            child: ProjectDetailsPage(
+              id: id,
+              userFullName: userName,
+              isInvasiveMode: isInvasive,
+            ),
           ),
         ),
   );
@@ -219,6 +235,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   void addNewChild(String name) {
     //setState(() {});
     if (selectedTabIndex == 1) {
+      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
         AddEditLocationPage.getRoute(
@@ -226,9 +243,17 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           true,
           userFullName,
           name,
+          locationRepository: locationRepo,
         ),
-      ); //.then(refreshProjectDetails);
+      ).then((value) {
+        try {
+          context.read<ProjectDetailsBloc>().add(LoadProjectDetails(projectId));
+        } catch (_) {}
+      });
     } else {
+      final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(
+        context,
+      );
       Navigator.push(
         context,
         AddEditSubProjectPage.getRoute(
@@ -236,13 +261,19 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           true,
           userFullName,
           name,
+          subprojectRepository: subprojectRepo,
         ),
-      ); //.then(refreshProjectDetails);
+      ).then((value) {
+        try {
+          context.read<ProjectDetailsBloc>().add(LoadProjectDetails(projectId));
+        } catch (_) {}
+      });
     }
   }
 
   void gotoDetails(String id, String name, String pageName) {
     if (selectedTabIndex == 1) {
+      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
         LocationPage.getRoute(
@@ -251,15 +282,27 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           'Project Locations',
           userFullName,
           pageName,
+          locationRepository: locationRepo,
         ),
       ).then((value) {
         locations.remove(value);
         setState(() => {});
       });
     } else {
+      final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(
+        context,
+      );
+      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
-        SubProjectDetailsPage.getRoute(id, name, userFullName, pageName),
+        SubProjectDetailsPage.getRoute(
+          id,
+          name,
+          userFullName,
+          pageName,
+          subprojectRepository: subprojectRepo,
+          locationRepository: locationRepo,
+        ),
       ).then((value) => setState(() => {}));
     }
   }

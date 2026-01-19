@@ -31,10 +31,15 @@ class LocationPage extends StatefulWidget {
     String parentType,
     String locationType,
     String userName,
-    String pageName,
-  ) => MaterialPageRoute(
+    String pageName, {
+    required LocationRepository locationRepository,
+  }) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
-    builder: (context) => LocationPage(id, parentType, locationType, userName),
+    builder:
+        (context) => RepositoryProvider<LocationRepository>.value(
+          value: locationRepository,
+          child: LocationPage(id, parentType, locationType, userName),
+        ),
   );
 }
 
@@ -648,6 +653,7 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   void addEditLocation(Location currentLocation) {
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
       AddEditLocationPage.getRoute(
@@ -655,8 +661,15 @@ class _LocationPageState extends State<LocationPage> {
         false,
         userFullName,
         currentLocation.name as String,
+        locationRepository: locationRepo,
       ),
-    );
+    ).then((value) {
+      if (value == true) {
+        try {
+          context.read<LocationBloc>().add(RefreshLocationEvent(locationId));
+        } catch (_) {}
+      }
+    });
   }
 
   void gotoInvasiveDetails(String id, String sectionName) {

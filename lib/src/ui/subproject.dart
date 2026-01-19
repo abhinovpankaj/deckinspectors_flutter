@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/settings_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/subproject_repository.dart';
+import '../resources/couchbase/location_repository.dart';
 import '../bloc/subproject_bloc.dart';
 import '../bloc/subproject_event.dart';
 import '../bloc/subproject_state.dart';
@@ -31,10 +32,23 @@ class SubProjectDetailsPage extends StatefulWidget {
     String id,
     String prevPageName,
     String userName,
-    String pageName,
-  ) => MaterialPageRoute(
+    String pageName, {
+    required SubprojectRepository subprojectRepository,
+    required LocationRepository locationRepository,
+  }) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
-    builder: (context) => SubProjectDetailsPage(id, prevPageName, userName),
+    builder:
+        (context) => MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<SubprojectRepository>.value(
+              value: subprojectRepository,
+            ),
+            RepositoryProvider<LocationRepository>.value(
+              value: locationRepository,
+            ),
+          ],
+          child: SubProjectDetailsPage(id, prevPageName, userName),
+        ),
   );
 }
 
@@ -96,6 +110,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
 
   void addEditSubProject() {
     setState(() {});
+    final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
     Navigator.push(
       context,
       AddEditSubProjectPage.getRoute(
@@ -103,6 +118,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
         false,
         userFullName,
         currentBuilding.name as String,
+        subprojectRepository: subprojectRepo,
       ),
     ).then((value) => setState(() {}));
   }
@@ -110,6 +126,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
   void addNewChild(String name) {
     setState(() {});
     if (selectedTabIndex == 1) {
+      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
         AddEditLocationPage.getRoute(
@@ -117,9 +134,11 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           true,
           userFullName,
           name,
+          locationRepository: locationRepo,
         ),
       );
     } else {
+      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
         AddEditLocationPage.getRoute(
@@ -127,12 +146,14 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           true,
           userFullName,
           name,
+          locationRepository: locationRepo,
         ),
       );
     }
   }
 
   void gotoDetails(String id, String type, String pageName) {
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
       LocationPage.getRoute(
@@ -141,6 +162,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
         type,
         userFullName,
         pageName,
+        locationRepository: locationRepo,
       ),
       // MaterialPageRoute(
       //     builder: (context) => LocationPage(

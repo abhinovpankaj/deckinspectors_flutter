@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/locations_bloc.dart';
 import '../bloc/locations_event.dart';
@@ -32,18 +31,19 @@ class AddEditLocationPage extends StatefulWidget {
     Location location,
     bool isNew,
     String userName,
-    String prevPage,
-  ) {
+    String prevPage, {
+    required LocationRepository locationRepository,
+  }) {
     return MaterialPageRoute(
       settings: RouteSettings(name: isNew ? 'Add Location' : 'Edit Location'),
       builder: (context) {
-        final locationRepository = Provider.of<LocationRepository>(
-          context,
-          listen: false,
-        );
-        return BlocProvider(
-          create: (_) => LocationsBloc(locationRepository: locationRepository),
-          child: AddEditLocationPage(location, isNew, userName, prevPage),
+        return RepositoryProvider<LocationRepository>.value(
+          value: locationRepository,
+          child: BlocProvider(
+            create:
+                (_) => LocationsBloc(locationRepository: locationRepository),
+            child: AddEditLocationPage(location, isNew, userName, prevPage),
+          ),
         );
       },
     );
@@ -134,6 +134,9 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
             SnackBar(content: Text('$pageType saved successfully.')),
           );
           if (isNewLocation) {
+            final locationRepo = RepositoryProvider.of<LocationRepository>(
+              context,
+            );
             Navigator.pushReplacement(
               context,
               LocationPage.getRoute(
@@ -142,10 +145,11 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                 pageType,
                 fullUserName,
                 currentLocation.name as String,
+                locationRepository: locationRepo,
               ),
             );
           } else {
-            Navigator.pop(context);
+              Navigator.pop(context, true);
           }
         } else if (state is LocationSaveFailure) {
           ScaffoldMessenger.of(

@@ -218,6 +218,10 @@ class SubprojectRepository {
       final id = subProject.id ?? CouchbaseDocument.generateId();
       subProject.id = id;
 
+      debugPrint(
+        'addupdateSubProject: id=$id parent=${subProject.parentid} name=${subProject.name}',
+      );
+
       // update parent project's children
       await _projectRepository.updateProjectChildren(
         subProject.id as String,
@@ -227,6 +231,8 @@ class SubprojectRepository {
         subProject.type,
         subProject.description ?? '',
       );
+
+      debugPrint('addupdateSubProject: updated parent ${subProject.parentid}');
 
       final doc = MutableDocument.withId(
         subProject.id as String,
