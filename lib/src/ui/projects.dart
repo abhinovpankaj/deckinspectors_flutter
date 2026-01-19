@@ -95,7 +95,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
         projectRepository: projectRepo,
         globalRepository: globalRepo,
       ),
-    ).then((value) => setState(() => {}));
+    ).then((value) {
+      try {
+        context.read<ProjectsBloc>().add(LoadProjectsEvent());
+      } catch (_) {}
+      setState(() => {});
+    });
   }
 
   void gotoInvasiveProjectDetails(String projectId, String projName) {
@@ -111,7 +116,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
         projectRepository: projectRepo,
         globalRepository: globalRepo,
       ),
-    ).then((value) => setState(() => {}));
+    ).then((value) {
+      try {
+        context.read<ProjectsBloc>().add(LoadProjectsEvent());
+      } catch (_) {}
+      setState(() => {});
+    });
   }
 
   getCustomFormattedDateTime(String givenDateTime, String dateFormat) {

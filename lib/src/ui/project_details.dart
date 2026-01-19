@@ -7,6 +7,8 @@ import 'package:flutter_material_pickers/models/select_all_config.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/projectdetails_bloc.dart';
+import '../bloc/projects_bloc.dart';
+import '../bloc/projects_event.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
@@ -201,7 +203,17 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     Navigator.push(
       context,
       AddEditProjectPage.getRoute(currentProject, false, userFullName),
-    );
+    ).then((value) {
+      // If the project was deleted in the Add/Edit page, it will return `true`.
+      if (value == true) {
+        // Pop this ProjectDetails page and signal parent to refresh list.
+        Navigator.pop(context, true);
+        return;
+      }
+
+      final bloc = context.read<ProjectDetailsBloc>();
+      bloc.add(LoadProjectDetails(currentProject.id as String));
+    });
   }
 
   void addNewChild(String name) {
@@ -279,99 +291,115 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
       //   child: BreadCrumbNavigator(),
       // ),
-      body: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
-        builder: (context, state) {
-          if (state is ProjectDetailsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is ProjectDetailsLoaded) {
-            currentProject = state.project;
-
-            if (isInvasiveMode) {
-              locations =
-                  currentProject.children
-                      .where(
-                        (element) =>
-                            element.type == 'projectlocation' &&
-                            element.isInvasive,
-                      )
-                      .toList();
-
-              buildings =
-                  currentProject.children
-                      .where(
-                        (element) =>
-                            element.type == 'subproject' && element.isInvasive,
-                      )
-                      .toList();
-            } else {
-              locations =
-                  currentProject.children
-                      .where((element) => element.type == 'projectlocation')
-                      .toList();
-
-              buildings =
-                  currentProject.children
-                      .where((element) => element.type == 'subproject')
-                      .toList();
-            }
-
-            buildings.sort((l1, l2) {
-              if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
-                  return -1;
-                } else {
-                  return 1;
-                }
-              } else {
-                return l1.id.toString().compareTo(l2!.id.toString());
-              }
-            });
-
-            locations.sort((l1, l2) {
-              if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
-                  return -1;
-                } else {
-                  return 1;
-                }
-              } else {
-                return l1.id.toString().compareTo(l2!.id.toString());
-              }
-            });
-
-            var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
-            if (shortDate != null) {
-              createdAt = DateFormat.yMMMEd().format(shortDate);
-            } else {
-              createdAt = "";
-            }
-
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  projectDetails(
-                    currentProject.name ?? '',
-                    currentProject.url ?? '',
-                    currentProject.id as String,
-                    currentProject.description ?? '',
-                    currentProject.editedat ?? '',
-                    currentProject.address ?? '',
-                  ),
-                  projectChildrenTab(context),
-                ],
+      body: BlocListener<ProjectDetailsBloc, ProjectDetailsState>(
+        listener: (context, state) {
+          if (state is ProjectDetailsSaved) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Project assignment updated successfully'),
               ),
             );
+          } else if (state is ProjectDetailsError) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
-
-          if (state is ProjectDetailsError) {
-            return Center(child: Text(state.message));
-          }
-
-          return const Center(child: CircularProgressIndicator());
         },
+        child: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
+          builder: (context, state) {
+            if (state is ProjectDetailsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is ProjectDetailsLoaded) {
+              currentProject = state.project;
+
+              if (isInvasiveMode) {
+                locations =
+                    currentProject.children
+                        .where(
+                          (element) =>
+                              element.type == 'projectlocation' &&
+                              element.isInvasive,
+                        )
+                        .toList();
+
+                buildings =
+                    currentProject.children
+                        .where(
+                          (element) =>
+                              element.type == 'subproject' &&
+                              element.isInvasive,
+                        )
+                        .toList();
+              } else {
+                locations =
+                    currentProject.children
+                        .where((element) => element.type == 'projectlocation')
+                        .toList();
+
+                buildings =
+                    currentProject.children
+                        .where((element) => element.type == 'subproject')
+                        .toList();
+              }
+
+              buildings.sort((l1, l2) {
+                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                    return -1;
+                  } else {
+                    return 1;
+                  }
+                } else {
+                  return l1.id.toString().compareTo(l2!.id.toString());
+                }
+              });
+
+              locations.sort((l1, l2) {
+                if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                    return -1;
+                  } else {
+                    return 1;
+                  }
+                } else {
+                  return l1.id.toString().compareTo(l2!.id.toString());
+                }
+              });
+
+              var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
+              if (shortDate != null) {
+                createdAt = DateFormat.yMMMEd().format(shortDate);
+              } else {
+                createdAt = "";
+              }
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    projectDetails(
+                      currentProject.name ?? '',
+                      currentProject.url ?? '',
+                      currentProject.id as String,
+                      currentProject.description ?? '',
+                      currentProject.editedat ?? '',
+                      currentProject.address ?? '',
+                    ),
+                    projectChildrenTab(context),
+                  ],
+                ),
+              );
+            }
+
+            if (state is ProjectDetailsError) {
+              return Center(child: Text(state.message));
+            }
+
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }
@@ -1209,6 +1237,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     assignedUsers = currentProject.assignedto.toList();
     List<String> allUsers = List<String>.from(users);
     allUsers.remove(usersBloc.userDetails.username);
+    var projectDetailsbloc = context.read<ProjectDetailsBloc>();
     showMaterialCheckboxPicker<String>(
       context: context,
       selectAllConfig: SelectAllConfig(
@@ -1221,27 +1250,12 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
       onChanged:
           (value) => setState(() {
             assignedUsers = value;
-            // update the project assignment via repository
-            () async {
-              final repo = RepositoryProvider.of<ProjectRepository>(context);
-              final bool result = await repo.updateAssignment(
-                projectId,
-                assignedUsers,
-              );
-              if (result) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Project assignment updated successfully'),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Failed to update the project assignment.'),
-                  ),
-                );
-              }
-            }();
+            projectDetailsbloc.add(
+              UpdateProjectAssignment(
+                projectId: projectId,
+                assignees: assignedUsers,
+              ),
+            );
           }),
     );
   }

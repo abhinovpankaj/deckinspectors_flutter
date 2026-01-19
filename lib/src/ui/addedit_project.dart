@@ -625,13 +625,25 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
 
   void deleteProject() async {
     try {
-      final projectsBloc = context.read<AddEditProjectBloc>();
+      final addEditBloc = context.read<AddEditProjectBloc>();
       if (currentProject.id != '') {
-        projectsBloc.add(DeleteProject(projectId: currentProject.id!));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Project deleted successfully.')),
+        addEditBloc.add(DeleteProject(projectId: currentProject.id!));
+
+        // Wait for bloc to emit success or failure to ensure deletion completed
+        final state = await addEditBloc.stream.firstWhere(
+          (s) => s is DeleteProjectSuccess || s is AddEditProjectFailure,
         );
-        Navigator.pop(context, true);
+
+        if (state is DeleteProjectSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Project deleted successfully.')),
+          );
+          Navigator.pop(context, true);
+        } else if (state is AddEditProjectFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete project: ${state.error}')),
+          );
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(

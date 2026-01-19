@@ -26,6 +26,28 @@ class ProjectDetailsBloc
         emit(const ProjectDetailsError('Failed to load project details'));
       }
     });
+    on<UpdateProjectAssignment>((event, emit) async {
+      // indicate loading while assignment is being updated
+      emit(ProjectDetailsLoading());
+      try {
+        final success = await projectRepository.updateAssignment(
+          event.projectId,
+          event.assignees,
+        );
+        if (success) {
+          // reload project and emit saved notification
+          final updated = await projectRepository.fetchProjectById(
+            event.projectId,
+          );
+          emit(ProjectDetailsSaved());
+          if (updated != null) emit(ProjectDetailsLoaded(updated));
+        } else {
+          emit(const ProjectDetailsError('Failed to update assignment'));
+        }
+      } catch (e) {
+        emit(ProjectDetailsError(e.toString()));
+      }
+    });
     //   on<UpdateProjectDetails>((event, emit) async {
     //     emit(ProjectDetailsLoading());
     //     try {

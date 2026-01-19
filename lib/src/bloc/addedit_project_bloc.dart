@@ -120,7 +120,7 @@ class AddEditProjectBloc
     try {
       if (event.projectId != null && event.projectId!.isNotEmpty) {
         await projectRepository.deleteProject(event.projectId!);
-        emit(AddEditProjectSuccess());
+        emit(DeleteProjectSuccess());
       } else {
         emit(
           const AddEditProjectFailure(error: 'Invalid project ID for deletion'),

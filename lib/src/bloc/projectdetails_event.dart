@@ -20,3 +20,16 @@ class UpdateProjectDetails extends ProjectDetailsEvent {
   @override
   List<Object?> get props => [project];
 }
+
+class UpdateProjectAssignment extends ProjectDetailsEvent {
+  final String projectId;
+  final List<String> assignees;
+
+  const UpdateProjectAssignment({
+    required this.projectId,
+    required this.assignees,
+  });
+
+  @override
+  List<Object?> get props => [projectId, assignees];
+}

@@ -24,6 +24,8 @@ class AddEditProjectDeleting extends AddEditProjectState {}
 
 class AddEditProjectSuccess extends AddEditProjectState {}
 
+class DeleteProjectSuccess extends AddEditProjectState {}
+
 class AddEditProjectFailure extends AddEditProjectState {
   final String error;
   const AddEditProjectFailure({required this.error});
