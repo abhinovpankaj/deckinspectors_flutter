@@ -8,6 +8,7 @@ import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/image_repository.dart';
 import '../resources/couchbase/subproject_repository.dart';
 import '../resources/couchbase/location_repository.dart';
+import '../resources/couchbase/section_repository.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
@@ -23,44 +24,12 @@ class ProjectsPage extends StatefulWidget {
   static MaterialPageRoute getRoute() => MaterialPageRoute(
     settings: const RouteSettings(name: 'Home'),
     builder: (context) {
-      final dbProvider = DatabaseProvider();
-      final imageRepo = ImageRepository(dbProvider);
-      final projectRepository = ProjectRepository(dbProvider, imageRepo);
-      final subprojectRepository = SubprojectRepository(
-        dbProvider,
-        projectRepository,
-        imageRepo,
-        usersBloc,
-        appSettings,
-      );
-      final locationRepository = LocationRepository(
-        dbProvider,
-        projectRepository,
-        subprojectRepository,
-        imageRepo,
-        usersBloc,
-        appSettings,
-      );
-      final globalRepository = Repository();
-      return MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<ProjectRepository>.value(value: projectRepository),
-          RepositoryProvider<SubprojectRepository>.value(
-            value: subprojectRepository,
-          ),
-          RepositoryProvider<LocationRepository>.value(
-            value: locationRepository,
-          ),
-          RepositoryProvider<ImageRepository>.value(value: imageRepo),
-          RepositoryProvider<Repository>.value(value: globalRepository),
-        ],
-        child: BlocProvider(
-          create:
-              (_) =>
-                  ProjectsBloc(projectRepository: projectRepository)
-                    ..add(LoadProjectsEvent()),
-          child: const ProjectsPage(),
-        ),
+      return BlocProvider(
+        create:
+            (_) => ProjectsBloc(
+              projectRepository: context.read<ProjectRepository>(),
+            )..add(LoadProjectsEvent()),
+        child: const ProjectsPage(),
       );
     },
   );
@@ -115,22 +84,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   void gotoProjectDetails(String projectId, String projName) {
     //setState(() {});
-    final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
-    final globalRepo = RepositoryProvider.of<Repository>(context);
-    final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
-    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
-      ProjectDetailsPage.getRoute(
-        projectId,
-        userFullName,
-        false,
-        projName,
-        projectRepository: projectRepo,
-        globalRepository: globalRepo,
-        subprojectRepository: subprojectRepo,
-        locationRepository: locationRepo,
-      ),
+      ProjectDetailsPage.getRoute(projectId, userFullName, false, projName),
     ).then((value) {
       try {
         context.read<ProjectsBloc>().add(LoadProjectsEvent());
@@ -140,22 +96,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   void gotoInvasiveProjectDetails(String projectId, String projName) {
-    final projectRepo = RepositoryProvider.of<ProjectRepository>(context);
-    final globalRepo = RepositoryProvider.of<Repository>(context);
-    final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
-    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
-      ProjectDetailsPage.getRoute(
-        projectId,
-        userFullName,
-        true,
-        projName,
-        projectRepository: projectRepo,
-        globalRepository: globalRepo,
-        subprojectRepository: subprojectRepo,
-        locationRepository: locationRepo,
-      ),
+      ProjectDetailsPage.getRoute(projectId, userFullName, true, projName),
     ).then((value) {
       try {
         context.read<ProjectsBloc>().add(LoadProjectsEvent());

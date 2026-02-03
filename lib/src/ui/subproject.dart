@@ -32,21 +32,16 @@ class SubProjectDetailsPage extends StatefulWidget {
     String id,
     String prevPageName,
     String userName,
-    String pageName, {
-    required SubprojectRepository subprojectRepository,
-    required LocationRepository locationRepository,
-  }) => MaterialPageRoute(
+    String pageName,
+  ) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
-        (context) => MultiRepositoryProvider(
-          providers: [
-            RepositoryProvider<SubprojectRepository>.value(
-              value: subprojectRepository,
-            ),
-            RepositoryProvider<LocationRepository>.value(
-              value: locationRepository,
-            ),
-          ],
+        (context) => BlocProvider(
+          create:
+              (context) => SubProjectBloc(
+                subprojectRepository: context.read<SubprojectRepository>(),
+                // locationRepository: context.read<LocationRepository>(),
+              )..add(LoadSubProjectEvent(id)),
           child: SubProjectDetailsPage(id, prevPageName, userName),
         ),
   );
@@ -111,6 +106,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
   void addEditSubProject() {
     setState(() {});
     final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(context);
+    final bloc = context.read<SubProjectBloc>();
     Navigator.push(
       context,
       AddEditSubProjectPage.getRoute(
@@ -122,14 +118,15 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
       ),
     ).then((value) {
       if (value == true) {
-        context.read<SubProjectBloc>().add(LoadSubProjectEvent(widget.id));
+        bloc.add(LoadSubProjectEvent(widget.id));
       }
       setState(() {});
     });
   }
 
   void addNewChild(String name) {
-    setState(() {});
+    // setState(() {});
+    final bloc = context.read<SubProjectBloc>();
     if (selectedTabIndex == 1) {
       final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
@@ -141,7 +138,12 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           name,
           locationRepository: locationRepo,
         ),
-      );
+      ).then((value) {
+        if (value == true) {
+          bloc.add(LoadSubProjectEvent(widget.id));
+        }
+        setState(() {});
+      });
     } else {
       final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
@@ -153,12 +155,16 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           name,
           locationRepository: locationRepo,
         ),
-      );
+      ).then((value) {
+        if (value == true) {
+          bloc.add(LoadSubProjectEvent(widget.id));
+        }
+        setState(() {});
+      });
     }
   }
 
   void gotoDetails(String id, String type, String pageName) {
-    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     Navigator.push(
       context,
       LocationPage.getRoute(
@@ -167,7 +173,6 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
         type,
         userFullName,
         pageName,
-        locationRepository: locationRepo,
       ),
       // MaterialPageRoute(
       //     builder: (context) => LocationPage(
@@ -177,70 +182,59 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => SubProjectBloc(
-            subprojectRepository: RepositoryProvider.of<SubprojectRepository>(
-              context,
-            ),
-          )..add(LoadSubProjectEvent(widget.id)),
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leadingWidth: 120,
-          leading: ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-            label: const Text(
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              'Back',
-              style: TextStyle(color: Colors.blue),
-            ),
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leadingWidth: 120,
+        leading: ElevatedButton.icon(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+          label: const Text(
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            'Back',
+            style: TextStyle(color: Colors.blue),
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
-          elevation: 0,
-          title: const Text(
-            'Building',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.normal,
-            ),
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
           ),
         ),
-        // floatingActionButton: Padding(
-        //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-        //   child: BreadCrumbNavigator(),
-        // ),
-        body: BlocBuilder<SubProjectBloc, SubProjectState>(
-          builder: (context, state) {
-            if (state is SubProjectLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is SubProjectLoaded) {
-              currentBuilding = state.subProject;
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    StatefulBuilder(
-                      builder: (BuildContext context, StateSetter setState) {
-                        return buildingDetails();
-                      },
-                    ),
-                    subProjectChildrenTab(context),
-                  ],
-                ),
-              );
-            } else if (state is SubProjectFailure) {
-              return Center(child: Text(state.error));
-            }
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.blue,
+        elevation: 0,
+        title: const Text(
+          'Building',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+        ),
+      ),
+      // floatingActionButton: Padding(
+      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+      //   child: BreadCrumbNavigator(),
+      // ),
+      body: BlocBuilder<SubProjectBloc, SubProjectState>(
+        builder: (context, state) {
+          if (state is SubProjectLoading) {
             return const Center(child: CircularProgressIndicator());
-          },
-        ),
+          } else if (state is SubProjectLoaded) {
+            currentBuilding = state.subProject;
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  StatefulBuilder(
+                    builder: (BuildContext context, StateSetter setState) {
+                      return buildingDetails();
+                    },
+                  ),
+                  subProjectChildrenTab(context),
+                ],
+              ),
+            );
+          } else if (state is SubProjectFailure) {
+            return Center(child: Text(state.error));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }

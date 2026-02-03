@@ -5,11 +5,16 @@ import '../bloc/location_bloc.dart';
 import '../bloc/location_event.dart';
 import '../bloc/location_state.dart';
 import '../bloc/settings_bloc.dart';
+import '../bloc/users_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
+import '../resources/couchbase/image_repository.dart';
 import '../resources/couchbase/location_repository.dart';
+import '../resources/couchbase/section_repository.dart';
 //import 'breadcrumb_navigation.dart';
 import 'addedit_location.dart';
 import 'cachedimage_widget.dart';
+import 'dynamic_section.dart';
+import 'section.dart';
 import 'showprojecttype_widget.dart';
 
 class LocationPage extends StatefulWidget {
@@ -31,22 +36,16 @@ class LocationPage extends StatefulWidget {
     String parentType,
     String locationType,
     String userName,
-    String pageName, {
-    required LocationRepository locationRepository,
-  }) => MaterialPageRoute(
+    String pageName,
+  ) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
-        (context) => RepositoryProvider<LocationRepository>.value(
-          value: locationRepository,
-          child: BlocProvider(
-            create:
-                (context) => LocationBloc(
-                  locationRepository: RepositoryProvider.of<LocationRepository>(
-                    context,
-                  ),
-                )..add(LoadLocationEvent(id)),
-            child: LocationPage(id, parentType, locationType, userName),
-          ),
+        (context) => BlocProvider(
+          create:
+              (context) => LocationBloc(
+                locationRepository: context.read<LocationRepository>(),
+              )..add(LoadLocationEvent(id)),
+          child: LocationPage(id, parentType, locationType, userName),
         ),
   );
 }
@@ -70,6 +69,7 @@ class _LocationPageState extends State<LocationPage> {
   String? formId;
   @override
   Widget build(BuildContext context) {
+    formId = usersBloc.currentFormId;
     return BlocBuilder<LocationBloc, LocationState>(
       builder: (context, state) {
         if (state is LocationLoading) {
@@ -80,7 +80,7 @@ class _LocationPageState extends State<LocationPage> {
 
         if (state is LocationLoaded) {
           currentLocation = state.location;
-          formId = currentLocation.parentid;
+
           return Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
@@ -363,10 +363,11 @@ class _LocationPageState extends State<LocationPage> {
         child: InkWell(
           onTap: () {
             if (appSettings.isInvasiveMode) {
-              gotoInvasiveDetails(
-                sections[index].id as String,
-                sections[index].name as String,
-              );
+              //commented for now
+              // gotoInvasiveDetails(
+              //   sections[index].id as String,
+              //   sections[index].name as String,
+              // );
             } else {
               gotoDetails(
                 sections[index].id as String,
@@ -635,19 +636,98 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   void addNewChild() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add section not implemented in migration.'),
-      ),
-    );
+    final bloc = context.read<LocationBloc>();
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
+    final sectionRepo = RepositoryProvider.of<SectionRepository>(context);
+    final imageRepo = RepositoryProvider.of<ImageRepository>(context);
+    if (formId == null) {
+      Navigator.push(
+        context,
+        SectionPage.getRoute(
+          currentLocation.id as String,
+          currentLocation.parentid,
+          userFullName,
+          locationType,
+          currentLocation.name as String,
+          true,
+          "New",
+          sectionRepository: sectionRepo,
+          locationRepository: locationRepo,
+          imageRepository: imageRepo,
+        ),
+      ).then((value) {
+        if (value == true) {
+          bloc.add(LoadLocationEvent(locationId));
+        }
+        setState(() {});
+      });
+    } else {
+      // Navigator.push(
+      //   context,
+      //   DynamicVisualSectionPage.getRoute(
+
+      //     currentLocation.id as String,
+      //     userFullName,
+      //     locationType,
+      //     currentLocation.name as String,
+      //     formId as ObjectId,
+      //     true,
+      //     "New",
+      //   ),
+      // ).then((value) {
+      //   if (value == true) {
+      //     bloc.add(LoadLocationEvent(locationId));
+      //   }
+      //   setState(() {});
+      // });
+    }
   }
 
   void gotoDetails(String sectionId, String sectionName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Open section not implemented in migration.'),
+    final locationRepo = RepositoryProvider.of<LocationRepository>(context);
+    final sectionRepo = RepositoryProvider.of<SectionRepository>(context);
+    final imageRepo = RepositoryProvider.of<ImageRepository>(context);
+    Navigator.push(
+      context,
+      //just testing
+      //formId == null
+      //?
+      SectionPage.getRoute(
+        sectionId,
+        currentLocation.id as String,
+        userFullName,
+        locationType,
+        currentLocation.name as String,
+        false,
+        sectionName,
+        sectionRepository: sectionRepo,
+        locationRepository: locationRepo,
+        imageRepository: imageRepo,
       ),
-    );
+      //:
+      // MaterialPageRoute(
+      //   builder:
+      //       (context) => DynamicVisualSectionPage(
+      //         sectionId,
+      //         currentLocation.id as String,
+      //         userFullName,
+      //         locationType,
+      //         currentLocation.name as String,
+      //         false,
+      //         formId as String,
+      //       ),
+      // ),
+    ).then((value) {
+      if (!mounted) {
+        return;
+      }
+      if (value is bool) {
+        if (value == true) {
+          addNewChild();
+        }
+      }
+      setState(() {});
+    });
   }
 
   void addEditLocation(Location currentLocation) {
@@ -675,11 +755,24 @@ class _LocationPageState extends State<LocationPage> {
     });
   }
 
-  void gotoInvasiveDetails(String id, String sectionName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Open invasive section not implemented in migration.'),
-      ),
-    );
-  }
+  // void gotoInvasiveDetails(String id, String sectionName) {
+  //   Navigator.push(
+  //           context,
+  //           InvasiveSectionPage.getRoute(
+  //               id,
+  //               currentLocation.id,
+  //               userFullName,
+  //               locationType,
+  //               currentLocation.name as String,
+  //               false,
+  //               sectionName))
+  //       .then((value) {
+  //     if (!mounted) {
+  //       return;
+  //     }
+  //     setState(
+  //       () {},
+  //     );
+  //   });
+  // }
 }

@@ -17,15 +17,22 @@ class SectionRepository {
   final UsersBloc _usersBloc;
   //final AppSettings _appSettings;
 
-  SectionRepository(this._databaseProvider, this._locationRepository,
-      this._subprojectRepository, this._imageRepository, this._usersBloc);
+  SectionRepository(
+    this._databaseProvider,
+    this._locationRepository,
+    this._subprojectRepository,
+    this._imageRepository,
+    this._usersBloc,
+  );
   final String locationDocumentType = 'location';
   final String attributeDocumentType = 'documentType';
 
   Future<void> createVisualSection(VisualSection visualSection) async {
     try {
       final doc = MutableDocument.withId(
-          visualSection.id as String, visualSection.toDocument());
+        visualSection.id as String,
+        visualSection.toDocument(),
+      );
       await _databaseProvider.visualSectionCollection.saveDocument(doc);
     } catch (e) {
       debugPrint('Error creating visual section: $e');
@@ -37,7 +44,7 @@ class SectionRepository {
       final doc = await _databaseProvider.visualSectionCollection.document(id);
       if (doc != null) {
         final model = VisualSection.fromDocument(doc.toPlainMap());
-
+        model.id = doc.id;
         return model;
       }
       return null;
@@ -64,9 +71,12 @@ class SectionRepository {
     try {
       // remove from parent project children
       await _subprojectRepository.deleteProjectChildren(
-          visualSection.id as String, visualSection.parentid);
-      final doc = await _databaseProvider.visualSectionCollection
-          .document(visualSection.id as String);
+        visualSection.id as String,
+        visualSection.parentid,
+      );
+      final doc = await _databaseProvider.visualSectionCollection.document(
+        visualSection.id as String,
+      );
       if (doc != null) {
         await _databaseProvider.visualSectionCollection.deleteDocument(doc);
       }
@@ -77,8 +87,11 @@ class SectionRepository {
     }
   }
 
-  bool addImagesUrl(VisualSection localVisualSection, List<String> localPaths,
-      List<String> onlinePaths) {
+  bool addImagesUrl(
+    VisualSection localVisualSection,
+    List<String> localPaths,
+    List<String> onlinePaths,
+  ) {
     try {
       for (int i = 0; i < localPaths.length; i++) {
         final image = DeckImage(
@@ -92,7 +105,20 @@ class SectionRepository {
           uploadedBy: _usersBloc.userDetails.username,
         );
         _imageRepository.saveImage(image);
+
+        if (localVisualSection.images.contains(localPaths[i])) {
+          final index = localVisualSection.images.indexOf(localPaths[i]);
+          localVisualSection.images[index] = onlinePaths[i];
+        } else {
+          localVisualSection.images.add(onlinePaths[i]);
+        }
       }
+
+      final doc = MutableDocument.withId(
+        localVisualSection.id as String,
+        localVisualSection.toDocument(),
+      );
+      _databaseProvider.visualSectionCollection.saveDocument(doc);
       return true;
     } catch (e) {
       debugPrint('Error adding images url: $e');
@@ -100,32 +126,62 @@ class SectionRepository {
     }
   }
 
+  Future<bool> removeImageUrl(VisualSection section, String url) async {
+    try {
+      section.images.remove(url);
+      _locationRepository.updateLocationSection(
+        section.parenttype,
+        section.id as String,
+        section.parentid,
+        section.name,
+        section.visualreview,
+        section.visualsignsofleak,
+        section.furtherinvasivereviewrequired,
+        section.conditionalassessment,
+        section.images.length,
+      );
+
+      final doc = MutableDocument.withId(
+        section.id as String,
+        section.toDocument(),
+      );
+      await _databaseProvider.visualSectionCollection.saveDocument(doc);
+      return true;
+    } catch (e) {
+      debugPrint('Error removing image url: $e');
+      return false;
+    }
+  }
+
   Future<bool> addupdateVisualSection(
-      VisualSection visualSection,
-      String name,
-      String concerns,
-      List<ElementModel> selectedExteriorelements,
-      List<ElementModel> selectedWaterproofingElements,
-      VisualReview? review,
-      ConditionalAssessment? assessment,
-      ExpectancyYears? eee,
-      ExpectancyYears? lbc,
-      ExpectancyYears? awe,
-      bool invasiveReviewRequired,
-      bool hasSignsOfLeak,
-      bool isNewSection,
-      String userFullName,
-      bool unitUnavailable) async {
+    VisualSection visualSection,
+    String name,
+    String concerns,
+    List<ElementModel> selectedExteriorelements,
+    List<ElementModel> selectedWaterproofingElements,
+    VisualReview? review,
+    ConditionalAssessment? assessment,
+    ExpectancyYears? eee,
+    ExpectancyYears? lbc,
+    ExpectancyYears? awe,
+    bool invasiveReviewRequired,
+    bool hasSignsOfLeak,
+    bool isNewSection,
+    String userFullName,
+    bool unitUnavailable,
+  ) async {
     try {
       visualSection.name = name;
       visualSection.unitUnavailable = unitUnavailable;
       visualSection.additionalconsiderations = concerns;
       visualSection.exteriorelements.clear();
-      visualSection.exteriorelements
-          .addAll(selectedExteriorelements.map((element) => element.name));
+      visualSection.exteriorelements.addAll(
+        selectedExteriorelements.map((element) => element.name),
+      );
       visualSection.waterproofingelements.clear();
-      visualSection.waterproofingelements
-          .addAll(selectedWaterproofingElements.map((element) => element.name));
+      visualSection.waterproofingelements.addAll(
+        selectedWaterproofingElements.map((element) => element.name),
+      );
 
       visualSection.visualreview = review == null ? "" : review.name;
       visualSection.conditionalassessment =
@@ -148,15 +204,16 @@ class SectionRepository {
 
       // update parent with the section detail
       _locationRepository.updateLocationSection(
-          visualSection.parenttype,
-          visualSection.id as String,
-          visualSection.parentid,
-          visualSection.name,
-          visualSection.visualreview,
-          visualSection.visualsignsofleak,
-          visualSection.furtherinvasivereviewrequired,
-          visualSection.conditionalassessment,
-          visualSection.images.length);
+        visualSection.parenttype,
+        visualSection.id as String,
+        visualSection.parentid,
+        visualSection.name,
+        visualSection.visualreview,
+        visualSection.visualsignsofleak,
+        visualSection.furtherinvasivereviewrequired,
+        visualSection.conditionalassessment,
+        visualSection.images.length,
+      );
 
       final doc = MutableDocument.withId(
         visualSection.id as String,
@@ -193,8 +250,11 @@ class SectionRepository {
     );
   }
 
-  Future<bool> addInvasiveImagesUrl(String visualSectionName,
-      InvasiveSection currentInvasiveSection, List<String> urls) async {
+  Future<bool> addInvasiveImagesUrl(
+    String visualSectionName,
+    InvasiveSection currentInvasiveSection,
+    List<String> urls,
+  ) async {
     try {
       for (var url in urls) {
         final image = DeckImage(
@@ -223,8 +283,11 @@ class SectionRepository {
     }
   }
 
-  Future<bool> addConclusiveImagesUrl(String visualSectionName,
-      ConclusiveSection currentConclusiveSection, List<String> urls) async {
+  Future<bool> addConclusiveImagesUrl(
+    String visualSectionName,
+    ConclusiveSection currentConclusiveSection,
+    List<String> urls,
+  ) async {
     try {
       for (var url in urls) {
         final image = DeckImage(
@@ -258,10 +321,15 @@ class SectionRepository {
       final query = QueryBuilder.createAsync()
           .select(SelectResult.all())
           .from(
-              DataSource.collection(_databaseProvider.invasiveSectionCollection)
-                  .as('InvasiveSection'))
-          .where(Expression.property('parentid')
-              .equalTo(Expression.string(sectionId)));
+            DataSource.collection(
+              _databaseProvider.invasiveSectionCollection,
+            ).as('InvasiveSection'),
+          )
+          .where(
+            Expression.property(
+              'parentid',
+            ).equalTo(Expression.string(sectionId)),
+          );
       final result = await query.execute();
       final results = await result.allResults();
       if (results.isEmpty) {
@@ -280,11 +348,16 @@ class SectionRepository {
     try {
       final query = QueryBuilder.createAsync()
           .select(SelectResult.all())
-          .from(DataSource.collection(
-                  _databaseProvider.conclusiveSectionCollection)
-              .as('ConclusiveSection'))
-          .where(Expression.property('parentid')
-              .equalTo(Expression.string(sectionId)));
+          .from(
+            DataSource.collection(
+              _databaseProvider.conclusiveSectionCollection,
+            ).as('ConclusiveSection'),
+          )
+          .where(
+            Expression.property(
+              'parentid',
+            ).equalTo(Expression.string(sectionId)),
+          );
       final result = await query.execute();
       final results = await result.allResults();
       if (results.isEmpty) {
@@ -352,7 +425,9 @@ class SectionRepository {
   }
 
   Future<bool> removeConclusiveImageUrl(
-      ConclusiveSection localConclusiveSection, String url) async {
+    ConclusiveSection localConclusiveSection,
+    String url,
+  ) async {
     try {
       localConclusiveSection.conclusiveimages.remove(url);
 
@@ -369,7 +444,9 @@ class SectionRepository {
   }
 
   Future<bool> removeInvasiveImageUrl(
-      InvasiveSection localInvasiveSection, String url) async {
+    InvasiveSection localInvasiveSection,
+    String url,
+  ) async {
     try {
       localInvasiveSection.invasiveimages.remove(url);
 

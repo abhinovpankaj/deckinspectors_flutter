@@ -133,9 +133,6 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
             SnackBar(content: Text('$pageType saved successfully.')),
           );
           if (isNewLocation) {
-            final locationRepo = RepositoryProvider.of<LocationRepository>(
-              context,
-            );
             Navigator.pushReplacement(
               context,
               LocationPage.getRoute(
@@ -144,7 +141,6 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                 pageType,
                 fullUserName,
                 currentLocation.name as String,
-                locationRepository: locationRepo,
               ),
             );
           } else {

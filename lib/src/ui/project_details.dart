@@ -48,40 +48,22 @@ class ProjectDetailsPage extends StatefulWidget {
     String id,
     String userName,
     bool isInvasive,
-    String pageName, {
-    required ProjectRepository projectRepository,
-    required Repository globalRepository,
-    required SubprojectRepository subprojectRepository,
-    required LocationRepository locationRepository,
-  }) => MaterialPageRoute(
+    String pageName,
+  ) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
-        (context) => MultiRepositoryProvider(
-          providers: [
-            RepositoryProvider<ProjectRepository>.value(
-              value: projectRepository,
-            ),
-            RepositoryProvider<Repository>.value(value: globalRepository),
-            RepositoryProvider<SubprojectRepository>.value(
-              value: subprojectRepository,
-            ),
-            RepositoryProvider<LocationRepository>.value(
-              value: locationRepository,
-            ),
-          ],
-          child: BlocProvider(
-            create:
-                (_) => ProjectDetailsBloc(
-                  projectRepository: projectRepository,
-                  subprojectRepository: subprojectRepository,
-                  locationRepository: locationRepository,
-                  globalRepository: globalRepository,
-                )..add(LoadProjectDetails(id)),
-            child: ProjectDetailsPage(
-              id: id,
-              userFullName: userName,
-              isInvasiveMode: isInvasive,
-            ),
+        (context) => BlocProvider(
+          create:
+              (_) => ProjectDetailsBloc(
+                projectRepository: context.read<ProjectRepository>(),
+                subprojectRepository: context.read<SubprojectRepository>(),
+                locationRepository: context.read<LocationRepository>(),
+                globalRepository: context.read<Repository>(),
+              )..add(LoadProjectDetails(id)),
+          child: ProjectDetailsPage(
+            id: id,
+            userFullName: userName,
+            isInvasiveMode: isInvasive,
           ),
         ),
   );
@@ -275,7 +257,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   void gotoDetails(String id, String name, String pageName) {
     if (selectedTabIndex == 1) {
-      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
         LocationPage.getRoute(
@@ -284,27 +265,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           'Project Locations',
           userFullName,
           pageName,
-          locationRepository: locationRepo,
         ),
       ).then((value) {
         locations.remove(value);
         setState(() => {});
       });
     } else {
-      final subprojectRepo = RepositoryProvider.of<SubprojectRepository>(
-        context,
-      );
-      final locationRepo = RepositoryProvider.of<LocationRepository>(context);
       Navigator.push(
         context,
-        SubProjectDetailsPage.getRoute(
-          id,
-          name,
-          userFullName,
-          pageName,
-          subprojectRepository: subprojectRepo,
-          locationRepository: locationRepo,
-        ),
+        SubProjectDetailsPage.getRoute(id, name, userFullName, pageName),
       ).then((value) => setState(() => {}));
     }
   }
@@ -358,6 +327,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
             if (state is ProjectDetailsLoaded) {
               currentProject = state.project;
+              usersBloc.currentFormId = currentProject.formId;
 
               if (isInvasiveMode) {
                 locations =

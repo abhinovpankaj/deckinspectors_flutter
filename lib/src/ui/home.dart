@@ -27,48 +27,13 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Create repositories here so we can provide the ProjectsBloc to the
-    // embedded ProjectsPage when HomePage is used as the app's shell.
-    final dbProvider = DatabaseProvider();
-    final imageRepo = ImageRepository(dbProvider);
-    final projectRepository = ProjectRepository(dbProvider, imageRepo);
-    final subprojectRepository = SubprojectRepository(
-      dbProvider,
-      projectRepository,
-      imageRepo,
-      usersBloc,
-      appSettings,
-    );
-    final locationRepository = LocationRepository(
-      dbProvider,
-      projectRepository,
-      subprojectRepository,
-      imageRepo,
-      usersBloc,
-      appSettings,
-    );
-
-    final globalRepository = Repository();
-
     final pages = [
-      RepositoryProvider<ProjectRepository>.value(
-        value: projectRepository,
-        child: RepositoryProvider<SubprojectRepository>.value(
-          value: subprojectRepository,
-          child: RepositoryProvider<LocationRepository>.value(
-            value: locationRepository,
-            child: RepositoryProvider<Repository>.value(
-              value: globalRepository,
-              child: BlocProvider(
-                create:
-                    (_) =>
-                        ProjectsBloc(projectRepository: projectRepository)
-                          ..add(LoadProjectsEvent()),
-                child: const Center(child: ProjectsPage()),
-              ),
-            ),
-          ),
-        ),
+      BlocProvider(
+        create:
+            (_) => ProjectsBloc(
+              projectRepository: context.read<ProjectRepository>(),
+            )..add(LoadProjectsEvent()),
+        child: const Center(child: ProjectsPage()),
       ),
       //Center(child: OfflineModePage()),
       const Center(child: ReportsPage()),
