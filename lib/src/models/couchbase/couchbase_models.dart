@@ -1,4 +1,6 @@
 // Base document class with common fields
+import 'package:uuid/uuid.dart';
+
 abstract class CouchbaseDocument {
   String? id;
   String get docType;
@@ -6,7 +8,9 @@ abstract class CouchbaseDocument {
   Map<String, dynamic> toDocument();
 
   static String generateId() {
-    return '${DateTime.now().millisecondsSinceEpoch}_${(DateTime.now().microsecond % 1000)}';
+    var uuid = Uuid();
+    return uuid.v4();
+    //return '${DateTime.now().millisecondsSinceEpoch}_${(DateTime.now().microsecond % 1000)}';
   }
 }
 
@@ -165,8 +169,8 @@ class Location extends CouchbaseDocument {
     'sections': sections.map((s) => s.toDocument()).toList(),
   };
 
-  factory Location.fromDocument(Map<String, dynamic> doc) {
-    return Location(
+  factory Location.fromDocument(Map<String, dynamic> doc, {String? id}) {
+    var location = Location(
       name: doc['name'],
       type: doc['type'],
       description: doc['description'],
@@ -175,7 +179,7 @@ class Location extends CouchbaseDocument {
       parenttype: doc['parenttype'] ?? '',
       url: doc['url'],
       editedat: doc['editedat'],
-      lasteditedby: doc['lasteditedby'],
+      lasteditedby: doc['lasteditedby'] ?? '',
       parentid: doc['parentid'],
       isInvasive: doc['isInvasive'] ?? false,
       sections:
@@ -184,6 +188,8 @@ class Location extends CouchbaseDocument {
               .toList() ??
           [],
     );
+    if (id != null) location.id = id;
+    return location;
   }
 }
 
@@ -211,9 +217,9 @@ class VisualSection extends CouchbaseDocument {
 
   VisualSection({
     this.name,
-    this.images = const [],
-    this.exteriorelements = const [],
-    this.waterproofingelements = const [],
+    images,
+    exteriorelements,
+    waterproofingelements,
     this.additionalconsiderations,
     this.visualreview,
     this.visualsignsofleak = false,
@@ -229,7 +235,9 @@ class VisualSection extends CouchbaseDocument {
     this.awe = '',
     this.parenttype = '',
     this.unitUnavailable = false,
-  });
+  }) : images = [],
+       exteriorelements = [],
+       waterproofingelements = [];
 
   @override
   String get docType => 'VisualSection';
@@ -631,8 +639,8 @@ class SubProject extends CouchbaseDocument {
     'children': children.map((c) => c.toMap()).toList(),
   };
 
-  factory SubProject.fromDocument(Map<String, dynamic> doc) {
-    return SubProject(
+  factory SubProject.fromDocument(Map<String, dynamic> doc, {String? id}) {
+    var subProject = SubProject(
       name: doc['name'],
       description: doc['description'],
       parentid: doc['parentid'],
@@ -650,6 +658,8 @@ class SubProject extends CouchbaseDocument {
           [],
       isInvasive: doc['isInvasive'] ?? false,
     );
+    if (id != null) subProject.id = id;
+    return subProject;
   }
 }
 
@@ -726,9 +736,9 @@ class Section extends CouchbaseDocument {
   @override
   String get docType => 'Section';
   @override
-  @override
   Map<String, dynamic> toDocument() => {
     'docType': 'Section',
+    'sectionId': sectionId,
     'name': name,
     'isInvasive': isInvasive,
     'visualsignsofleak': visualsignsofleak,
@@ -751,10 +761,10 @@ class Section extends CouchbaseDocument {
           doc['furtherinvasivereviewrequired'] ?? false,
       conditionalassessment: doc['conditionalassessment'],
       visualreview: doc['visualreview'],
-      coverUrl: doc['coverUrl'],
+      coverUrl: doc['coverUrl'] ?? '',
       count: doc['count'] ?? 0,
       isuploading: doc['isuploading'] ?? false,
-      sequenceNo: doc['sequenceNo'],
+      sequenceNo: doc['sequenceNo'] ?? '0',
     );
   }
 }

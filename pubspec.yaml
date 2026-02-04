@@ -98,6 +98,7 @@ dependencies:
   geolocator: ^10.1.1
   url_launcher: ^6.3.2
   cbl_flutter: ^3.3.5
+  uuid: ^4.4.0
 dependency_overrides:
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.

@@ -47,10 +47,7 @@ class SubprojectRepository {
   Future<String> deleteSubProject(SubProject subProject) async {
     try {
       // remove from parent project children
-      await deleteProjectChildren(
-        subProject.id as String,
-        subProject.parentid ?? '',
-      );
+      await deleteProjectChildren(subProject.id as String, subProject.parentid);
       final doc = await _databaseProvider.subProjectCollection.document(
         subProject.id as String,
       );

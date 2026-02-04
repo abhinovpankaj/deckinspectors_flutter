@@ -220,7 +220,10 @@ class LocationRepository {
       var doc = await _databaseProvider.projectCollection.document(parentid);
 
       if (doc != null) {
-        final parentProject = Project.fromDocument(doc.toPlainMap());
+        final parentProject = Project.fromDocument(
+          doc.toPlainMap(),
+          id: doc.id,
+        );
         var found = parentProject.sections.where((element) => element.id == id);
         if (found.isEmpty) {
           parentProject.sections.add(
@@ -257,7 +260,10 @@ class LocationRepository {
         parentid,
       );
       if (location != null) {
-        final parentLocation = Location.fromDocument(location.toPlainMap());
+        final parentLocation = Location.fromDocument(
+          location.toPlainMap(),
+          id: location.id,
+        );
         var found = parentLocation.sections.where(
           (element) => element.id == id,
         );
@@ -295,7 +301,11 @@ class LocationRepository {
             parentLocation.parentid,
           );
           if (projDoc != null) {
-            final parentProject = Project.fromDocument(projDoc.toPlainMap());
+            final parentProject = Project.fromDocument(
+              projDoc.toPlainMap(),
+              id: projDoc.id,
+            );
+
             var childLocation = parentProject.children.where(
               (element) => element.id == parentLocation.id,
             );
@@ -321,6 +331,7 @@ class LocationRepository {
           if (subDoc != null) {
             final parentSubProject = SubProject.fromDocument(
               subDoc.toPlainMap(),
+              id: subDoc.id,
             );
             var childLocation = parentSubProject.children.where(
               (element) => element.id == parentLocation.id,
@@ -343,7 +354,10 @@ class LocationRepository {
               parentSubProject.parentid,
             );
             if (projDoc != null) {
-              final parentProject = Project.fromDocument(projDoc.toPlainMap());
+              final parentProject = Project.fromDocument(
+                projDoc.toPlainMap(),
+                id: projDoc.id,
+              );
               var childLocation = parentProject.children.where(
                 (element) => element.id == parentSubProject.id,
               );

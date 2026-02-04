@@ -644,8 +644,8 @@ class _LocationPageState extends State<LocationPage> {
       Navigator.push(
         context,
         SectionPage.getRoute(
+          '',
           currentLocation.id as String,
-          currentLocation.parentid,
           userFullName,
           locationType,
           currentLocation.name as String,
@@ -657,7 +657,9 @@ class _LocationPageState extends State<LocationPage> {
         ),
       ).then((value) {
         if (value == true) {
-          bloc.add(LoadLocationEvent(locationId));
+          Future.delayed(const Duration(milliseconds: 200), () {
+            bloc.add(LoadLocationEvent(locationId));
+          });
         }
         setState(() {});
       });
@@ -684,6 +686,7 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   void gotoDetails(String sectionId, String sectionName) {
+    final bloc = context.read<LocationBloc>();
     final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     final sectionRepo = RepositoryProvider.of<SectionRepository>(context);
     final imageRepo = RepositoryProvider.of<ImageRepository>(context);
@@ -723,7 +726,9 @@ class _LocationPageState extends State<LocationPage> {
       }
       if (value is bool) {
         if (value == true) {
-          addNewChild();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            bloc.add(LoadLocationEvent(locationId));
+          });
         }
       }
       setState(() {});

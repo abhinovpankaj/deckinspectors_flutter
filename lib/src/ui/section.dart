@@ -49,8 +49,8 @@ class SectionPage extends StatefulWidget {
     this.parentType,
     this.parentName,
     this.isNewSection, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
   //VisualSection currentSection;
   static MaterialPageRoute getRoute(
     String id,
@@ -129,7 +129,8 @@ class _SectionPageState extends State<SectionPage> {
           setState(() {
             isRunning = false;
           });
-          Navigator.of(context).pop(pendingCreateNew);
+          //Navigator.of(context).pop(pendingCreateNew);
+          Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location saved successfully.')),
           );
