@@ -78,7 +78,7 @@ class Project extends CouchbaseDocument {
     'iscomplete': iscomplete,
     'assignedto': assignedto,
     'children': children.map((c) => c.toMap()).toList(),
-    'sections': sections.map((s) => s.toDocument()).toList(),
+    'sections': sections.map((s) => s.toMap()).toList(),
     'latitude': latitude,
     'longitude': longitude,
     'formId': formId,
@@ -105,7 +105,7 @@ class Project extends CouchbaseDocument {
           [],
       sections:
           (doc['sections'] as List<dynamic>?)
-              ?.map((s) => Section.fromDocument(s as Map<String, dynamic>))
+              ?.map((s) => Section.fromMap(s as Map<String, dynamic>))
               .toList() ??
           [],
       latitude: (doc['latitude'] ?? 0.0).toDouble(),
@@ -166,7 +166,7 @@ class Location extends CouchbaseDocument {
     'lasteditedby': lasteditedby,
     'parentid': parentid,
     'isInvasive': isInvasive,
-    'sections': sections.map((s) => s.toDocument()).toList(),
+    'sections': sections.map((s) => s.toMap()).toList(),
   };
 
   factory Location.fromDocument(Map<String, dynamic> doc, {String? id}) {
@@ -184,7 +184,7 @@ class Location extends CouchbaseDocument {
       isInvasive: doc['isInvasive'] ?? false,
       sections:
           (doc['sections'] as List<dynamic>?)
-              ?.map((s) => Section.fromDocument(s as Map<String, dynamic>))
+              ?.map((s) => Section.fromMap(s as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -555,7 +555,7 @@ class DynamicVisualSection extends CouchbaseDocument {
     'lasteditedby': lasteditedby,
     'additionalconsiderations': additionalconsiderations,
     'images': images,
-    'sections': sections.map((s) => s.toDocument()).toList(),
+    'sections': sections.map((s) => s.toMap()).toList(),
     'questions': questions.map((q) => q.toMap()).toList(),
   };
 
@@ -577,7 +577,7 @@ class DynamicVisualSection extends CouchbaseDocument {
       sections:
           doc['sections'] != null
               ? (doc['sections'] as List<dynamic>)
-                  .map((s) => Section.fromDocument(s as Map<String, dynamic>))
+                  .map((s) => Section.fromMap(s as Map<String, dynamic>))
                   .toList()
               : [],
       questions:
@@ -706,9 +706,9 @@ class Child {
   }
 }
 
-class Section extends CouchbaseDocument {
+class Section {
   String? name;
-  String sectionId;
+  String id;
   bool isInvasive;
   bool visualsignsofleak;
   bool furtherinvasivereviewrequired;
@@ -720,7 +720,7 @@ class Section extends CouchbaseDocument {
   String? sequenceNo;
 
   Section({
-    required this.sectionId,
+    required this.id,
     this.name,
     this.isInvasive = false,
     this.visualsignsofleak = false,
@@ -733,12 +733,12 @@ class Section extends CouchbaseDocument {
     this.sequenceNo,
   });
 
-  @override
-  String get docType => 'Section';
-  @override
-  Map<String, dynamic> toDocument() => {
+  // @override
+  // String get docType => 'Section';
+
+  Map<String, dynamic> toMap() => {
     'docType': 'Section',
-    'sectionId': sectionId,
+    'id': id,
     'name': name,
     'isInvasive': isInvasive,
     'visualsignsofleak': visualsignsofleak,
@@ -751,9 +751,9 @@ class Section extends CouchbaseDocument {
     'sequenceNo': sequenceNo,
   };
 
-  factory Section.fromDocument(Map<String, dynamic> doc) {
-    return Section(
-      sectionId: doc['sectionId'],
+  factory Section.fromMap(Map<String, dynamic> doc, {String? id}) {
+    var section = Section(
+      id: doc['id'] ?? doc['sectionId'],
       name: doc['name'],
       isInvasive: doc['isInvasive'] ?? false,
       visualsignsofleak: doc['visualsignsofleak'] ?? false,
@@ -766,5 +766,7 @@ class Section extends CouchbaseDocument {
       isuploading: doc['isuploading'] ?? false,
       sequenceNo: doc['sequenceNo'] ?? '0',
     );
+    if (id != null) section.id = id;
+    return section;
   }
 }

@@ -228,7 +228,7 @@ class LocationRepository {
         if (found.isEmpty) {
           parentProject.sections.add(
             Section(
-              sectionId: id,
+              id: id,
               isInvasive: furtherinvasivereviewrequired,
               name: name,
               visualreview: visualreview,
@@ -270,7 +270,7 @@ class LocationRepository {
         if (found.isEmpty) {
           parentLocation.sections.add(
             Section(
-              sectionId: id,
+              id: id,
               isInvasive: furtherinvasivereviewrequired,
               name: name,
               visualreview: visualreview,
