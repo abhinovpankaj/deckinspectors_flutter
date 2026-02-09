@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../bloc/users_bloc.dart';
 import 'database_provider.dart';
@@ -21,94 +24,71 @@ class ReplicatorProvider {
     var db = databaseProvider.e3inspectionsDatabase;
     var user = usersBloc.getCurrentUser();
     if (db != null && user != null) {
-      //MODIFY THIS CONFIG OR REPLICATOR WILL NOT RUN PROPERLY
+      // Load certificate for App Services
+      var pem = await rootBundle.load('assets/syncinspectionsdata.pem');
 
-      /*********************************************************************
-
-      ** For Sync Gateway User:  Docker installations on your local computer
-      ** require these changes to work with the learning path documentation
-
-      ** scheme: switch from wss to ws
-
-      ** port: 4984
-
-      ** host:
-      **    Android:
-      **      10.0.2.2
-      **    iOS:
-      **      localhost
-      **
-      ** path:  projects
-      **
-
-       ** For App Services Users:  You can find  this url in your
-       ** App Services Endpoint connection tab
-       ** you will need to replace host with the provided host in the App Services
-       ** connection tab and replace path with the endpoint path.
-       ** for the learning path, you can default it to projects.
-
-       **  example
-       **    host:
-       **     your_account_hostname.apps.cloud.couchbase.com
-       **
-       ** APP SERVICES Users - you must do the following:
-
-       ** 1. Find the url in your App Services Endpoint connection tab
-       **  a. you will need to replace host with the provided host in the App Services
-       **     connection tab and replace path with the endpoint path.
-       **  example
-       **    host:
-       **     your_account_hostname.apps.cloud.couchbase.com
-
-       ** 2. In Capella, download the Public Certificate from the Connection tab in your App EndPoint
-       ** 3. Add the .pem file to the asset folder in the src folder
-       ** 4. Update your pubspec.yaml to include the certificate - note it's yaml so the spacing is important
-       ** example
-       **   assets:
-       ** - asset/images/couchbase.png
-       ** - asset/database/startingWarehouses.zip
-       ** - asset/cert.pem
-       ** 5. Uncomment the line below to load the certificate
-       ** 6. Uncomment the line in the replicator configuration to load the certificate
-       ************************************************************************************/
-
-      // App Services Users - Uncomment to Load the certificate from the asset folder
-      //var pem = await rootBundle.load('projects.pem');
-
-      // <1>
+      // Replicator endpoint
       var url = Uri(
         scheme: 'wss',
         port: 4984,
-        host:
-            'put_your_url_in_here', //change this line to match your configuration!!
-        path: 'projects',
+        host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
+        path: 'syncinspectionsdata',
       );
-
       var basicAuthenticator = BasicAuthenticator(
-        username: user.username,
-        password: user.password,
+        username: 'p5nadmin', //user.username,
+        password: 'Deck@123', //user.password,
       );
       var endPoint = UrlEndpoint(url);
 
-      // <2>
-      _replicatorConfiguration = ReplicatorConfiguration(
-        database: db,
+      // Specify collections to replicate
+
+      // Create ReplicatorConfiguration with required parameters
+      final config = ReplicatorConfiguration(
         target: endPoint,
         authenticator: basicAuthenticator,
         continuous: true,
         replicatorType: ReplicatorType.pushAndPull,
         heartbeat: const Duration(seconds: 60),
-        // **UNCOMMENT** this the line below if you are using App Services or a custom certificate
-        //pinnedServerCertificate: pem.buffer.asUint8List()
+        pushFilter: companyFilter,
+        pullFilter: companyFilter,
+        //pinnedServerCertificate: pem.buffer.asUint8List(),
       );
 
-      //check for nulls
-      var config = _replicatorConfiguration;
-      if (config != null) {
-        // <3>
-        _replicator = await Replicator.createAsync(config);
+      // Add each collection to the configuration
+      final collectionNames = [
+        'Project',
+        'Location',
+        'SubProject',
+        'VisualSection',
+      ];
+      for (final name in collectionNames) {
+        final collection = await db.collection(name, 'inventory');
+        if (collection != null) {
+          config.addCollection(collection);
+        }
+      }
+
+      _replicatorConfiguration = config;
+      if (_replicatorConfiguration != null) {
+        _replicator = await Replicator.createAsync(_replicatorConfiguration!);
       }
     }
+  }
+
+  FutureOr<bool> companyFilter(Document doc, Set<DocumentFlag> flags) {
+    if (flags.contains(DocumentFlag.deleted)) {
+      return true;
+    }
+    if (doc.value('docType') == 'Project') {
+      return doc.value('companyIdentifier') ==
+              usersBloc.getCurrentUser()?.companyIdentifier &&
+          doc.value('assignedUsers') != null &&
+          (doc.value('assignedUsers') as List).contains(
+            usersBloc.getCurrentUser()?.username,
+          );
+    }
+    return doc.value('companyIdentifier') ==
+        usersBloc.getCurrentUser()?.companyIdentifier;
   }
 
   // callbacks are used to get information on status of replication
@@ -123,10 +103,20 @@ class ReplicatorProvider {
 
     var replicator = _replicator;
     if (replicator != null) {
-      if (onStatusChange != null) {
-        var function = onStatusChange;
-        statusChangedToken = await replicator.addChangeListener(function);
-      }
+      // Add detailed status logging
+      statusChangedToken = await replicator.addChangeListener((change) {
+        final status = change.status;
+        debugPrint('[Replicator Status] Activity: \\${status.activity}');
+        debugPrint(
+          '[Replicator Status] Progress: \\${status.progress.completed} / \\${status.progress.progress}',
+        );
+        if (status.error != null) {
+          debugPrint('[Replicator Status] Error: \\${status.error}');
+        }
+        if (onStatusChange != null) {
+          onStatusChange(change);
+        }
+      });
       if (onDocument != null) {
         var function = onDocument;
         replicator.addDocumentReplicationListener(function);

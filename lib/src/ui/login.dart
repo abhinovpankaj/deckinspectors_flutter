@@ -14,6 +14,7 @@ import '../models/login_response.dart';
 import '../resources/couchbase/couchbase_services.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../models/users_response.dart';
+import '../resources/couchbase/replicator_provider.dart';
 import 'home.dart';
 
 class LoginPage extends StatefulWidget {
@@ -167,6 +168,16 @@ class _LoginPageState extends State<LoginPage> {
               companyIdentifier: companyId,
             );
             await dbProvider.initDatabases(user: user);
+            // Start Couchbase Replicator after DB is initialized
+            final replicatorProvider = await _initReplicator(dbProvider);
+            await replicatorProvider?.startReplicator(
+              onStatusChange: (change) {
+                debugPrint('Replicator status: \\${change.status.activity}');
+              },
+              onDocument: (doc) {
+                debugPrint('Replicated docs: \\${doc.documents.length}');
+              },
+            );
           }
         } catch (e) {
           debugPrint('Error initializing DB after login: $e');
@@ -192,6 +203,28 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
+    }
+  }
+
+  // Helper to initialize and return the ReplicatorProvider
+  Future<ReplicatorProvider?> _initReplicator(
+    DatabaseProvider dbProvider,
+  ) async {
+    try {
+      // Import the singleton or create a new instance as needed
+      // If using singleton:
+      // import '../resources/couchbase/replicator_singleton.dart';
+      // final replicatorProvider = ReplicatorSingleton.instance;
+      // If not, create here:
+
+      final replicatorProvider = ReplicatorProvider(
+        databaseProvider: dbProvider,
+      );
+      await replicatorProvider.init();
+      return replicatorProvider;
+    } catch (e) {
+      debugPrint('Error initializing replicator: $e');
+      return null;
     }
   }
 

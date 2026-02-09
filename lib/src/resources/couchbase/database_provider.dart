@@ -131,20 +131,20 @@ class DatabaseProvider {
         dbConfig,
       );
       // initialize collections (create if missing)
-      projectCollection = await _getOrCreateCollection('projects');
-      subProjectCollection = await _getOrCreateCollection('subProjects');
-      locationCollection = await _getOrCreateCollection('locations');
-      deckImageCollection = await _getOrCreateCollection('deckImages');
-      visualSectionCollection = await _getOrCreateCollection('visualSections');
-      formCollection = await _getOrCreateCollection('forms');
+      projectCollection = await _getOrCreateCollection('Project');
+      subProjectCollection = await _getOrCreateCollection('SubProject');
+      locationCollection = await _getOrCreateCollection('Location');
+      deckImageCollection = await _getOrCreateCollection('DeckImage');
+      visualSectionCollection = await _getOrCreateCollection('VisualSection');
+      formCollection = await _getOrCreateCollection('LocationForm');
       invasiveSectionCollection = await _getOrCreateCollection(
-        'invasiveSections',
+        'InvasiveSection',
       );
       dynamicSectionCollection = await _getOrCreateCollection(
-        'dynamicSections',
+        'DynamicVisualSection',
       );
       conclusiveSectionCollection = await _getOrCreateCollection(
-        'conclusiveSections',
+        'ConclusiveSection',
       );
       //create indexes for queries
       await _createDocumentTypeIndex();
@@ -313,33 +313,41 @@ class DatabaseProvider {
 extension on DatabaseProvider {
   Future<Collection> _getOrCreateCollection(String name) async {
     try {
-      // Try to get existing collection
-      final existing = await e3inspectionsDatabase?.collection(name);
+      // Try to get existing collection in 'inventory' scope
+      final existing = await e3inspectionsDatabase?.collection(
+        name,
+        'inventory',
+      );
       if (existing != null) return existing;
 
-      // If not present, attempt to create it
+      // If not present, attempt to create it in 'inventory' scope
       try {
-        // Some platform implementations expose `createCollection`.
-        // Use no-scope collection creation if available.
         final createMethod = e3inspectionsDatabase?.createCollection;
         if (createMethod != null) {
           // ignore: invalid_use_of_protected_member
-          await e3inspectionsDatabase?.createCollection(name);
-        } else {
-          // Fallback: call collection access again (may auto-create on some platforms)
+          await e3inspectionsDatabase?.createCollection(name, 'inventory');
         }
       } catch (e) {
-        debugPrint('Could not call createCollection for $name: $e');
+        debugPrint(
+          'Could not call createCollection for $name in inventory scope: $e',
+        );
       }
 
       // Try to read it again
-      final created = await e3inspectionsDatabase?.collection(name);
+      final created = await e3inspectionsDatabase?.collection(
+        name,
+        'inventory',
+      );
       if (created != null) return created;
 
       // As a last resort throw an informative error
-      throw StateError('Failed to obtain or create collection: $name');
+      throw StateError(
+        'Failed to obtain or create collection: $name in inventory scope',
+      );
     } catch (e) {
-      debugPrint('Error getting/creating collection $name: $e');
+      debugPrint(
+        'Error getting/creating collection $name in inventory scope: $e',
+      );
       rethrow;
     }
   }
