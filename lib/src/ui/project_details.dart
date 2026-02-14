@@ -267,14 +267,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           pageName,
         ),
       ).then((value) {
-        locations.remove(value);
         setState(() => {});
       });
     } else {
       Navigator.push(
         context,
         SubProjectDetailsPage.getRoute(id, name, userFullName, pageName),
-      ).then((value) => setState(() => {}));
+      ).then((value) {
+        setState(() => {});
+      });
     }
   }
 

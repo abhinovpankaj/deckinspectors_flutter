@@ -130,7 +130,7 @@ class LocationRepository {
           location.parentid,
         );
       } else {
-        await _projectRepository.deleteProjectChildren(
+        await _subprojectRepository.deleteSubProjectChildren(
           location.id as String,
           location.parentid,
         );

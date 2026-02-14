@@ -86,7 +86,9 @@ class _LocationPageState extends State<LocationPage> {
               automaticallyImplyLeading: false,
               leadingWidth: 120,
               leading: ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
                 icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
                 label: const Text(
                   maxLines: 2,
@@ -369,10 +371,7 @@ class _LocationPageState extends State<LocationPage> {
               //   sections[index].name as String,
               // );
             } else {
-              gotoDetails(
-                sections[index].id as String,
-                sections[index].name as String,
-              );
+              gotoDetails(sections[index].id, sections[index].name as String);
             }
           },
           child: Column(

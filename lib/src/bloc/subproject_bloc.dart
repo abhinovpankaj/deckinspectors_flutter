@@ -47,14 +47,7 @@ class SubProjectBloc extends Bloc<SubProjectEvent, SubProjectState> {
         event.fullUserName,
       );
       if (ok) {
-        // final reloaded = await subprojectRepository.getSubProject(
-        //   event.subProject.id ?? '',
-        // );
-        // if (reloaded != null) {
-        //   emit(SubProjectLoaded(reloaded));
-        // } else {
         emit(SubProjectSuccess());
-        //}
       } else {
         emit(const SubProjectFailure('Failed to save subproject'));
       }
@@ -71,12 +64,12 @@ class SubProjectBloc extends Bloc<SubProjectEvent, SubProjectState> {
     try {
       final res = await subprojectRepository.deleteSubProject(event.subProject);
       if (res == 'success') {
-        emit(SubProjectSuccess());
+        emit(SubProjectDeleteSuccess());
       } else {
-        emit(const SubProjectFailure('Failed to delete subproject'));
+        emit(const SubProjectDeleteFailure('Failed to delete subproject'));
       }
     } catch (e) {
-      emit(SubProjectFailure(e.toString()));
+      emit(SubProjectDeleteFailure(e.toString()));
     }
   }
 }

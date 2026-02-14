@@ -1,4 +1,5 @@
 // Base document class with common fields
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class CouchbaseDocument {
@@ -118,6 +119,80 @@ class Project extends CouchbaseDocument {
   }
 
   // no id on model level; repositories supply document ids
+}
+
+// Sub Project Document
+class SubProject extends CouchbaseDocument {
+  String? name;
+  String? description;
+  String parentid;
+  String? createdby;
+  String? createdat;
+  String? editedat;
+  String? lasteditedby;
+  String? url;
+  String type;
+  bool isInvasive;
+  List<String> assignedto = [];
+  List<Child> children = [];
+
+  SubProject({
+    this.name,
+    this.description,
+    required this.parentid,
+    this.createdby,
+    this.createdat,
+    this.editedat,
+    this.lasteditedby,
+    this.url,
+    this.type = '',
+    List<String>? assignedto,
+    List<Child>? children,
+    required this.isInvasive,
+  }) : assignedto = assignedto ?? [],
+       children = children ?? [];
+
+  @override
+  String get docType => 'SubProject';
+  @override
+  Map<String, dynamic> toDocument() => {
+    'docType': 'SubProject',
+    'name': name,
+    'url': url,
+    'description': description,
+    'parentid': parentid,
+    'createdby': createdby,
+    'createdat': createdat,
+    'editedat': editedat,
+    'lasteditedby': lasteditedby,
+    'assignedto': assignedto,
+    'type': type,
+    'isInvasive': isInvasive,
+    'children': children.map((c) => c.toMap()).toList(),
+  };
+
+  factory SubProject.fromDocument(Map<String, dynamic> doc, {String? id}) {
+    var subProject = SubProject(
+      name: doc['name'],
+      description: doc['description'],
+      parentid: doc['parentid'],
+      createdby: doc['createdby'],
+      createdat: doc['createdat'],
+      url: doc['url'],
+      type: doc['type'],
+      editedat: doc['editedat'],
+      lasteditedby: doc['lasteditedby'],
+      assignedto: List<String>.from(doc['assignedto'] ?? []),
+      children:
+          (doc['children'] as List<dynamic>?)
+              ?.map((c) => Child.fromMap(c as Map<String, dynamic>))
+              .toList() ??
+          [],
+      isInvasive: doc['isInvasive'] ?? false,
+    );
+    if (id != null) subProject.id = id;
+    return subProject;
+  }
 }
 
 // Location Document
@@ -589,80 +664,6 @@ class DynamicVisualSection extends CouchbaseDocument {
   }
 }
 
-// Sub Project Document
-class SubProject extends CouchbaseDocument {
-  String? name;
-  String? description;
-  String parentid;
-  String? createdby;
-  String? createdat;
-  String? editedat;
-  String? lasteditedby;
-  String? url;
-  String type;
-  bool isInvasive;
-  List<String> assignedto = [];
-  List<Child> children = [];
-
-  SubProject({
-    this.name,
-    this.description,
-    required this.parentid,
-    this.createdby,
-    this.createdat,
-    this.editedat,
-    this.lasteditedby,
-    this.url,
-    this.type = '',
-    required this.isInvasive,
-    List<String>? assignedto,
-    List<Child>? children,
-  });
-
-  @override
-  String get docType => 'SubProject';
-  @override
-  @override
-  Map<String, dynamic> toDocument() => {
-    'docType': 'SubProject',
-    'name': name,
-    'url': url,
-    'description': description,
-    'parentid': parentid,
-    'createdby': createdby,
-    'createdat': createdat,
-    'editedat': editedat,
-    'lasteditedby': lasteditedby,
-    'assignedto': assignedto,
-    'type': type,
-    'isInvasive': isInvasive,
-    'children': children.map((c) => c.toMap()).toList(),
-  };
-
-  factory SubProject.fromDocument(Map<String, dynamic> doc, {String? id}) {
-    var subProject = SubProject(
-      name: doc['name'],
-      description: doc['description'],
-      parentid: doc['parentid'],
-      createdby: doc['createdby'],
-      createdat: doc['createdat'],
-      url: doc['url'],
-      type: doc['type'],
-      editedat: doc['editedat'],
-      lasteditedby: doc['lasteditedby'],
-      assignedto: List<String>.from(doc['assignedto'] ?? []),
-      children:
-          (doc['children'] as List<dynamic>?)
-              ?.map((c) => Child.fromMap(c as Map<String, dynamic>))
-              .toList() ??
-          [],
-      isInvasive: doc['isInvasive'] ?? false,
-    );
-    if (id != null) subProject.id = id;
-    return subProject;
-  }
-}
-
 // Child (embedded) Document used by Project/SubProject
 class Child {
   String? id;
@@ -694,15 +695,21 @@ class Child {
   };
 
   factory Child.fromMap(Map<String, dynamic> map) {
-    return Child(
-      id: map['id'],
-      name: map['name'],
-      type: map['type'],
-      description: map['description'],
-      url: map['url'],
-      isInvasive: map['isInvasive'] ?? false,
-      sequenceNo: map['sequenceNo'],
-    );
+    try {
+      var child = Child(
+        id: map['id'],
+        name: map['name'],
+        type: map['type'],
+        description: map['description'],
+        url: map['url'],
+        isInvasive: map['isInvasive'] ?? false,
+        sequenceNo: map['sequenceNo'] ?? '0',
+      );
+      return child;
+    } catch (e) {
+      debugPrint('Error parsing Child from map: $e');
+      return Child();
+    }
   }
 }
 

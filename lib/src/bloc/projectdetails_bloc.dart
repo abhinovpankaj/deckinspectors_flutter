@@ -73,7 +73,7 @@ class ProjectDetailsBloc
             }
           });
         } else {
-          emit(const ProjectDetailsError('Failed to load project details'));
+          //emit(const ProjectDetailsError('Failed to load project details'));
         }
       } catch (e) {
         emit(const ProjectDetailsError('Failed to load project details'));

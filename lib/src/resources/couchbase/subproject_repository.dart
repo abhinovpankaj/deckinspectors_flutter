@@ -33,7 +33,10 @@ class SubprojectRepository {
         parentId,
       );
       if (parentDoc == null) return;
-      final project = Project.fromDocument(parentDoc.toPlainMap());
+      final project = Project.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
 
       project.children.removeWhere((c) => c.id == childId);
 
@@ -41,6 +44,26 @@ class SubprojectRepository {
       //notifyListeners();
     } catch (e) {
       debugPrint('Error deleting project child: $e');
+    }
+  }
+
+  Future<void> deleteSubProjectChildren(String id, String parentid) async {
+    try {
+      final parentDoc = await _databaseProvider.subProjectCollection.document(
+        parentid,
+      );
+      if (parentDoc == null) return;
+      final subProject = SubProject.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
+
+      subProject.children.removeWhere((c) => c.id == id);
+
+      await createOrUpdateSubProject(subProject);
+      //notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting subproject child: $e');
     }
   }
 

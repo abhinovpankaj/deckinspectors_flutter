@@ -29,3 +29,12 @@ class SubProjectFailure extends SubProjectState {
   @override
   List<Object?> get props => [error];
 }
+
+class SubProjectDeleteSuccess extends SubProjectState {}
+
+class SubProjectDeleteFailure extends SubProjectState {
+  final String error;
+  const SubProjectDeleteFailure(this.error);
+  @override
+  List<Object?> get props => [error];
+}

@@ -155,7 +155,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
             SnackBar(content: Text('$pageType deleted successfully.')),
           );
           Navigator.of(context)
-            ..pop()
+            ..pop(true)
             ..pop(currentLocation);
         } else if (state is LocationDeleteFailure) {
           ScaffoldMessenger.of(

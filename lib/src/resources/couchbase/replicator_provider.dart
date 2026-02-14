@@ -20,58 +20,62 @@ class ReplicatorProvider {
   //init - NOTE:  YOU MUST modify the replicator configuration prior to starting the replicator
   // or it will not function properly.
   Future<void> init() async {
-    debugPrint('${DateTime.now()} [ReplicatorProvider] info: starting init.');
-    var db = databaseProvider.e3inspectionsDatabase;
-    var user = usersBloc.getCurrentUser();
-    if (db != null && user != null) {
-      // Load certificate for App Services
-      var pem = await rootBundle.load('assets/syncinspectionsdata.pem');
+    try {
+      debugPrint('${DateTime.now()} [ReplicatorProvider] info: starting init.');
+      var db = databaseProvider.e3inspectionsDatabase;
+      var user = usersBloc.getCurrentUser();
+      if (db != null && user != null) {
+        // Load certificate for App Services
+        var pem = await rootBundle.load('assets/syncinspectionsdata.pem');
 
-      // Replicator endpoint
-      var url = Uri(
-        scheme: 'wss',
-        port: 4984,
-        host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
-        path: 'syncinspectionsdata',
-      );
-      var basicAuthenticator = BasicAuthenticator(
-        username: 'p5nadmin', //user.username,
-        password: 'Deck@123', //user.password,
-      );
-      var endPoint = UrlEndpoint(url);
+        // Replicator endpoint
+        var url = Uri(
+          scheme: 'wss',
+          port: 4984,
+          host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
+          path: 'syncinspectionsdata',
+        );
+        var basicAuthenticator = BasicAuthenticator(
+          username: 'p5nadmin', //user.username,
+          password: 'Deck@123', //user.password,
+        );
+        var endPoint = UrlEndpoint(url);
 
-      // Specify collections to replicate
+        // Specify collections to replicate
 
-      // Create ReplicatorConfiguration with required parameters
-      final config = ReplicatorConfiguration(
-        target: endPoint,
-        authenticator: basicAuthenticator,
-        continuous: true,
-        replicatorType: ReplicatorType.pushAndPull,
-        heartbeat: const Duration(seconds: 60),
-        pushFilter: companyFilter,
-        pullFilter: companyFilter,
-        //pinnedServerCertificate: pem.buffer.asUint8List(),
-      );
+        // Create ReplicatorConfiguration with required parameters
+        final config = ReplicatorConfiguration(
+          target: endPoint,
+          authenticator: basicAuthenticator,
+          continuous: true,
+          replicatorType: ReplicatorType.pushAndPull,
+          heartbeat: const Duration(seconds: 60),
+          pinnedServerCertificate: pem.buffer.asUint8List(),
+        );
 
-      // Add each collection to the configuration
-      final collectionNames = [
-        'Project',
-        'Location',
-        'SubProject',
-        'VisualSection',
-      ];
-      for (final name in collectionNames) {
-        final collection = await db.collection(name, 'inventory');
-        if (collection != null) {
-          config.addCollection(collection);
+        // Add each collection to the configuration
+        final collectionNames = [
+          'Project',
+          'Location',
+          'SubProject',
+          'VisualSection',
+        ];
+        for (final name in collectionNames) {
+          final collection = await db.collection(name, 'inventory');
+          if (collection != null) {
+            config.addCollection(collection);
+          }
+        }
+
+        _replicatorConfiguration = config;
+        if (_replicatorConfiguration != null) {
+          _replicator = await Replicator.createAsync(_replicatorConfiguration!);
         }
       }
-
-      _replicatorConfiguration = config;
-      if (_replicatorConfiguration != null) {
-        _replicator = await Replicator.createAsync(_replicatorConfiguration!);
-      }
+    } catch (e) {
+      debugPrint(
+        '${DateTime.now()} [ReplicatorProvider] exception: starting init.${e.toString()}',
+      );
     }
   }
 

@@ -139,9 +139,7 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           locationRepository: locationRepo,
         ),
       ).then((value) {
-        if (value == true) {
-          bloc.add(LoadSubProjectEvent(widget.id));
-        }
+        bloc.add(LoadSubProjectEvent(widget.id));
         setState(() {});
       });
     } else {
@@ -156,15 +154,14 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
           locationRepository: locationRepo,
         ),
       ).then((value) {
-        if (value == true) {
-          bloc.add(LoadSubProjectEvent(widget.id));
-        }
+        bloc.add(LoadSubProjectEvent(widget.id));
         setState(() {});
       });
     }
   }
 
   void gotoDetails(String id, String type, String pageName) {
+    final bloc = context.read<SubProjectBloc>();
     Navigator.push(
       context,
       LocationPage.getRoute(
@@ -177,7 +174,10 @@ class _SubProjectDetailsPageState extends State<SubProjectDetailsPage>
       // MaterialPageRoute(
       //     builder: (context) => LocationPage(
       //         id, currentBuilding.name as String, type, userFullName)),
-    ).then((value) => setState(() => {}));
+    ).then((value) {
+      bloc.add(LoadSubProjectEvent(widget.id));
+      setState(() => {});
+    });
   }
 
   @override

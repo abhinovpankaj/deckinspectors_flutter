@@ -95,6 +95,17 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Failed: ${state.error}')));
+        } else if (state is SubProjectDeleteSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('SubProject deleted successfully.')),
+          );
+          Navigator.of(context)
+            ..pop(true)
+            ..pop(currentBuilding);
+        } else if (state is SubProjectDeleteFailure) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error)));
         }
       },
       child: Scaffold(
