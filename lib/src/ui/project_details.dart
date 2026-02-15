@@ -362,7 +362,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
               buildings.sort((l1, l2) {
                 if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
                     return -1;
                   } else {
                     return 1;
@@ -374,7 +374,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
               locations.sort((l1, l2) {
                 if (l1!.sequenceNo != null && l2!.sequenceNo != null) {
-                  if (int.parse(l1.sequenceNo!) < int.parse(l2!.sequenceNo!)) {
+                  if (int.parse(l1.sequenceNo!) < int.parse(l2.sequenceNo!)) {
                     return -1;
                   } else {
                     return 1;

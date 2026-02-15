@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/dynamic_repository.dart';
 import 'dynamic_section_event.dart';
 import 'dynamic_section_state.dart';

@@ -26,14 +26,14 @@ class ReplicatorProvider {
       var user = usersBloc.getCurrentUser();
       if (db != null && user != null) {
         // Load certificate for App Services
-        var pem = await rootBundle.load('assets/syncinspectionsdata.pem');
-
+        var pem = await rootBundle.load('assets/syncinspectionsdata-qa.pem');
+        //wss://kksvdl6h3dascsw.apps.cloud.couchbase.com:4984/syncinspectionsdata-qa
         // Replicator endpoint
         var url = Uri(
           scheme: 'wss',
           port: 4984,
           host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
-          path: 'syncinspectionsdata',
+          path: 'syncinspectionsdata-qa',
         );
         var basicAuthenticator = BasicAuthenticator(
           username: 'p5nadmin', //user.username,
@@ -61,7 +61,7 @@ class ReplicatorProvider {
           'VisualSection',
         ];
         for (final name in collectionNames) {
-          final collection = await db.collection(name, 'inventory');
+          final collection = await db.collection(name, 'inventory-qa');
           if (collection != null) {
             config.addCollection(collection);
           }

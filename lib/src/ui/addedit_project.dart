@@ -225,21 +225,8 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           // After successful save, navigate to ProjectDetailsPage for the
           // saved project. The repository sets the `id` on the passed project
           // object, so `currentProject.id` should contain the document id.
-          final projId = currentProject.id ?? '';
+          //final projId = currentProject.id ?? '';
           try {
-            // if (projId.isNotEmpty) {
-            //   Navigator.pushReplacement(
-            //     context,
-            //     ProjectDetailsPage.getRoute(
-            //       projId,
-            //       userFullName,
-            //       false,
-            //       currentProject.name ?? '',
-            //     ),
-            //   );
-            // } else {
-            //   Navigator.pop(context, true);
-            // }
             Navigator.pop(context, true);
           } catch (_) {
             Navigator.pop(context, true);

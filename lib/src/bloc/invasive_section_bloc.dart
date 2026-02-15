@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/invasive_section_repository.dart';
 import 'invasive_section_event.dart';
 import 'invasive_section_state.dart';

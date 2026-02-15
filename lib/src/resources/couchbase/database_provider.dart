@@ -172,20 +172,20 @@ class DatabaseProvider {
         dbConfig,
       );
 
-      projectCollection = await _getOrCreateCollection('projects');
-      subProjectCollection = await _getOrCreateCollection('subProjects');
-      locationCollection = await _getOrCreateCollection('locations');
-      deckImageCollection = await _getOrCreateCollection('deckImages');
-      visualSectionCollection = await _getOrCreateCollection('visualSections');
-      formCollection = await _getOrCreateCollection('forms');
+      projectCollection = await _getOrCreateCollection('Project');
+      subProjectCollection = await _getOrCreateCollection('SubProject');
+      locationCollection = await _getOrCreateCollection('Location');
+      deckImageCollection = await _getOrCreateCollection('DeckImage');
+      visualSectionCollection = await _getOrCreateCollection('VisualSection');
+      formCollection = await _getOrCreateCollection('LocationForm');
       invasiveSectionCollection = await _getOrCreateCollection(
-        'invasiveSections',
+        'InvasiveSection',
       );
       dynamicSectionCollection = await _getOrCreateCollection(
-        'dynamicSections',
+        'DynamicVisualSection',
       );
       conclusiveSectionCollection = await _getOrCreateCollection(
-        'conclusiveSections',
+        'ConclusiveSection',
       );
 
       await _createDocumentTypeIndex();
@@ -316,7 +316,7 @@ extension on DatabaseProvider {
       // Try to get existing collection in 'inventory' scope
       final existing = await e3inspectionsDatabase?.collection(
         name,
-        'inventory',
+        'inventory-qa',
       );
       if (existing != null) return existing;
 
@@ -325,18 +325,18 @@ extension on DatabaseProvider {
         final createMethod = e3inspectionsDatabase?.createCollection;
         if (createMethod != null) {
           // ignore: invalid_use_of_protected_member
-          await e3inspectionsDatabase?.createCollection(name, 'inventory');
+          await e3inspectionsDatabase?.createCollection(name, 'inventory-qa');
         }
       } catch (e) {
         debugPrint(
-          'Could not call createCollection for $name in inventory scope: $e',
+          'Could not call createCollection for $name in inventory-qa scope: $e',
         );
       }
 
       // Try to read it again
       final created = await e3inspectionsDatabase?.collection(
         name,
-        'inventory',
+        'inventory-qa',
       );
       if (created != null) return created;
 

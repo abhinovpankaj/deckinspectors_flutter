@@ -19,19 +19,22 @@ class VisualSectionRepository {
   final AppSettings _appSettings;
 
   VisualSectionRepository(
-      this._databaseProvider,
-      this._locationRepository,
-      this._subprojectRepository,
-      this._imageRepository,
-      this._usersBloc,
-      this._appSettings);
+    this._databaseProvider,
+    this._locationRepository,
+    this._subprojectRepository,
+    this._imageRepository,
+    this._usersBloc,
+    this._appSettings,
+  );
   final String locationDocumentType = 'location';
   final String attributeDocumentType = 'documentType';
 
   Future<void> createVisualSection(VisualSection visualSection) async {
     try {
       final doc = MutableDocument.withId(
-          visualSection.id as String, visualSection.toDocument());
+        visualSection.id as String,
+        visualSection.toDocument(),
+      );
       await _databaseProvider.visualSectionCollection.saveDocument(doc);
     } catch (e) {
       debugPrint('Error creating visual section: $e');
@@ -68,9 +71,12 @@ class VisualSectionRepository {
     try {
       // remove from parent project children
       await _subprojectRepository.deleteProjectChildren(
-          visualSection.id as String, visualSection.parentid ?? '');
-      final doc = await _databaseProvider.visualSectionCollection
-          .document(visualSection.id as String);
+        visualSection.id as String,
+        visualSection.parentid,
+      );
+      final doc = await _databaseProvider.visualSectionCollection.document(
+        visualSection.id as String,
+      );
       if (doc != null) {
         await _databaseProvider.visualSectionCollection.deleteDocument(doc);
       }
@@ -81,8 +87,11 @@ class VisualSectionRepository {
     }
   }
 
-  bool addImagesUrl(VisualSection localVisualSection, List<String> localPaths,
-      List<String> onlinePaths) {
+  bool addImagesUrl(
+    VisualSection localVisualSection,
+    List<String> localPaths,
+    List<String> onlinePaths,
+  ) {
     try {
       for (int i = 0; i < localPaths.length; i++) {
         final image = DeckImage(
@@ -105,31 +114,34 @@ class VisualSectionRepository {
   }
 
   Future<bool> addupdateVisualSection(
-      VisualSection visualSection,
-      String name,
-      String concerns,
-      List<ElementModel> selectedExteriorelements,
-      List<ElementModel> selectedWaterproofingElements,
-      VisualReview? review,
-      ConditionalAssessment? assessment,
-      ExpectancyYears? eee,
-      ExpectancyYears? lbc,
-      ExpectancyYears? awe,
-      bool invasiveReviewRequired,
-      bool hasSignsOfLeak,
-      bool isNewSection,
-      String userFullName,
-      bool unitUnavailable) async {
+    VisualSection visualSection,
+    String name,
+    String concerns,
+    List<ElementModel> selectedExteriorelements,
+    List<ElementModel> selectedWaterproofingElements,
+    VisualReview? review,
+    ConditionalAssessment? assessment,
+    ExpectancyYears? eee,
+    ExpectancyYears? lbc,
+    ExpectancyYears? awe,
+    bool invasiveReviewRequired,
+    bool hasSignsOfLeak,
+    bool isNewSection,
+    String userFullName,
+    bool unitUnavailable,
+  ) async {
     try {
       visualSection.name = name;
       visualSection.unitUnavailable = unitUnavailable;
       visualSection.additionalconsiderations = concerns;
       visualSection.exteriorelements.clear();
-      visualSection.exteriorelements
-          .addAll(selectedExteriorelements.map((element) => element.name));
+      visualSection.exteriorelements.addAll(
+        selectedExteriorelements.map((element) => element.name),
+      );
       visualSection.waterproofingelements.clear();
-      visualSection.waterproofingelements
-          .addAll(selectedWaterproofingElements.map((element) => element.name));
+      visualSection.waterproofingelements.addAll(
+        selectedWaterproofingElements.map((element) => element.name),
+      );
 
       visualSection.visualreview = review == null ? "" : review.name;
       visualSection.conditionalassessment =
@@ -152,15 +164,16 @@ class VisualSectionRepository {
 
       // update parent with the section detail
       _locationRepository.updateLocationSection(
-          visualSection.parenttype,
-          visualSection.id as String,
-          visualSection.parentid,
-          visualSection.name,
-          visualSection.visualreview,
-          visualSection.visualsignsofleak,
-          visualSection.furtherinvasivereviewrequired,
-          visualSection.conditionalassessment,
-          visualSection.images.length);
+        visualSection.parenttype,
+        visualSection.id as String,
+        visualSection.parentid,
+        visualSection.name,
+        visualSection.visualreview,
+        visualSection.visualsignsofleak,
+        visualSection.furtherinvasivereviewrequired,
+        visualSection.conditionalassessment,
+        visualSection.images.length,
+      );
 
       final doc = MutableDocument.withId(
         visualSection.id as String,

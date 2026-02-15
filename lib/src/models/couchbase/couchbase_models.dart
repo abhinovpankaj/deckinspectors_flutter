@@ -507,7 +507,7 @@ class InvasiveSection extends CouchbaseDocument {
   @override
   @override
   Map<String, dynamic> toDocument() => {
-    'type': 'InvasiveSection',
+    'docType': 'InvasiveSection',
     'invasiveDescription': invasiveDescription,
     'parentid': parentid,
     'postinvasiverepairsrequired': postinvasiverepairsrequired,

@@ -13,7 +13,6 @@ import '../resources/couchbase/section_repository.dart';
 //import 'breadcrumb_navigation.dart';
 import 'addedit_location.dart';
 import 'cachedimage_widget.dart';
-import 'dynamic_section.dart';
 import 'section.dart';
 import 'showprojecttype_widget.dart';
 
