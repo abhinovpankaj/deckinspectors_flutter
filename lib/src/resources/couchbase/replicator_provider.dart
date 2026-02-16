@@ -59,6 +59,9 @@ class ReplicatorProvider {
           'Location',
           'SubProject',
           'VisualSection',
+          'ConclusiveSection',
+          'InvasiveSection',
+          'DynamicVisualSection',
         ];
         for (final name in collectionNames) {
           final collection = await db.collection(name, 'inventory-qa');
@@ -86,8 +89,8 @@ class ReplicatorProvider {
     if (doc.value('docType') == 'Project') {
       return doc.value('companyIdentifier') ==
               usersBloc.getCurrentUser()?.companyIdentifier &&
-          doc.value('assignedUsers') != null &&
-          (doc.value('assignedUsers') as List).contains(
+          doc.value('assignedto') != null &&
+          (doc.value('assignedto') as List).contains(
             usersBloc.getCurrentUser()?.username,
           );
     }
@@ -107,7 +110,6 @@ class ReplicatorProvider {
 
     var replicator = _replicator;
     if (replicator != null) {
-      // Add detailed status logging
       statusChangedToken = await replicator.addChangeListener((change) {
         final status = change.status;
         debugPrint('[Replicator Status] Activity: \\${status.activity}');

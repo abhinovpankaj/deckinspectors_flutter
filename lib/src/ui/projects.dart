@@ -277,7 +277,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                     0,
                                                   ),
                                               child: Text(
-                                                'Edited at:  ${projects[index].editedat != null ? getCustomFormattedDateTime(projects[index].editedat as String, 'MM/dd/yy hh:mm') : ''}',
+                                                'Edited at: ${projects[index].editedat != null ? getCustomFormattedDateTime(projects[index].editedat as String, 'MM/dd/yy hh:mm') : ''}',
                                                 textAlign: TextAlign.left,
                                                 style: const TextStyle(
                                                   color: Colors.black87,

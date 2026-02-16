@@ -63,8 +63,7 @@ class Project extends CouchbaseDocument {
   String get docType => 'Project';
   @override
   Map<String, dynamic> toDocument() => {
-    'documentType': 'project',
-    'type': 'Project',
+    'docType': 'Project',
     'name': name,
     'projecttype': projecttype,
     'description': description,
@@ -319,7 +318,7 @@ class VisualSection extends CouchbaseDocument {
 
   @override
   Map<String, dynamic> toDocument() => {
-    'type': 'VisualSection',
+    'docType': 'VisualSection',
     'name': name,
     'images': images,
     'exteriorelements': exteriorelements,
@@ -395,7 +394,7 @@ class DeckImage extends CouchbaseDocument {
   String get docType => 'DeckImage';
   @override
   Map<String, dynamic> toDocument() => {
-    'type': 'DeckImage',
+    'docType': 'DeckImage',
     'localUrl': localUrl,
     'remoteUrl': remoteUrl,
     'isuploaded': isuploaded,
@@ -471,6 +470,7 @@ class Question {
 
   Map<String, dynamic> toMap() => {
     'id': id,
+    'docType': 'Question',
     'question': question,
     'answerType': answerType,
     'options': options,

@@ -56,9 +56,8 @@ class ProjectRepository {
 
   ProjectRepository(this._databaseProvider, this._imageRepository);
 
-  final String projectDocumentType = 'project';
-  final String auditDocumentType = 'audit';
-  final String attributeDocumentType = 'documentType';
+  final String projectDocumentType = 'Project';
+  final String attributeDocumentType = 'docType';
   //add a method to fetch all projects
   //Future<List<Project>> fetchAllProjects() async {
   Future<AsyncListenStream<QueryChange<ResultSet>>?>? fetchAllProjects() async {
@@ -322,7 +321,7 @@ class ProjectRepository {
     try {
       final doc = await _databaseProvider.projectCollection.document(projectId);
       if (doc == null) return false;
-      final project = Project.fromDocument(doc.toPlainMap());
+      final project = Project.fromDocument(doc.toPlainMap(), id: doc.id);
       project.assignedto = assignees;
       await createOrUpdateProject(project);
       return true;
