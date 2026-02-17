@@ -88,10 +88,7 @@ class SubprojectRepository {
     try {
       final doc = await _databaseProvider.subProjectCollection.document(id);
       if (doc != null) {
-        final model = SubProject.fromDocument(doc.toPlainMap());
-
-        // set model id from document id
-        model.id = doc.id;
+        final model = SubProject.fromDocument(doc.toPlainMap(), id: doc.id);
         return model;
       }
       return null;
@@ -153,7 +150,10 @@ class SubprojectRepository {
         parentId,
       );
       if (parentDoc == null) return;
-      final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
+      final subProject = SubProject.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentDoc.id,
+      );
 
       subProject.isInvasive = isInvasive;
       final found = subProject.children.where((c) => c.id == childId);

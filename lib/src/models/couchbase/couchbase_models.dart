@@ -291,9 +291,9 @@ class VisualSection extends CouchbaseDocument {
 
   VisualSection({
     this.name,
-    images,
-    exteriorelements,
-    waterproofingelements,
+    List<String>? images,
+    List<String>? exteriorelements,
+    List<String>? waterproofingelements,
     this.additionalconsiderations,
     this.visualreview,
     this.visualsignsofleak = false,
@@ -309,9 +309,9 @@ class VisualSection extends CouchbaseDocument {
     this.awe = '',
     this.parenttype = '',
     this.unitUnavailable = false,
-  }) : images = [],
-       exteriorelements = [],
-       waterproofingelements = [];
+  }) : images = images ?? [],
+       exteriorelements = exteriorelements ?? [],
+       waterproofingelements = waterproofingelements ?? [];
 
   @override
   String get docType => 'VisualSection';

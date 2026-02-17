@@ -656,7 +656,7 @@ class _LocationPageState extends State<LocationPage> {
       ).then((value) {
         if (value == true) {
           Future.delayed(const Duration(milliseconds: 200), () {
-            bloc.add(LoadLocationEvent(locationId));
+            bloc.add(RefreshLocationEvent(locationId));
           });
         }
         setState(() {});

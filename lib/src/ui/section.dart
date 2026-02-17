@@ -695,10 +695,6 @@ class _SectionPageState extends State<SectionPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Form(
-        onChanged:
-            () => setState(() {
-              isFormUpdated = true;
-            }),
         key: _formKey,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
