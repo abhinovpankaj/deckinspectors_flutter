@@ -45,8 +45,7 @@ class LocationRepository {
     try {
       final doc = await _databaseProvider.locationCollection.document(id);
       if (doc == null) return null;
-      final model = Location.fromDocument(doc.toPlainMap());
-      model.id = doc.id;
+      final model = Location.fromDocument(doc.toPlainMap(), id: doc.id);
       return model;
     } catch (e) {
       debugPrint('Error fetching location by id: $e');
@@ -213,8 +212,9 @@ class LocationRepository {
     bool visualsignsofleak,
     bool furtherinvasivereviewrequired,
     String? conditionalassessment,
-    int length,
-  ) async {
+    int length, {
+    String? coverUrl,
+  }) async {
     //for singlelevel project
     if (parentType == 'project') {
       var doc = await _databaseProvider.projectCollection.document(parentid);
@@ -239,15 +239,22 @@ class LocationRepository {
             ),
           );
         } else {
-          var foundChild = found.first;
-          foundChild.name = name;
-          foundChild.visualreview = visualreview;
-          foundChild.visualsignsofleak = visualsignsofleak;
-          foundChild.conditionalassessment = conditionalassessment;
-          foundChild.furtherinvasivereviewrequired =
-              furtherinvasivereviewrequired;
-          foundChild.count = length;
-          foundChild.isInvasive = furtherinvasivereviewrequired;
+          final index = parentProject.sections.indexWhere((e) => e.id == id);
+          if (index != -1) {
+            parentProject.sections[index].name = name;
+            parentProject.sections[index].visualreview = visualreview;
+            parentProject.sections[index].visualsignsofleak = visualsignsofleak;
+            parentProject.sections[index].conditionalassessment =
+                conditionalassessment;
+            parentProject.sections[index].furtherinvasivereviewrequired =
+                furtherinvasivereviewrequired;
+            parentProject.sections[index].count = length;
+            parentProject.sections[index].isInvasive =
+                furtherinvasivereviewrequired;
+            if (coverUrl != null && coverUrl.isNotEmpty) {
+              parentProject.sections[index].coverUrl = coverUrl;
+            }
+          }
         }
         final updatedDoc = MutableDocument.withId(
           parentProject.id as String,
@@ -281,15 +288,23 @@ class LocationRepository {
             ),
           );
         } else {
-          var foundChild = found.first;
-          foundChild.name = name;
-          foundChild.visualreview = visualreview;
-          foundChild.visualsignsofleak = visualsignsofleak;
-          foundChild.conditionalassessment = conditionalassessment;
-          foundChild.furtherinvasivereviewrequired =
-              furtherinvasivereviewrequired;
-          foundChild.count = length;
-          foundChild.isInvasive = furtherinvasivereviewrequired;
+          final index = parentLocation.sections.indexWhere((e) => e.id == id);
+          if (index != -1) {
+            parentLocation.sections[index].name = name;
+            parentLocation.sections[index].visualreview = visualreview;
+            parentLocation.sections[index].visualsignsofleak =
+                visualsignsofleak;
+            parentLocation.sections[index].conditionalassessment =
+                conditionalassessment;
+            parentLocation.sections[index].furtherinvasivereviewrequired =
+                furtherinvasivereviewrequired;
+            parentLocation.sections[index].count = length;
+            parentLocation.sections[index].isInvasive =
+                furtherinvasivereviewrequired;
+            if (coverUrl != null && coverUrl.isNotEmpty) {
+              parentLocation.sections[index].coverUrl = coverUrl;
+            }
+          }
         }
         //set invasive property of location.
         parentLocation.isInvasive = parentLocation.sections.any(
@@ -397,7 +412,10 @@ class LocationRepository {
       if (parentType == 'project') {
         var doc = await _databaseProvider.projectCollection.document(parentid);
         if (doc != null) {
-          final parentProject = Project.fromDocument(doc.toPlainMap());
+          final parentProject = Project.fromDocument(
+            doc.toPlainMap(),
+            id: doc.id,
+          );
           var found = parentProject.sections.where(
             (element) => element.id == id,
           );
@@ -417,7 +435,10 @@ class LocationRepository {
       } else {
         var doc = await _databaseProvider.locationCollection.document(parentid);
         if (doc != null) {
-          final parentLocation = Location.fromDocument(doc.toPlainMap());
+          final parentLocation = Location.fromDocument(
+            doc.toPlainMap(),
+            id: doc.id,
+          );
           var found = parentLocation.sections.where(
             (element) => element.id == id,
           );

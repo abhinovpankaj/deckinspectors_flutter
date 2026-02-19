@@ -119,6 +119,20 @@ class SectionRepository {
         localVisualSection.toDocument(),
       );
       _databaseProvider.visualSectionCollection.saveDocument(doc);
+
+      // Update coverUrl on the parent section with the first remote image
+      final newCoverUrl =
+          localVisualSection.images.isNotEmpty
+              ? localVisualSection.images.last
+              : '';
+      _locationRepository.updateImageCount(
+        localVisualSection.parenttype,
+        localVisualSection.id as String,
+        localVisualSection.parentid,
+        localVisualSection.images.length,
+        newCoverUrl,
+      );
+
       return true;
     } catch (e) {
       debugPrint('Error adding images url: $e');
@@ -129,6 +143,7 @@ class SectionRepository {
   Future<bool> removeImageUrl(VisualSection section, String url) async {
     try {
       section.images.remove(url);
+      final newCoverUrl = section.images.isNotEmpty ? section.images.last : '';
       _locationRepository.updateLocationSection(
         section.parenttype,
         section.id as String,
@@ -139,6 +154,7 @@ class SectionRepository {
         section.furtherinvasivereviewrequired,
         section.conditionalassessment,
         section.images.length,
+        coverUrl: newCoverUrl,
       );
 
       final doc = MutableDocument.withId(
@@ -203,7 +219,9 @@ class SectionRepository {
       visualSection.editedat = DateTime.now().toString();
 
       // update parent with the section detail
-      _locationRepository.updateLocationSection(
+      final coverUrl =
+          visualSection.images.isNotEmpty ? visualSection.images.first : null;
+      await _locationRepository.updateLocationSection(
         visualSection.parenttype,
         visualSection.id as String,
         visualSection.parentid,
@@ -213,6 +231,7 @@ class SectionRepository {
         visualSection.furtherinvasivereviewrequired,
         visualSection.conditionalassessment,
         visualSection.images.length,
+        coverUrl: coverUrl,
       );
 
       final doc = MutableDocument.withId(

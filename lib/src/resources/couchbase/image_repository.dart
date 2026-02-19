@@ -84,7 +84,8 @@ class ImageRepository {
       final rows = await result.allResults();
       if (rows.isEmpty) return null;
 
-      final data = rows.first['DeckImage'] as Map<String, dynamic>?;
+      final row = rows.first.toPlainMap();
+      final data = row['DeckImage'] as Map<String, dynamic>?;
       return data?['localUrl'] as String?;
     } catch (e) {
       debugPrint('Error getting local path: $e');

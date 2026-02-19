@@ -155,7 +155,6 @@ class SubprojectRepository {
         id: parentDoc.id,
       );
 
-      subProject.isInvasive = isInvasive;
       final found = subProject.children.where((c) => c.id == childId);
       if (found.isEmpty) {
         subProject.children.add(
@@ -169,11 +168,16 @@ class SubprojectRepository {
           ),
         );
       } else {
-        final foundChild = found.first;
-        foundChild.name = name;
-        foundChild.description = description;
-        foundChild.isInvasive = isInvasive;
+        final index = subProject.children.indexWhere((c) => c.id == childId);
+        if (index != -1) {
+          subProject.children[index].name = name;
+          subProject.children[index].description = description;
+          subProject.children[index].type = type;
+          subProject.children[index].isInvasive = isInvasive;
+        }
       }
+      // Recompute subProject isInvasive from all children
+      subProject.isInvasive = subProject.children.any((c) => c.isInvasive);
 
       await createOrUpdateSubProject(subProject);
       //notifyListeners();

@@ -217,7 +217,6 @@ class ProjectRepository {
       );
       debugPrint('Existing children count: ${project.children.length}');
 
-      project.isInvasive = isInvasive;
       final found = project.children.where((c) => c.id == childId);
       if (found.isEmpty) {
         project.children.add(
@@ -232,11 +231,16 @@ class ProjectRepository {
         );
         debugPrint('Added child $childId to project $parentId');
       } else {
-        final foundChild = found.first;
-        foundChild.name = name;
-        foundChild.description = description;
-        foundChild.isInvasive = isInvasive;
+        final index = project.children.indexWhere((c) => c.id == childId);
+        if (index != -1) {
+          project.children[index].name = name;
+          project.children[index].description = description;
+          project.children[index].type = type;
+          project.children[index].isInvasive = isInvasive;
+        }
       }
+      // Recompute project isInvasive from all children
+      project.isInvasive = project.children.any((c) => c.isInvasive);
 
       await createOrUpdateProject(project);
       debugPrint('Project $parentId children now: ${project.children.length}');

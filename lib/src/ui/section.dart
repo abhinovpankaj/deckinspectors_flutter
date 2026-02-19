@@ -509,7 +509,7 @@ class _SectionPageState extends State<SectionPage> {
     }
     capturedImages = [];
     if (currentVisualSection.images.isNotEmpty) {
-      if (appSettings.activeConnection) {
+      if (!appSettings.isAppOfflineMode) {
         capturedImages.addAll(currentVisualSection.images);
       } else {
         for (var imgpath in currentVisualSection.images) {
