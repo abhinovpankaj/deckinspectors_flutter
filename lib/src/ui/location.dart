@@ -652,6 +652,11 @@ class _LocationPageState extends State<LocationPage> {
           sectionRepository: sectionRepo,
           locationRepository: locationRepo,
           imageRepository: imageRepo,
+          onUploadComplete: () {
+            if (mounted) {
+              bloc.add(RefreshLocationEvent(locationId));
+            }
+          },
         ),
       ).then((value) {
         if (value == true) {
@@ -704,6 +709,11 @@ class _LocationPageState extends State<LocationPage> {
         sectionRepository: sectionRepo,
         locationRepository: locationRepo,
         imageRepository: imageRepo,
+        onUploadComplete: () {
+          if (mounted) {
+            bloc.add(LoadLocationEvent(locationId));
+          }
+        },
       ),
       //:
       // MaterialPageRoute(

@@ -42,6 +42,7 @@ class SectionPage extends StatefulWidget {
   final String parentId;
   final String parentName;
   final bool isNewSection;
+  final VoidCallback? onUploadComplete;
   const SectionPage(
     this.sectionId,
     this.parentId,
@@ -49,6 +50,7 @@ class SectionPage extends StatefulWidget {
     this.parentType,
     this.parentName,
     this.isNewSection, {
+    this.onUploadComplete,
     super.key,
   });
   //VisualSection currentSection;
@@ -63,6 +65,7 @@ class SectionPage extends StatefulWidget {
     required SectionRepository sectionRepository,
     required LocationRepository locationRepository,
     required ImageRepository imageRepository,
+    VoidCallback? onUploadComplete,
   }) => MaterialPageRoute(
     settings: RouteSettings(name: pageName),
     builder:
@@ -91,6 +94,7 @@ class SectionPage extends StatefulWidget {
               parentType,
               parentName,
               isNewSection,
+              onUploadComplete: onUploadComplete,
             ),
           ),
         ),
@@ -199,11 +203,12 @@ class _SectionPageState extends State<SectionPage> {
                       );
                     }
 
-                    sectionRepository.addImagesUrl(
+                    await sectionRepository.addImagesUrl(
                       currentVisualSection,
                       imagesToUpload,
                       urls,
                     );
+                    widget.onUploadComplete?.call();
                   });
             }
           }

@@ -87,11 +87,11 @@ class SectionRepository {
     }
   }
 
-  bool addImagesUrl(
+  Future<bool> addImagesUrl(
     VisualSection localVisualSection,
     List<String> localPaths,
     List<String> onlinePaths,
-  ) {
+  ) async {
     try {
       for (int i = 0; i < localPaths.length; i++) {
         final image = DeckImage(
@@ -125,7 +125,7 @@ class SectionRepository {
           localVisualSection.images.isNotEmpty
               ? localVisualSection.images.last
               : '';
-      _locationRepository.updateImageCount(
+      await _locationRepository.updateImageCount(
         localVisualSection.parenttype,
         localVisualSection.id as String,
         localVisualSection.parentid,
