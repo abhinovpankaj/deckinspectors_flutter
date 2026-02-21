@@ -248,16 +248,18 @@ class SectionRepository {
   }
 
   Future<InvasiveSection> getNewInvasiveSection(String sectionId) async {
-    return InvasiveSection(
+    final section = InvasiveSection(
       parentid: sectionId,
       invasiveDescription: "",
       postinvasiverepairsrequired: false,
       invasiveimages: const [],
     );
+    section.id = CouchbaseDocument.generateId();
+    return section;
   }
 
   Future<ConclusiveSection> getNewConclusiveSection(String sectionId) async {
-    return ConclusiveSection(
+    final section = ConclusiveSection(
       parentid: sectionId,
       conclusiveconsiderations: "",
       eeeconclusive: "",
@@ -267,6 +269,8 @@ class SectionRepository {
       invasiverepairsinspectedandcompleted: false,
       conclusiveimages: const [],
     );
+    section.id = CouchbaseDocument.generateId();
+    return section;
   }
 
   Future<bool> addInvasiveImagesUrl(
@@ -354,8 +358,13 @@ class SectionRepository {
       if (results.isEmpty) {
         return await getNewInvasiveSection(sectionId);
       }
-      final model = InvasiveSection.fromDocument(results.first.toPlainMap());
-
+      final rowMap = results.first.toPlainMap();
+      final data = (rowMap['InvasiveSection'] as Map<String, dynamic>?) ?? rowMap;
+      final model = InvasiveSection.fromDocument(data);
+      
+      if (model.id == null || model.id!.isEmpty) {
+        model.id = CouchbaseDocument.generateId();
+      }
       return model;
     } catch (e) {
       debugPrint('Error fetching invasive section: $e');
@@ -382,8 +391,12 @@ class SectionRepository {
       if (results.isEmpty) {
         return await getNewConclusiveSection(sectionId);
       }
-      final model = ConclusiveSection.fromDocument(results.first.toPlainMap());
-      //model.id = results.first.id;
+      final rowMap = results.first.toPlainMap();
+      final data = (rowMap['ConclusiveSection'] as Map<String, dynamic>?) ?? rowMap;
+      final model = ConclusiveSection.fromDocument(data);
+      if (model.id == null || model.id!.isEmpty) {
+        model.id = CouchbaseDocument.generateId();
+      }
       return model;
     } catch (e) {
       debugPrint('Error fetching conclusive section: $e');

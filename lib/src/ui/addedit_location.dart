@@ -1,10 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
+import '../bloc/images_bloc.dart';
 import '../bloc/location_bloc.dart';
 import '../bloc/location_event.dart';
 import '../bloc/location_state.dart';
 import '../models/couchbase/couchbase_models.dart';
+import '../models/success_response.dart';
 import '../resources/couchbase/location_repository.dart';
 import 'cachedimage_widget.dart';
 import 'capture_image.dart';
@@ -62,7 +64,6 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
     super.dispose();
   }
 
-  bool showAssetPic = true;
   @override
   void initState() {
     currentLocation = widget.currentLocation;
@@ -80,18 +81,15 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
     if (!widget.isNewLocation) {
       pageTitle = 'Edit $pageType';
       isNewLocation = false;
-      showAssetPic = false;
       _nameController.text = currentLocation.name as String;
       _descriptionController.text = currentLocation.description as String;
-      //currentLocation.url ??= "/assets/images/icon.png";
     } else {
       pageTitle = 'Add $pageType';
     }
-    if (currentLocation.url != null) {
-      imageURL = currentLocation.url as String;
+    if (currentLocation.url != null && currentLocation.url!.isNotEmpty) {
+      imageURL = currentLocation.url!;
     }
     prevPagename = widget.prevPageName;
-    //initSpeech();
   }
 
   late Location currentLocation;
@@ -103,25 +101,51 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
 
-  void saveWithBloc(BuildContext context) {
+  Future<void> save(BuildContext context) async {
     FocusScope.of(context).unfocus();
-    if (_formKey.currentState!.validate()) {
-      final name = _nameController.text;
-      final description = _descriptionController.text;
-      // Update currentLocation with new values
-      currentLocation.name = name;
-      currentLocation.description = description;
+    if (!_formKey.currentState!.validate()) return;
 
-      context.read<LocationBloc>().add(
-        SaveLocationEvent(
-          location: currentLocation,
-          name: name,
-          isNew: isNewLocation,
-          fullUserName: fullUserName,
-          description: description,
-        ),
+    final name = _nameController.text;
+    final description = _descriptionController.text;
+    currentLocation.name = name;
+    currentLocation.description = description;
+
+    // Upload image if a new local file was captured
+    if (imageURL.isNotEmpty &&
+        !imageURL.startsWith('assets/') &&
+        imageURL != (currentLocation.url ?? '')) {
+      final Object result = await imagesBloc.uploadImage(
+        imageURL,
+        currentLocation.name ?? '',
+        fullUserName,
+        currentLocation.id.toString(),
+        '',
+        'location',
       );
+      if (result is ImageResponse) {
+        // Save a local copy to the gallery if available
+        if (result.originalPath != null && result.originalPath!.isNotEmpty) {
+          try {
+            await GallerySaver.saveImage(result.originalPath as String);
+          } catch (_) {}
+        }
+        // Prefer the remote URL; fall back to original path or local path
+        imageURL = result.url ?? result.originalPath ?? imageURL;
+        currentLocation.url = imageURL;
+      }
     }
+
+    if (!context.mounted) return;
+    context.read<LocationBloc>().add(
+      SaveLocationEvent(
+        location: currentLocation,
+        name: name,
+        isNew: isNewLocation,
+        fullUserName: fullUserName,
+        description: description,
+        imageURL: imageURL,
+      ),
+    );
   }
 
   @override
@@ -187,7 +211,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
           actions: [
             InkWell(
               onTap: () {
-                saveWithBloc(context);
+                save(context);
               },
               child: const Chip(
                 avatar: Icon(Icons.save_outlined, color: Colors.black),
@@ -242,7 +266,6 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                         elevation: 0,
                       ),
                       onPressed: () async {
-                        showAssetPic = false;
                         var xfile = await captureImage(context);
                         if (xfile != null) {
                           setState(() {
@@ -266,7 +289,6 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                         elevation: 4,
                         child: GestureDetector(
                           onTap: () async {
-                            showAssetPic = false;
                             var xfile = await captureImage(context);
                             if (xfile != null) {
                               setState(() {
@@ -285,20 +307,13 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                               ],
                             ),
                             child:
-                                showAssetPic
-                                    ? currentLocation.url == ""
-                                        ? Image.asset(
-                                          "assets/images/icon.png",
-                                          fit: BoxFit.fill,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
-                                        : Image.file(
-                                          File(imageURL),
-                                          fit: BoxFit.fill,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
+                                imageURL == 'assets/images/icon.png'
+                                    ? Image.asset(
+                                      "assets/images/icon.png",
+                                      fit: BoxFit.fill,
+                                      width: double.infinity,
+                                      height: 250,
+                                    )
                                     : cachedNetworkImage(imageURL),
                           ),
                         ),

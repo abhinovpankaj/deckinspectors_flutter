@@ -51,6 +51,14 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
         event.isNew,
       );
       if (ok) {
+        // Persist the image URL and update the parent child reference
+        if (event.imageURL.isNotEmpty &&
+            !event.imageURL.startsWith('assets/')) {
+          await locationRepository.updateLocationUrl(
+            event.location,
+            event.imageURL,
+          );
+        }
         emit(LocationSaveSuccess());
       } else {
         emit(const LocationSaveFailure('Failed to save location'));

@@ -12,6 +12,7 @@ import 'resources/couchbase/section_repository.dart';
 import 'bloc/users_bloc.dart';
 import 'bloc/settings_bloc.dart';
 import 'resources/repository.dart';
+import 'services/image_sync_service.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -29,8 +30,12 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   void initState() {
-    //NotificationController.startListeningNotificationEvents();
     super.initState();
+    // When connectivity is restored, retry any images saved locally while offline.
+    // ImageSyncService uses the DatabaseProvider singleton internally.
+    appSettings.onConnectivityRestored = () {
+      ImageSyncService().retryPendingUploads();
+    };
   }
 
   @override

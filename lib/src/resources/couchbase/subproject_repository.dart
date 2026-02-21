@@ -204,7 +204,10 @@ class SubprojectRepository {
         parentId,
       );
       if (parentDoc == null) return;
-      final subProject = SubProject.fromDocument(parentDoc.toPlainMap());
+      final subProject = SubProject.fromDocument(
+        parentDoc.toPlainMap(),
+        id: parentId,
+      );
       final found = subProject.children.where((c) => c.id == childId);
       if (found.isNotEmpty) {
         final child = found.first;

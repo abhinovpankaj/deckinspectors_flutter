@@ -7,6 +7,7 @@ import '../app.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../resources/couchbase/couchbase_services.dart';
+import '../resources/couchbase/database_provider.dart';
 import 'login.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -394,6 +395,8 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     }
     appSettings.isAppOfflineMode = !isSyncOn;
+    // Keep DatabaseProvider in sync so CBL repos see the change immediately
+    DatabaseProvider.offlineModeOn = !isSyncOn;
     await prefs.setString('appSync', isSyncOn.toString());
   }
 }

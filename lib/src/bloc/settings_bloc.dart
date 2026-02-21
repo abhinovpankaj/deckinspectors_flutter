@@ -45,12 +45,23 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {
     connectionStatus = result;
-    //start the sync only on wifi .
-    activeConnection = connectionStatus.contains(ConnectivityResult.wifi);
+    // Accept WiFi, mobile data, and ethernet — not just WiFi
+    activeConnection = connectionStatus.any(
+      (r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet,
+    );
     if (activeConnection) {
       notifyListeners();
+      // Trigger retry of any images that were saved locally while offline
+      onConnectivityRestored?.call();
     }
   }
+
+  /// Callback invoked when the device comes back online.
+  /// Register this in app.dart to retry pending image uploads.
+  VoidCallback? onConnectivityRestored;
 }
 
 enum ImageQuality { high, medium, low }

@@ -27,6 +27,7 @@ class SaveLocationEvent extends LocationEvent {
   final String fullUserName;
   final String description;
   final String name;
+  final String imageURL;
 
   const SaveLocationEvent({
     required this.location,
@@ -34,10 +35,18 @@ class SaveLocationEvent extends LocationEvent {
     required this.name,
     required this.fullUserName,
     required this.description,
+    required this.imageURL,
   });
 
   @override
-  List<Object?> get props => [location, isNew, fullUserName, description, name];
+  List<Object?> get props => [
+    location,
+    isNew,
+    fullUserName,
+    description,
+    name,
+    imageURL,
+  ];
 }
 
 class DeleteLocationEvent extends LocationEvent {

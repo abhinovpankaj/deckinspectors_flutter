@@ -21,11 +21,24 @@ class SaveSubProjectEvent extends SubProjectEvent {
   final String description;
   final bool isNewBuilding;
   final String fullUserName;
-  const SaveSubProjectEvent(this.subProject, this.name, this.description,
-      this.isNewBuilding, this.fullUserName);
+  final String imageURL;
+  const SaveSubProjectEvent(
+    this.subProject,
+    this.name,
+    this.description,
+    this.isNewBuilding,
+    this.fullUserName,
+    this.imageURL,
+  );
   @override
-  List<Object?> get props =>
-      [subProject, name, description, isNewBuilding, fullUserName];
+  List<Object?> get props => [
+    subProject,
+    name,
+    description,
+    isNewBuilding,
+    fullUserName,
+    imageURL,
+  ];
 }
 
 class DeleteSubProjectEvent extends SubProjectEvent {

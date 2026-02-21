@@ -1,11 +1,12 @@
-import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:flutter/material.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
+import '../bloc/images_bloc.dart';
 import '../bloc/subproject_bloc.dart';
 import '../bloc/subproject_event.dart';
 import '../bloc/subproject_state.dart';
 import '../models/couchbase/couchbase_models.dart';
+import '../models/success_response.dart';
 import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import '../resources/couchbase/subproject_repository.dart';
@@ -49,7 +50,6 @@ class AddEditSubProjectPage extends StatefulWidget {
 class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
   late String fullUserName;
   final TextEditingController _nameController = TextEditingController(text: '');
-  bool showAssetPic = true;
   final TextEditingController _descriptionController = TextEditingController(
     text: '',
   );
@@ -63,7 +63,6 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
     isNewBuilding = widget.isNewBuilding;
     if (!widget.isNewBuilding) {
       pageTitle = 'Edit Building';
-      showAssetPic = false;
       _nameController.text = currentBuilding.name as String;
       _descriptionController.text = currentBuilding.description as String;
       //currentBuilding.url ??= "/assets/images/icon.png";
@@ -82,6 +81,46 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
   String name = "";
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
+
+  Future<void> save(BuildContext context) async {
+    // Upload image if a new local file was captured
+    if (imageURL.isNotEmpty &&
+        !imageURL.startsWith('assets/') &&
+        imageURL != (currentBuilding.url ?? '')) {
+      final Object result = await imagesBloc.uploadImage(
+        imageURL,
+        currentBuilding.name ?? '',
+        fullUserName,
+        currentBuilding.id.toString(),
+        '',
+        'subProject',
+      );
+      if (result is ImageResponse) {
+        // Save a local copy to the gallery if available
+        if (result.originalPath != null && result.originalPath!.isNotEmpty) {
+          try {
+            await GallerySaver.saveImage(result.originalPath as String);
+          } catch (_) {}
+        }
+        // Prefer the remote URL; fall back to original path or local path
+        imageURL = result.url ?? result.originalPath ?? imageURL;
+        currentBuilding.url = imageURL;
+      }
+    }
+
+    if (!context.mounted) return;
+    context.read<SubProjectBloc>().add(
+      SaveSubProjectEvent(
+        currentBuilding,
+        _nameController.text,
+        _descriptionController.text,
+        isNewBuilding,
+        fullUserName,
+        imageURL,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<SubProjectBloc, SubProjectState>(
@@ -131,18 +170,7 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
           elevation: 0,
           actions: [
             InkWell(
-              onTap: () {
-                final updatedSubProject = currentBuilding;
-                context.read<SubProjectBloc>().add(
-                  SaveSubProjectEvent(
-                    updatedSubProject,
-                    _nameController.text,
-                    _descriptionController.text,
-                    isNewBuilding,
-                    fullUserName,
-                  ),
-                );
-              },
+              onTap: () => save(context),
               child: const Chip(
                 avatar: Icon(Icons.save_outlined, color: Colors.black),
                 labelPadding: EdgeInsets.all(2),
@@ -202,7 +230,6 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
                         elevation: 0,
                       ),
                       onPressed: () async {
-                        showAssetPic = false;
                         //add logic to open camera.
                         var xfile = await captureImage(context);
                         if (xfile != null) {
@@ -227,7 +254,6 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
                         elevation: 8,
                         child: GestureDetector(
                           onTap: () async {
-                            showAssetPic = false;
                             //add logic to open camera.
                             var xfile = await captureImage(context);
                             if (xfile != null) {
@@ -247,20 +273,13 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
                               ],
                             ),
                             child:
-                                showAssetPic
-                                    ? currentBuilding.url == ""
-                                        ? Image.asset(
-                                          "assets/images/icon.png",
-                                          fit: BoxFit.fill,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
-                                        : Image.file(
-                                          File(imageURL),
-                                          fit: BoxFit.fill,
-                                          width: double.infinity,
-                                          height: 250,
-                                        )
+                                imageURL == 'assets/images/icon.png'
+                                    ? Image.asset(
+                                      "assets/images/icon.png",
+                                      fit: BoxFit.fill,
+                                      width: double.infinity,
+                                      height: 250,
+                                    )
                                     : cachedNetworkImage(imageURL),
                           ),
                         ),

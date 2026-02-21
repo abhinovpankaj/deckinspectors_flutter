@@ -508,6 +508,7 @@ class InvasiveSection extends CouchbaseDocument {
   @override
   Map<String, dynamic> toDocument() => {
     'docType': 'InvasiveSection',
+    'id': id,
     'invasiveDescription': invasiveDescription,
     'parentid': parentid,
     'postinvasiverepairsrequired': postinvasiverepairsrequired,
@@ -520,7 +521,7 @@ class InvasiveSection extends CouchbaseDocument {
       parentid: doc['parentid'],
       postinvasiverepairsrequired: doc['postinvasiverepairsrequired'] ?? false,
       invasiveimages: List<String>.from(doc['invasiveimages'] ?? []),
-    );
+    )..id = doc['id'];
   }
 }
 
@@ -552,6 +553,7 @@ class ConclusiveSection extends CouchbaseDocument {
   @override
   Map<String, dynamic> toDocument() => {
     'docType': 'ConclusiveSection',
+    'id': id,
     'conclusiveconsiderations': conclusiveconsiderations,
     'eeeconclusive': eeeconclusive,
     'lbcconclusive': lbcconclusive,
@@ -574,7 +576,7 @@ class ConclusiveSection extends CouchbaseDocument {
       invasiverepairsinspectedandcompleted:
           doc['invasiverepairsinspectedandcompleted'] ?? false,
       conclusiveimages: List<String>.from(doc['conclusiveimages'] ?? []),
-    );
+    )..id = doc['id'];
   }
 }
 

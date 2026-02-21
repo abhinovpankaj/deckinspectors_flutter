@@ -35,7 +35,7 @@ class DynamicRepository {
       final doc = await _databaseProvider.dynamicSectionCollection.document(id);
       if (doc != null) {
         final model = DynamicVisualSection.fromDocument(doc.toPlainMap());
-
+        model.id = doc.id;
         return model;
       }
       return null;

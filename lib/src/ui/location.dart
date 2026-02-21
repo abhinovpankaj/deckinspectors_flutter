@@ -13,6 +13,7 @@ import '../resources/couchbase/section_repository.dart';
 //import 'breadcrumb_navigation.dart';
 import 'addedit_location.dart';
 import 'cachedimage_widget.dart';
+import 'invasivesection.dart';
 import 'section.dart';
 import 'showprojecttype_widget.dart';
 
@@ -364,11 +365,11 @@ class _LocationPageState extends State<LocationPage> {
         child: InkWell(
           onTap: () {
             if (appSettings.isInvasiveMode) {
-              //commented for now
-              // gotoInvasiveDetails(
-              //   sections[index].id as String,
-              //   sections[index].name as String,
-              // );
+              
+              gotoInvasiveDetails(
+                sections[index].id as String,
+                sections[index].name as String,
+              );
             } else {
               gotoDetails(sections[index].id, sections[index].name as String);
             }
@@ -768,24 +769,29 @@ class _LocationPageState extends State<LocationPage> {
     });
   }
 
-  // void gotoInvasiveDetails(String id, String sectionName) {
-  //   Navigator.push(
-  //           context,
-  //           InvasiveSectionPage.getRoute(
-  //               id,
-  //               currentLocation.id,
-  //               userFullName,
-  //               locationType,
-  //               currentLocation.name as String,
-  //               false,
-  //               sectionName))
-  //       .then((value) {
-  //     if (!mounted) {
-  //       return;
-  //     }
-  //     setState(
-  //       () {},
-  //     );
-  //   });
-  // }
+  void gotoInvasiveDetails(String id, String sectionName) {
+    final sectionRepo = RepositoryProvider.of<SectionRepository>(context);
+    final imageRepo = RepositoryProvider.of<ImageRepository>(context);
+    Navigator.push(
+      context,
+      InvasiveSectionPage.getRoute(
+        id,
+        currentLocation.id as String,
+        userFullName,
+        locationType,
+        currentLocation.name as String,
+        false,
+        sectionName,
+        sectionRepository: sectionRepo,
+        imageRepository: imageRepo,
+      ),
+    ).then((value) {
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () {},
+      );
+    });
+  }
 }

@@ -47,6 +47,14 @@ class SubProjectBloc extends Bloc<SubProjectEvent, SubProjectState> {
         event.fullUserName,
       );
       if (ok) {
+        // Upload and persist the image URL when a new local image was captured
+        if (event.imageURL.isNotEmpty &&
+            !event.imageURL.startsWith('assets/')) {
+          await subprojectRepository.updateSubProjectUrl(
+            event.subProject,
+            event.imageURL,
+          );
+        }
         emit(SubProjectSuccess());
       } else {
         emit(const SubProjectFailure('Failed to save subproject'));
