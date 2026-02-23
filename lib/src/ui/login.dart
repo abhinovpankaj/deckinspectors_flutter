@@ -15,6 +15,7 @@ import '../resources/couchbase/couchbase_services.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../models/users_response.dart';
 import '../resources/couchbase/replicator_provider.dart';
+import '../services/image_sync_service.dart';
 import 'home.dart';
 
 class LoginPage extends StatefulWidget {
@@ -178,6 +179,10 @@ class _LoginPageState extends State<LoginPage> {
                 debugPrint('Replicated docs: \\${doc.documents.length}');
               },
             );
+            // When online, upload any images that were saved locally (e.g. from a previous offline session).
+            if (appSettings.activeConnection && !DatabaseProvider.offlineModeOn) {
+              ImageSyncService().retryPendingUploads();
+            }
           }
         } catch (e) {
           debugPrint('Error initializing DB after login: $e');

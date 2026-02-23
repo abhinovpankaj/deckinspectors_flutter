@@ -1,5 +1,3 @@
-import 'package:async/async.dart';
-
 import '../resources/repository.dart';
 
 class ImagesBloc {
@@ -28,19 +26,13 @@ class ImagesBloc {
       String id,
       String parentType,
       String entityName) async {
-    final FutureGroup<Object> futureGroup = FutureGroup<Object>();
-
-    // Adding futures
-
-    for (var element in imagePathList) {
-      futureGroup.add(uploadImage(
-          element, containerName, uploader, id, parentType, entityName));
-    }
-    // Signals that the adding process is done
-    futureGroup.close();
-
-    // Firing the future from the FutureGroup.future property
-    final List<Object> results = await futureGroup.future;
+    final results = await Future.wait<Object>(
+      imagePathList.map(
+        (element) => uploadImage(
+          element, containerName, uploader, id, parentType, entityName,
+        ),
+      ),
+    );
     return results;
   }
 }

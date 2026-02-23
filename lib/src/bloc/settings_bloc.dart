@@ -24,23 +24,23 @@ class AppSettings extends ChangeNotifier {
   List<ConnectivityResult> connectionStatus = [ConnectivityResult.none];
 
   final Connectivity _connectivity = Connectivity();
-  late StreamSubscription<List<ConnectivityResult>> connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   Future<void> initConnectivity() async {
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      _updateConnectionStatus,
-    );
-    late List<ConnectivityResult> result;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      result = await _connectivity.checkConnectivity();
-    } on PlatformException catch (e) {
-      debugPrint('Couldn\'t check connectivity status + $e');
-      return;
-    }
+    _connectivitySubscription ??=
+        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    await refreshConnectivity();
+  }
 
-    return _updateConnectionStatus(result);
+  /// Updates [activeConnection] from a fresh connectivity check. Call before
+  /// deciding to upload so the decision uses current state, not stale.
+  Future<void> refreshConnectivity() async {
+    try {
+      final result = await _connectivity.checkConnectivity();
+      await _updateConnectionStatus(result);
+    } on PlatformException catch (e) {
+      debugPrint('Couldn\'t check connectivity status: $e');
+    }
   }
 
   Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {

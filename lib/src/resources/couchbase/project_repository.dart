@@ -90,6 +90,52 @@ class ProjectRepository {
     return null;
   }
 
+  /// Fetch all forms for the logged-in user's company (mirrors Realm getAllForms).
+  Future<List<LocationForm>> getAllForms() async {
+    try {
+      final company = usersBloc.userDetails.companyidentifer;
+      if (company == null || company.isEmpty) {
+        debugPrint('getAllForms: no company identifier');
+        return [];
+      }
+      if (_databaseProvider.e3inspectionsDatabase == null) return [];
+
+      final query = QueryBuilder.createAsync()
+          .select(
+            SelectResult.expression(Meta.id).as('docId'),
+            SelectResult.all(),
+          )
+          .from(
+            DataSource.collection(
+              _databaseProvider.formCollection,
+            ).as('LocationForm'),
+          )
+          .where(
+            Expression.property(attributeDocumentType)
+                .equalTo(Expression.string('LocationForm'))
+                .and(
+                  Expression.property('companyIdentifier')
+                      .equalTo(Expression.string(company)),
+                ),
+          );
+
+      final result = await query.execute();
+      final rows = await result.allResults();
+
+      return rows.map((row) {
+        final data = row.dictionary('LocationForm')?.toPlainMap();
+        if (data == null) return null;
+        final form = LocationForm.fromDocument(data);
+        final docId = row.string('docId');
+        if (docId != null && docId.isNotEmpty) form.id = docId;
+        return form;
+      }).whereType<LocationForm>().toList();
+    } catch (e) {
+      debugPrint('Error fetching forms: $e');
+      return [];
+    }
+  }
+
   /// Fetch a single project by its ID
   Future<Project?> fetchProjectById(String projectId) async {
     try {

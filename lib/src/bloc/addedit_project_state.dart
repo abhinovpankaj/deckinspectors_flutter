@@ -12,10 +12,15 @@ class AddEditProjectInitial extends AddEditProjectState {}
 class AddEditProjectLoading extends AddEditProjectState {}
 
 class AddEditProjectLoaded extends AddEditProjectState {
-  final Project project;
-  const AddEditProjectLoaded({required this.project});
+  /// Null when adding a new project (use widget's initial project in UI).
+  final Project? project;
+  final List<LocationForm> forms;
+  const AddEditProjectLoaded({
+    this.project,
+    this.forms = const [],
+  });
   @override
-  List<Object?> get props => [project];
+  List<Object?> get props => [project, forms];
 }
 
 class AddEditProjectSaving extends AddEditProjectState {}

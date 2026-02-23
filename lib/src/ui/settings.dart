@@ -385,13 +385,11 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         isSyncOn = true;
         couchbaseServices.toggleOnlineState(true);
-        appSettings.activeConnection = true;
       });
     } else {
       setState(() {
         isSyncOn = false;
         couchbaseServices.toggleOnlineState(false);
-        appSettings.activeConnection = false;
       });
     }
     appSettings.isAppOfflineMode = !isSyncOn;

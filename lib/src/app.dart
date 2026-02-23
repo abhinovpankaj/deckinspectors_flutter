@@ -31,11 +31,10 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    // When connectivity is restored, retry any images saved locally while offline.
-    // ImageSyncService uses the DatabaseProvider singleton internally.
     appSettings.onConnectivityRestored = () {
       ImageSyncService().retryPendingUploads();
     };
+    appSettings.initConnectivity();
   }
 
   @override

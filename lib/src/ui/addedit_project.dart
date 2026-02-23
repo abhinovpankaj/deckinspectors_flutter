@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-//import 'package:get/get.dart';
-
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:intl/intl.dart';
-// import 'package:provider/provider.dart';
+
 import '../bloc/images_bloc.dart';
 import '../bloc/addedit_project_bloc.dart';
 import '../bloc/addedit_project_event.dart';
@@ -16,11 +14,10 @@ import '../resources/couchbase/image_repository.dart';
 
 import '../models/couchbase/couchbase_models.dart';
 import '../models/success_response.dart';
-// import '../resources/couchbase/couchbase_project_services.dart';
+
 import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import 'googlemaps_view.dart';
-import 'project_details.dart';
 
 class AddEditProjectPage extends StatefulWidget {
   final Project newProject;
@@ -212,8 +209,11 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   LocationForm? selectedValue;
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AddEditProjectBloc, AddEditProjectState>(
+    return BlocConsumer<AddEditProjectBloc, AddEditProjectState>(
       listener: (context, state) {
+        if (state is AddEditProjectLoaded && state.project != null) {
+          setState(() => currentProject = state.project!);
+        }
         if (state is AddEditProjectSaving) {
           ScaffoldMessenger.of(
             context,
@@ -222,10 +222,6 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Project saved successfully')),
           );
-          // After successful save, navigate to ProjectDetailsPage for the
-          // saved project. The repository sets the `id` on the passed project
-          // object, so `currentProject.id` should contain the document id.
-          //final projId = currentProject.id ?? '';
           try {
             Navigator.pop(context, true);
           } catch (_) {
@@ -237,21 +233,38 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           );
         }
       },
-      child: _buildForm(context),
+      builder: (context, state) => _buildForm(context, state),
     );
   }
 
-  Widget _buildForm(BuildContext context) {
-    // realmProjServices =
-    // Provider.of<RealmProjectServices>(context, listen: false);
-    // TODO: Replace with ProjectRepository/BLoC
-    // var forms = realmProjServices.getAllForms();
-
+  Widget _buildForm(BuildContext context, AddEditProjectState state) {
     List<DropdownMenuItem<LocationForm>> dropdownItems = [];
-    // TODO: Integrate ProjectRepository/BLoC for forms
     dropdownItems.add(
       const DropdownMenuItem(value: null, child: Text("E3 Form")),
     );
+    if (state is AddEditProjectLoaded && state.forms.isNotEmpty) {
+      for (final form in state.forms) {
+        dropdownItems.add(
+          DropdownMenuItem(
+            value: form,
+            child: Text(form.name ?? 'Form'),
+          ),
+        );
+      }
+    }
+    // Display value: user selection or project's form when loaded
+    LocationForm? displayValue = selectedValue;
+    if (displayValue == null &&
+        currentProject.formId != null &&
+        currentProject.formId!.isNotEmpty &&
+        state is AddEditProjectLoaded) {
+      for (final f in state.forms) {
+        if (f.id == currentProject.formId) {
+          displayValue = f;
+          break;
+        }
+      }
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -406,8 +419,8 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
                           'Location form type',
                           style: TextStyle(fontWeight: FontWeight.w500),
                         ),
-                        DropdownButton(
-                          value: selectedValue,
+                        DropdownButton<LocationForm>(
+                          value: displayValue,
                           hint: const Text('E3 form'),
                           items: dropdownItems,
                           onChanged: (value) {

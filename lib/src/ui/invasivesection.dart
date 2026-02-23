@@ -487,7 +487,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                     urls.add(element.url as String);
                   }
                 }
-                sectionRepository.addInvasiveImagesUrl(
+                await sectionRepository.addInvasiveImagesUrl(
                   invasiveImageName,
                   currentInvasiveSection,
                   urls,
@@ -525,7 +525,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                   urls.add(element.url as String);
                 }
               }
-              sectionRepository.addConclusiveImagesUrl(
+              await sectionRepository.addConclusiveImagesUrl(
                 conclusiveImageName,
                 currentConclusiveSection,
                 urls,

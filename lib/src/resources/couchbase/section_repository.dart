@@ -281,9 +281,9 @@ class SectionRepository {
     try {
       for (var url in urls) {
         final image = DeckImage(
-          localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          localUrl: null,
+          remoteUrl: url,
+          isuploaded: true,
           parentid: currentInvasiveSection.id,
           parenttype: 'invasiveSection',
           sectiontype: 'invasiveSectionImage',
@@ -314,9 +314,9 @@ class SectionRepository {
     try {
       for (var url in urls) {
         final image = DeckImage(
-          localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          localUrl: null,
+          remoteUrl: url,
+          isuploaded: true,
           parentid: currentConclusiveSection.id,
           parenttype: 'conclusiveSection',
           sectiontype: 'conclusiveSectionImage',

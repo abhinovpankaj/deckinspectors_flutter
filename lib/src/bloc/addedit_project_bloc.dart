@@ -26,17 +26,18 @@ class AddEditProjectBloc
   ) async {
     emit(AddEditProjectLoading());
     try {
+      final forms = await projectRepository.getAllForms();
       if (event.projectId != null && event.projectId!.isNotEmpty) {
         final project = await projectRepository.fetchProjectById(
           event.projectId!,
         );
         if (project != null) {
-          emit(AddEditProjectLoaded(project: project));
+          emit(AddEditProjectLoaded(project: project, forms: forms));
           return;
         }
       }
-      // If no id or project not found, emit initial loaded state with empty project handled by UI
-      emit(AddEditProjectInitial());
+      // New project or not found: still emit loaded state with forms so dropdown works
+      emit(AddEditProjectLoaded(project: null, forms: forms));
     } catch (e) {
       emit(AddEditProjectFailure(error: e.toString()));
     }
@@ -48,8 +49,8 @@ class AddEditProjectBloc
   ) async {
     // This handler allows UI to update fields locally; keep current loaded project
     final current = state;
-    if (current is AddEditProjectLoaded) {
-      final project = current.project;
+    if (current is AddEditProjectLoaded && current.project != null) {
+      final project = current.project!;
       // Apply update based on field name
       switch (event.field) {
         case 'name':

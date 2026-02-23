@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -33,10 +34,16 @@ class ImageSyncService {
     if (DatabaseProvider.offlineModeOn) return;
     // Skip if a previous sync run is still in progress.
     if (appSettings.isImageUploading) return;
+    // DB and collections are only ready after login (initDatabases).
+    if (_db.e3inspectionsDatabase == null) return;
 
     appSettings.isImageUploading = true;
-    // Keep the device awake while uploading.
-    await WakelockPlus.enable();
+    // Keep the device awake while uploading (ignore if platform channel unavailable).
+    try {
+      await WakelockPlus.enable();
+    } on PlatformException catch (e) {
+      debugPrint('[ImageSyncService] Wakelock not available: ${e.message}');
+    }
 
     try {
       final pending = await _queryPendingImages();
@@ -109,7 +116,11 @@ class ImageSyncService {
       debugPrint('[ImageSyncService] retryPendingUploads error: $e');
     } finally {
       appSettings.isImageUploading = false;
-      await WakelockPlus.disable();
+      try {
+        await WakelockPlus.disable();
+      } on PlatformException catch (e) {
+        debugPrint('[ImageSyncService] Wakelock disable failed: ${e.message}');
+      }
     }
   }
 
@@ -145,9 +156,18 @@ class ImageSyncService {
     String remoteUrl,
     bool uploaded,
   ) async {
-    image.remoteUrl = remoteUrl;
-    image.isuploaded = uploaded;
-    final doc = MutableDocument.withId(docId, image.toDocument());
+    // Preserve original localUrl; only update remoteUrl and isuploaded.
+    final updated = DeckImage(
+      localUrl: image.localUrl,
+      remoteUrl: remoteUrl,
+      isuploaded: uploaded,
+      parentid: image.parentid,
+      parenttype: image.parenttype,
+      sectiontype: image.sectiontype,
+      sectionname: image.sectionname,
+      uploadedBy: image.uploadedBy,
+    );
+    final doc = MutableDocument.withId(docId, updated.toDocument());
     await _db.deckImageCollection.saveDocument(doc);
   }
 
