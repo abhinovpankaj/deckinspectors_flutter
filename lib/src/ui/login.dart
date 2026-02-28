@@ -180,7 +180,8 @@ class _LoginPageState extends State<LoginPage> {
               },
             );
             // When online, upload any images that were saved locally (e.g. from a previous offline session).
-            if (appSettings.activeConnection && !DatabaseProvider.offlineModeOn) {
+            if (appSettings.activeConnection &&
+                !DatabaseProvider.offlineModeOn) {
               ImageSyncService().retryPendingUploads();
             }
           }

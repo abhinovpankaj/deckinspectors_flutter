@@ -5,7 +5,6 @@
 import FlutterMacOS
 import Foundation
 
-import awesome_notifications
 import cbl_flutter_ce
 import connectivity_plus
 import device_info_plus
@@ -18,7 +17,6 @@ import package_info_plus
 import path_provider_foundation
 import pdfx
 import printing
-import realm
 import share_plus
 import shared_preferences_foundation
 import speech_to_text
@@ -29,7 +27,6 @@ import wakelock_plus
 import webview_flutter_wkwebview
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
-  AwesomeNotificationsPlugin.register(with: registry.registrar(forPlugin: "AwesomeNotificationsPlugin"))
   CblFlutterCe.register(with: registry.registrar(forPlugin: "CblFlutterCe"))
   ConnectivityPlusPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlusPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
@@ -42,7 +39,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   PdfxPlugin.register(with: registry.registrar(forPlugin: "PdfxPlugin"))
   PrintingPlugin.register(with: registry.registrar(forPlugin: "PrintingPlugin"))
-  RealmPlugin.register(with: registry.registrar(forPlugin: "RealmPlugin"))
   SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
   SpeechToTextPlugin.register(with: registry.registrar(forPlugin: "SpeechToTextPlugin"))

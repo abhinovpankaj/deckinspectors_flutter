@@ -120,7 +120,7 @@ class Repository {
     String entityName,
   ) async {
     // Use current connectivity so we don't upload locally due to stale state
-    await appSettings.refreshConnectivity();
+    //await appSettings.refreshConnectivity();
     if (DatabaseProvider.offlineModeOn || !appSettings.activeConnection) {
       return imageApiProvider.uploadImageLocally(
         path,

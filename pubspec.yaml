@@ -48,7 +48,6 @@ dependencies:
   cbl: ^3.6.0+2
   http_auth: ^1.0.0
   speech_to_text: ^7.0.0
-  realm: ^20.0.1
   json_annotation: ^4.8.0
   smartstruct: ^1.4.0
   provider: ^6.0.5
@@ -63,10 +62,8 @@ dependencies:
   pdf: ^3.11.1
   thumbnailer: ^3.0.0
   connectivity_plus: ^6.0.5
-  awesome_notifications: ^0.9.0
   package_info_plus: ^4.2.0
-  wakelock_plus: ^1.1.4
-  
+  wakelock_plus: 1.1.4
   google_maps_place_picker_mb: ^3.1.2
   google_maps_flutter: ^2.5.3
   google_maps_flutter_platform_interface: ^2.4.3
@@ -76,7 +73,6 @@ dependencies:
   flutter_serial_communication: ^0.2.5
   device_info_plus: ^11.5.0
   udp: ^5.0.3
-  flutter_mjpeg: ^2.0.4
   web_socket_channel: ^3.0.1
   tar: ^1.0.4
   screenshot: ^3.0.0
@@ -88,6 +84,7 @@ dependencies:
   map_launcher: ^3.5.0
   maps_launcher: ^3.0.0+1
   gallery_saver_plus: ^3.2.9
+  
   # Use the community edition platform implementation for Couchbase Lite.
   # The `cbl` package provides the Dart API; `cbl_flutter_ce` registers
   # the native platform implementation. Replace with `cbl_flutter_ee`
@@ -100,13 +97,10 @@ dependencies:
   cbl_flutter: ^3.3.5
   uuid: ^4.4.0
 dependency_overrides:
+  package_info_plus: ^8.3.0
+  google_api_headers: 4.5.0
   # Overriding this because there has not been a new release with the
   # bump of http to > 1.0.0 instead of ^0.13.0.
-    flutter_mjpeg:
-      git:
-        url: https://github.com/mylisabox/flutter_mjpeg
-        ref: e8cbafc08f9c81a71df6ac584e731d04cc742ec4
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

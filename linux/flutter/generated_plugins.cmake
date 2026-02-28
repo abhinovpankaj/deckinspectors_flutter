@@ -3,13 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  awesome_notifications
   cbl_flutter_ce
   file_selector_linux
   flutter_webrtc
   maps_launcher
   printing
-  realm
   url_launcher_linux
 )
 

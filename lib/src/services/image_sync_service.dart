@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+//import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../bloc/images_bloc.dart';
 import '../bloc/settings_bloc.dart';
@@ -13,18 +13,6 @@ import '../models/couchbase/couchbase_models.dart';
 import '../models/success_response.dart';
 import '../resources/couchbase/database_provider.dart';
 
-/// Retries uploading every [DeckImage] record whose [DeckImage.isuploaded]
-/// flag is still [false] — i.e. images that were captured while the device
-/// was offline and were only stored locally.
-///
-/// This mirrors the old Realm `uploadLocalImages()` method but uses the
-/// Couchbase Lite collections instead of Realm queries/writes.
-///
-/// Register the hook once in app.dart's initState:
-/// ```dart
-/// appSettings.onConnectivityRestored =
-///     () => ImageSyncService().retryPendingUploads();
-/// ```
 class ImageSyncService {
   // DatabaseProvider is a singleton — we always get the same initialised instance.
   final DatabaseProvider _db = DatabaseProvider();
@@ -39,11 +27,11 @@ class ImageSyncService {
 
     appSettings.isImageUploading = true;
     // Keep the device awake while uploading (ignore if platform channel unavailable).
-    try {
-      await WakelockPlus.enable();
-    } on PlatformException catch (e) {
-      debugPrint('[ImageSyncService] Wakelock not available: ${e.message}');
-    }
+    // try {
+    //   //await WakelockPlus.enable();
+    // } on PlatformException catch (e) {
+    //   debugPrint('[ImageSyncService] Wakelock not available: ${e.message}');
+    // }
 
     try {
       final pending = await _queryPendingImages();
@@ -72,7 +60,9 @@ class ImageSyncService {
 
         // Skip if the file has been deleted from the device.
         if (!File(transformedPath).existsSync()) {
-          debugPrint('[ImageSyncService] File missing, skipping: $transformedPath');
+          debugPrint(
+            '[ImageSyncService] File missing, skipping: $transformedPath',
+          );
           continue;
         }
 
@@ -116,11 +106,11 @@ class ImageSyncService {
       debugPrint('[ImageSyncService] retryPendingUploads error: $e');
     } finally {
       appSettings.isImageUploading = false;
-      try {
-        await WakelockPlus.disable();
-      } on PlatformException catch (e) {
-        debugPrint('[ImageSyncService] Wakelock disable failed: ${e.message}');
-      }
+      // try {
+      //   await WakelockPlus.disable();
+      // } on PlatformException catch (e) {
+      //   debugPrint('[ImageSyncService] Wakelock disable failed: ${e.message}');
+      // }
     }
   }
 
@@ -129,9 +119,7 @@ class ImageSyncService {
   Future<List<MapEntry<String, DeckImage>>> _queryPendingImages() async {
     final query = QueryBuilder.createAsync()
         .select(SelectResult.all(), SelectResult.expression(Meta.id))
-        .from(
-          DataSource.collection(_db.deckImageCollection).as('DeckImage'),
-        )
+        .from(DataSource.collection(_db.deckImageCollection).as('DeckImage'))
         .where(
           Expression.property('isuploaded').equalTo(Expression.boolean(false)),
         );
@@ -369,10 +357,7 @@ class ImageSyncService {
   /// After a visualSection/dynamicSection image is uploaded, updates the
   /// `coverUrl` (and optionally image count) in the parent location or
   /// project's `sections` array entry for that section.
-  Future<void> _updateSectionCoverUrl(
-    String sectionId,
-    String coverUrl,
-  ) async {
+  Future<void> _updateSectionCoverUrl(String sectionId, String coverUrl) async {
     // Find the section doc to get its parentid and parenttype.
     // Try visualSectionCollection first; fall back to dynamicSectionCollection.
     Map<String, dynamic>? sectionMap;
