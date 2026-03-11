@@ -94,10 +94,11 @@ class VisualSectionRepository {
   ) {
     try {
       for (int i = 0; i < localPaths.length; i++) {
+        final persistedPath = onlinePaths[i];
         final image = DeckImage(
           localUrl: localPaths[i],
-          remoteUrl: onlinePaths[i],
-          isuploaded: true,
+          remoteUrl: persistedPath,
+          isuploaded: persistedPath.startsWith('http'),
           parentid: localVisualSection.id,
           parenttype: 'visualSection',
           sectiontype: 'visualSectionImage',

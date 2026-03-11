@@ -94,10 +94,11 @@ class SectionRepository {
   ) async {
     try {
       for (int i = 0; i < localPaths.length; i++) {
+        final persistedPath = onlinePaths[i];
         final image = DeckImage(
           localUrl: localPaths[i],
-          remoteUrl: onlinePaths[i],
-          isuploaded: true,
+          remoteUrl: persistedPath,
+          isuploaded: persistedPath.startsWith('http'),
           parentid: localVisualSection.id,
           parenttype: 'visualSection',
           sectiontype: 'visualSectionImage',
@@ -280,10 +281,11 @@ class SectionRepository {
   ) async {
     try {
       for (var url in urls) {
+        final persistedPath = url;
         final image = DeckImage(
           localUrl: null,
-          remoteUrl: url,
-          isuploaded: true,
+          remoteUrl: persistedPath,
+          isuploaded: persistedPath.startsWith('http'),
           parentid: currentInvasiveSection.id,
           parenttype: 'invasiveSection',
           sectiontype: 'invasiveSectionImage',
@@ -313,10 +315,11 @@ class SectionRepository {
   ) async {
     try {
       for (var url in urls) {
+        final persistedPath = url;
         final image = DeckImage(
           localUrl: null,
-          remoteUrl: url,
-          isuploaded: true,
+          remoteUrl: persistedPath,
+          isuploaded: persistedPath.startsWith('http'),
           parentid: currentConclusiveSection.id,
           parenttype: 'conclusiveSection',
           sectiontype: 'conclusiveSectionImage',
@@ -359,9 +362,10 @@ class SectionRepository {
         return await getNewInvasiveSection(sectionId);
       }
       final rowMap = results.first.toPlainMap();
-      final data = (rowMap['InvasiveSection'] as Map<String, dynamic>?) ?? rowMap;
+      final data =
+          (rowMap['InvasiveSection'] as Map<String, dynamic>?) ?? rowMap;
       final model = InvasiveSection.fromDocument(data);
-      
+
       if (model.id == null || model.id!.isEmpty) {
         model.id = CouchbaseDocument.generateId();
       }
@@ -392,7 +396,8 @@ class SectionRepository {
         return await getNewConclusiveSection(sectionId);
       }
       final rowMap = results.first.toPlainMap();
-      final data = (rowMap['ConclusiveSection'] as Map<String, dynamic>?) ?? rowMap;
+      final data =
+          (rowMap['ConclusiveSection'] as Map<String, dynamic>?) ?? rowMap;
       final model = ConclusiveSection.fromDocument(data);
       if (model.id == null || model.id!.isEmpty) {
         model.id = CouchbaseDocument.generateId();
