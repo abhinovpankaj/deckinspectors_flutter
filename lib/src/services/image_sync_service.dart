@@ -46,7 +46,7 @@ class ImageSyncService {
 
         final docId = entry.key;
         final image = entry.value;
-        final rawLocalPath = image.localUrl;
+        final rawLocalPath = image.remoteUrl;
         if (rawLocalPath == null || rawLocalPath.isEmpty) continue;
 
         // On iOS, local paths stored in DeckImage are relative to

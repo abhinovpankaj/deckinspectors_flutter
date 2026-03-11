@@ -1,6 +1,6 @@
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
-import '../../bloc/settings_bloc.dart';
+//import '../../bloc/settings_bloc.dart';
 import '../../bloc/users_bloc.dart';
 import '../../models/couchbase/couchbase_models.dart';
 import '../../models/enums.dart';
@@ -16,7 +16,6 @@ class VisualSectionRepository {
   final ImageRepository _imageRepository;
   final LocationRepository _locationRepository;
   final UsersBloc _usersBloc;
-  final AppSettings _appSettings;
 
   VisualSectionRepository(
     this._databaseProvider,
@@ -24,7 +23,6 @@ class VisualSectionRepository {
     this._subprojectRepository,
     this._imageRepository,
     this._usersBloc,
-    this._appSettings,
   );
   final String locationDocumentType = 'location';
   final String attributeDocumentType = 'documentType';
