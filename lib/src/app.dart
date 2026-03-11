@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 //import 'bloc/notificationcontroller.dart';
 import 'ui/login.dart';
@@ -9,9 +11,11 @@ import 'resources/couchbase/project_repository.dart';
 import 'resources/couchbase/subproject_repository.dart';
 import 'resources/couchbase/location_repository.dart';
 import 'resources/couchbase/section_repository.dart';
+import 'resources/couchbase/replicator_provider.dart';
 import 'bloc/users_bloc.dart';
 import 'bloc/settings_bloc.dart';
 import 'resources/repository.dart';
+import 'services/app_logger.dart';
 import 'services/image_sync_service.dart';
 
 class App extends StatefulWidget {
@@ -32,7 +36,30 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     appSettings.onConnectivityRestored = () {
+      unawaited(
+        AppLogger.instance.info(
+          'Connectivity',
+          'restored callback fired '
+              '(activeConnection=${appSettings.activeConnection}, appOfflineMode=${appSettings.isAppOfflineMode})',
+        ),
+      );
+      if (appSettings.isAppOfflineMode) {
+        unawaited(
+          AppLogger.instance.info(
+            'Connectivity',
+            'app is in OFFLINE MODE -> skip image sync and replicator resume',
+          ),
+        );
+        return;
+      }
+      unawaited(
+        AppLogger.instance.info(
+          'Connectivity',
+          'app is ONLINE MODE -> retry image sync and resume replicator',
+        ),
+      );
       ImageSyncService().retryPendingUploads();
+      ReplicatorProvider.resumeActiveReplicatorIfAllowed();
     };
     appSettings.initConnectivity();
   }
@@ -91,14 +118,13 @@ class _AppState extends State<App> {
           title: 'E3 Inspections',
           builder: (context, child) {
             final MediaQueryData data = MediaQuery.of(context);
+            final double clampedScale =
+                data.textScaler.scale(1.0).clamp(1.0, 1.2).toDouble();
 
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
                 boldText: false,
-                textScaler: data.textScaler.clamp(
-                  minScaleFactor: 1,
-                  maxScaleFactor: 1.2,
-                ),
+                textScaler: TextScaler.linear(clampedScale),
               ),
               child: child!,
             );

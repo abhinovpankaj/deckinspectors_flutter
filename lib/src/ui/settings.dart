@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app.dart';
@@ -8,6 +9,8 @@ import '../bloc/settings_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../resources/couchbase/couchbase_services.dart';
 import '../resources/couchbase/database_provider.dart';
+import '../resources/couchbase/replicator_provider.dart';
+import '../services/app_logger.dart';
 import 'login.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -143,6 +146,28 @@ class _SettingsPageState extends State<SettingsPage> {
     _applyImageSettings(quality);
   }
 
+  Future<void> _exportLogs() async {
+    final files = await AppLogger.instance.getLogFiles();
+    if (files.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No log files found to export.')),
+      );
+      return;
+    }
+
+    await AppLogger.instance.info(
+      'Settings',
+      'User requested log export (${files.length} files)',
+    );
+    final xFiles = files.map((file) => XFile(file.path)).toList();
+    await Share.shareXFiles(
+      xFiles,
+      text: 'Deck Inspectors diagnostic logs',
+      subject: 'Deck Inspectors Logs',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint(App.isImageUploading.toString());
@@ -260,6 +285,21 @@ class _SettingsPageState extends State<SettingsPage> {
                       backgroundColor: Colors.orange,
                       color: Colors.blue,
                     ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide.none,
+                    minimumSize: const Size.fromHeight(40),
+                    backgroundColor: Colors.white,
+                    shadowColor: Colors.blue,
+                    elevation: 0,
+                  ),
+                  onPressed: _exportLogs,
+                  icon: const Icon(Icons.upload_file, color: Colors.blue),
+                  label: const Text(
+                    'Export Logs',
+                    style: TextStyle(color: Colors.blue),
                   ),
                 ),
 
@@ -381,20 +421,41 @@ class _SettingsPageState extends State<SettingsPage> {
   bool isSyncOn = true;
   void toggleSwitch(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    if (isSyncOn == false) {
-      setState(() {
-        isSyncOn = true;
-        couchbaseServices.toggleOnlineState(true);
-      });
+    final nextSyncOn = !isSyncOn;
+
+    setState(() {
+      isSyncOn = nextSyncOn;
+      couchbaseServices.toggleOnlineState(nextSyncOn);
+    });
+
+    appSettings.isAppOfflineMode = !nextSyncOn;
+    DatabaseProvider.offlineModeOn = !nextSyncOn;
+    await AppLogger.instance.info(
+      'SyncMode',
+      'switch toggled -> ${nextSyncOn ? 'ONLINE MODE' : 'OFFLINE MODE'} '
+          '(activeConnection=${appSettings.activeConnection}, appOfflineMode=${appSettings.isAppOfflineMode})',
+    );
+
+    if (!nextSyncOn) {
+      await AppLogger.instance.info(
+        'SyncMode',
+        'OFFLINE MODE enabled -> requesting replicator stop',
+      );
+      await ReplicatorProvider.stopActiveReplicator();
+      await AppLogger.instance.info(
+        'SyncMode',
+        'OFFLINE MODE enabled -> replicator stop request completed',
+      );
     } else {
-      setState(() {
-        isSyncOn = false;
-        couchbaseServices.toggleOnlineState(false);
-      });
+      await appSettings.refreshConnectivity();
+      await AppLogger.instance.info(
+        'SyncMode',
+        'ONLINE MODE enabled -> attempting resume '
+            '(activeConnection=${appSettings.activeConnection}, appOfflineMode=${appSettings.isAppOfflineMode})',
+      );
+      await ReplicatorProvider.resumeActiveReplicatorIfAllowed();
     }
-    appSettings.isAppOfflineMode = !isSyncOn;
-    // Keep DatabaseProvider in sync so CBL repos see the change immediately
-    DatabaseProvider.offlineModeOn = !isSyncOn;
+
     await prefs.setString('appSync', isSyncOn.toString());
   }
 }

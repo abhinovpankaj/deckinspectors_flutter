@@ -4,11 +4,64 @@ import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../bloc/settings_bloc.dart';
 import '../../bloc/users_bloc.dart';
+import '../../services/app_logger.dart';
 import 'database_provider.dart';
 
 class ReplicatorProvider {
-  ReplicatorProvider({required this.databaseProvider});
+  ReplicatorProvider({required this.databaseProvider}) {
+    if (_activeInstance != null && !identical(_activeInstance, this)) {
+      unawaited(_activeInstance!.stopReplicator());
+    }
+    _activeInstance = this;
+  }
+
+  static ReplicatorProvider? _activeInstance;
+
+  static ReplicatorProvider? get activeInstance => _activeInstance;
+
+  static Future<void> stopActiveReplicator() async {
+    await AppLogger.instance.info(
+      'ReplicatorControl',
+      'stopActiveReplicator called '
+          '(hasActiveInstance=${_activeInstance != null}, appOfflineMode=${DatabaseProvider.offlineModeOn}, activeConnection=${appSettings.activeConnection})',
+    );
+    await _activeInstance?.stopReplicator();
+  }
+
+  static Future<void> resumeActiveReplicatorIfAllowed() async {
+    final active = _activeInstance;
+    if (active == null) {
+      await AppLogger.instance.info(
+        'ReplicatorControl',
+        'resume skipped: no active replicator instance',
+      );
+      return;
+    }
+    if (DatabaseProvider.offlineModeOn || !appSettings.activeConnection) {
+      await AppLogger.instance.info(
+        'ReplicatorControl',
+        'resume skipped: blocked by mode/connectivity '
+            '(appOfflineMode=${DatabaseProvider.offlineModeOn}, activeConnection=${appSettings.activeConnection})',
+      );
+      return;
+    }
+
+    await AppLogger.instance.info(
+      'ReplicatorControl',
+      'resume allowed: starting replicator',
+    );
+
+    await active.startReplicator(
+      onStatusChange: (change) {
+        debugPrint('Replicator status: ${change.status.activity}');
+      },
+      onDocument: (doc) {
+        debugPrint('Replicated docs: ${doc.documents.length}');
+      },
+    );
+  }
 
   final DatabaseProvider databaseProvider;
 
@@ -104,11 +157,31 @@ class ReplicatorProvider {
     required Function(ReplicatorChange change)? onStatusChange,
     required Function(DocumentReplication document)? onDocument,
   }) async {
+    if (databaseProvider.isReplicatorStarted) {
+      await AppLogger.instance.info(
+        'ReplicatorProvider',
+        'replicator already started; skipping',
+      );
+      return;
+    }
+    if (DatabaseProvider.offlineModeOn || !appSettings.activeConnection) {
+      await AppLogger.instance.info(
+        'ReplicatorProvider',
+        'skipping start due to offline mode or no connectivity '
+            '(appOfflineMode=${DatabaseProvider.offlineModeOn}, activeConnection=${appSettings.activeConnection})',
+      );
+      return;
+    }
+
     debugPrint(
       '${DateTime.now()} [ReplicatorProvider] info: starting replicator.',
     );
 
     var replicator = _replicator;
+    if (replicator == null && _replicatorConfiguration != null) {
+      replicator = await Replicator.createAsync(_replicatorConfiguration!);
+      _replicator = replicator;
+    }
     if (replicator != null) {
       statusChangedToken = await replicator.addChangeListener((change) {
         final status = change.status;
@@ -125,16 +198,20 @@ class ReplicatorProvider {
       });
       if (onDocument != null) {
         var function = onDocument;
-        replicator.addDocumentReplicationListener(function);
+        documentReplicationToken = await replicator
+            .addDocumentReplicationListener(function);
       }
       await replicator.start();
+      databaseProvider.isReplicatorStarted = true;
+      await AppLogger.instance.info('ReplicatorProvider', 'replicator started');
 
       debugPrint(
         '${DateTime.now()} [ReplicatorProvider] info: started replicator.',
       );
     } else {
-      debugPrint(
-        '${DateTime.now()} [ReplicatorProvider] error: cannot start replicator, it is null.',
+      await AppLogger.instance.error(
+        'ReplicatorProvider',
+        'cannot start replicator, it is null',
       );
     }
   }
@@ -142,8 +219,9 @@ class ReplicatorProvider {
   Future<void> stopReplicator() async {
     var replicator = _replicator;
     if (replicator != null) {
-      debugPrint(
-        '${DateTime.now()} [ReplicatorProvider] info: stopping replicator.',
+      await AppLogger.instance.info(
+        'ReplicatorProvider',
+        'stopping replicator',
       );
 
       //remove change listeners before stopping replicator, this should
@@ -152,17 +230,22 @@ class ReplicatorProvider {
       await removeStatusChangeListener();
 
       await replicator.stop();
+      databaseProvider.isReplicatorStarted = false;
 
       //null out tokens so they can be reused
       statusChangedToken = null;
       documentReplicationToken = null;
+      _replicator = null;
+      await AppLogger.instance.info('ReplicatorProvider', 'replicator stopped');
 
       debugPrint(
         '${DateTime.now()} [ReplicatorProvider] info: stopped replicator.',
       );
     } else {
-      debugPrint(
-        '${DateTime.now()} [ReplicatorProvider] warning: tried to stop replicator but it was null.',
+      databaseProvider.isReplicatorStarted = false;
+      await AppLogger.instance.warn(
+        'ReplicatorProvider',
+        'tried to stop replicator but it was null',
       );
     }
   }
@@ -170,7 +253,7 @@ class ReplicatorProvider {
   Future<void> removeStatusChangeListener() async {
     var replicator = _replicator;
     var token = statusChangedToken;
-    if (replicator != null && replicator.isClosed && token != null) {
+    if (replicator != null && !replicator.isClosed && token != null) {
       replicator.removeChangeListener(token);
     } else {
       debugPrint(
@@ -182,7 +265,7 @@ class ReplicatorProvider {
   Future<void> removeDocumentReplicationListener() async {
     var replicator = _replicator;
     var token = documentReplicationToken;
-    if (replicator != null && replicator.isClosed && token != null) {
+    if (replicator != null && !replicator.isClosed && token != null) {
       replicator.removeChangeListener(token);
     } else {
       debugPrint(

@@ -27,8 +27,9 @@ class AppSettings extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   Future<void> initConnectivity() async {
-    _connectivitySubscription ??=
-        _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _connectivitySubscription ??= _connectivity.onConnectivityChanged.listen(
+      _updateConnectionStatus,
+    );
     await refreshConnectivity();
   }
 
@@ -52,7 +53,7 @@ class AppSettings extends ChangeNotifier {
           r == ConnectivityResult.mobile ||
           r == ConnectivityResult.ethernet,
     );
-    if (activeConnection) {
+    if (activeConnection && !isAppOfflineMode) {
       notifyListeners();
       // Trigger retry of any images that were saved locally while offline
       onConnectivityRestored?.call();
