@@ -316,7 +316,7 @@ extension on DatabaseProvider {
       // Try to get existing collection in 'inventory' scope
       final existing = await e3inspectionsDatabase?.collection(
         name,
-        'inventory-qa',
+        'inventory',
       );
       if (existing != null) return existing;
 
@@ -325,18 +325,18 @@ extension on DatabaseProvider {
         final createMethod = e3inspectionsDatabase?.createCollection;
         if (createMethod != null) {
           // ignore: invalid_use_of_protected_member
-          await e3inspectionsDatabase?.createCollection(name, 'inventory-qa');
+          await e3inspectionsDatabase?.createCollection(name, 'inventory');
         }
       } catch (e) {
         debugPrint(
-          'Could not call createCollection for $name in inventory-qa scope: $e',
+          'Could not call createCollection for $name in inventory scope: $e',
         );
       }
 
       // Try to read it again
       final created = await e3inspectionsDatabase?.collection(
         name,
-        'inventory-qa',
+        'inventory',
       );
       if (created != null) return created;
 

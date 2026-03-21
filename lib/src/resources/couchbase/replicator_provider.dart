@@ -79,14 +79,19 @@ class ReplicatorProvider {
       var user = usersBloc.getCurrentUser();
       if (db != null && user != null) {
         // Load certificate for App Services
-        var pem = await rootBundle.load('assets/syncinspectionsdata-qa.pem');
-        //wss://kksvdl6h3dascsw.apps.cloud.couchbase.com:4984/syncinspectionsdata-qa
+        //var pem = await rootBundle.load('assets/syncinspectionsdata-qa.pem');// our account
+        var pem = await rootBundle.load(
+          'assets/e3inspectionsmultitenant.pem',
+        ); //david's account
+
         // Replicator endpoint
         var url = Uri(
           scheme: 'wss',
           port: 4984,
-          host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
-          path: 'syncinspectionsdata-qa',
+          // host: 'kksvdl6h3dascsw.apps.cloud.couchbase.com',
+          // path: 'syncinspectionsdata-qa',
+          host: 'bcqhbbemj1ossor.apps.cloud.couchbase.com',
+          path: 'e3inspectionsmultitenant',
         );
         var basicAuthenticator = BasicAuthenticator(
           username: 'p5nadmin', //user.username,
@@ -117,7 +122,7 @@ class ReplicatorProvider {
           'DynamicVisualSection',
         ];
         for (final name in collectionNames) {
-          final collection = await db.collection(name, 'inventory-qa');
+          final collection = await db.collection(name, 'inventory');
           if (collection != null) {
             config.addCollection(collection);
           }
