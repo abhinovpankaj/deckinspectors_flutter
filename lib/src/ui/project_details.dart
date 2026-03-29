@@ -478,44 +478,63 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   // Start navigation in external maps app. Tries platform-specific URL schemes
   // that start turn-by-turn navigation. Falls back to web URLs.
-  Future<void> _startNavigation(double lat, double lng) async {
+  Future<void> _startNavigation(
+    double lat,
+    double lng, {
+    Coords? origin,
+  }) async {
     try {
+      final String originParam =
+          origin != null ? '${origin.latitude},${origin.longitude}' : '';
+
       if (Platform.isAndroid) {
-        // Try Google Maps navigation intent
+        // Google Maps navigation intent always starts from current location.
         final Uri googleNav = Uri.parse('google.navigation:q=$lat,$lng');
         if (await canLaunchUrl(googleNav)) {
           await launchUrl(googleNav, mode: LaunchMode.externalApplication);
           return;
         }
 
-        // Fallback to Google Maps web directions
+        // Fallback to Google Maps web directions with explicit origin.
+        final String originQuery =
+            originParam.isNotEmpty ? '&origin=$originParam' : '';
         final Uri googleWeb = Uri.parse(
-          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+          'https://www.google.com/maps/dir/?api=1$originQuery&destination=$lat,$lng&travelmode=driving',
         );
         if (await canLaunchUrl(googleWeb)) {
           await launchUrl(googleWeb, mode: LaunchMode.externalApplication);
           return;
         }
       } else if (Platform.isIOS) {
-        // Prefer Apple Maps scheme
-        final Uri appleMaps = Uri.parse('maps://?daddr=$lat,$lng&dirflg=d');
+        // Apple Maps: saddr=current location, daddr=destination.
+        final String saddr =
+            originParam.isNotEmpty
+                ? 'saddr=$originParam&'
+                : 'saddr=Current+Location&';
+        final Uri appleMaps = Uri.parse(
+          'maps://?${saddr}daddr=$lat,$lng&dirflg=d',
+        );
         if (await canLaunchUrl(appleMaps)) {
           await launchUrl(appleMaps, mode: LaunchMode.externalApplication);
           return;
         }
 
-        // Try Google Maps on iOS if installed
+        // Google Maps on iOS: empty saddr means current location.
+        final String googleSaddr =
+            originParam.isNotEmpty ? 'saddr=$originParam&' : 'saddr=&';
         final Uri googleIos = Uri.parse(
-          'comgooglemaps://?daddr=$lat,$lng&directionsmode=driving',
+          'comgooglemaps://?${googleSaddr}daddr=$lat,$lng&directionsmode=driving',
         );
         if (await canLaunchUrl(googleIos)) {
           await launchUrl(googleIos, mode: LaunchMode.externalApplication);
           return;
         }
 
-        // Fallback to Apple Maps web
+        // Fallback to Apple Maps web with explicit origin.
+        final String appleOrigin =
+            originParam.isNotEmpty ? 'saddr=$originParam&' : '';
         final Uri appleWeb = Uri.parse(
-          'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d',
+          'https://maps.apple.com/?${appleOrigin}daddr=$lat,$lng&dirflg=d',
         );
         if (await canLaunchUrl(appleWeb)) {
           await launchUrl(appleWeb, mode: LaunchMode.externalApplication);
@@ -523,9 +542,11 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
         }
       }
 
-      // Generic fallback: open Google Maps web
+      // Generic fallback: Google Maps web with explicit origin.
+      final String originQuery =
+          originParam.isNotEmpty ? '&origin=$originParam' : '';
       final Uri fallback = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+        'https://www.google.com/maps/dir/?api=1$originQuery&destination=$lat,$lng&travelmode=driving',
       );
       if (await canLaunchUrl(fallback)) {
         await launchUrl(fallback, mode: LaunchMode.externalApplication);
@@ -628,31 +649,14 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
                       final coords = Coords(lat, lng);
 
-                      // Try to obtain current device coordinates to pass as origin.
+                      // Get current device location to use as navigation origin.
                       final Coords? originCoords = await _getCurrentCoords();
 
-                      if (Platform.isIOS) {
-                        // Start navigation via URL schemes so turn-by-turn starts
-                        await _startNavigation(
-                          coords.latitude,
-                          coords.longitude,
-                        );
-                      } else if (Platform.isAndroid) {
-                        // Start navigation via URL schemes so turn-by-turn starts
-                        await _startNavigation(
-                          coords.latitude,
-                          coords.longitude,
-                        );
-                      } else {
-                        // fallback for other platforms
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Platform not supported for navigation.',
-                            ),
-                          ),
-                        );
-                      }
+                      await _startNavigation(
+                        coords.latitude,
+                        coords.longitude,
+                        origin: originCoords,
+                      );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

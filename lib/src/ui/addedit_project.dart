@@ -106,8 +106,8 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   late Project currentProject;
   String pageTitle = "Add Project";
   final _formKey = GlobalKey<FormState>();
-  double lattitude = 28.7;
-  double longitude = 34.8;
+  double lattitude = 0.0;
+  double longitude = 0.0;
   save(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       currentProject.name = _nameController.text;
@@ -245,10 +245,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
     if (state is AddEditProjectLoaded && state.forms.isNotEmpty) {
       for (final form in state.forms) {
         dropdownItems.add(
-          DropdownMenuItem(
-            value: form,
-            child: Text(form.name ?? 'Form'),
-          ),
+          DropdownMenuItem(value: form, child: Text(form.name ?? 'Form')),
         );
       }
     }
