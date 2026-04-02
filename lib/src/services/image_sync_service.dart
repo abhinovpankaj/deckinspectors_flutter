@@ -2,10 +2,8 @@ import 'dart:io';
 
 import 'package:cbl/cbl.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-//import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../bloc/images_bloc.dart';
 import '../bloc/settings_bloc.dart';

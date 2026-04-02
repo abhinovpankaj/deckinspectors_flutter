@@ -4,16 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/users_bloc.dart';
 import '../models/couchbase/couchbase_models.dart';
 import '../resources/couchbase/project_repository.dart';
-import '../resources/couchbase/database_provider.dart';
-import '../resources/couchbase/image_repository.dart';
-import '../resources/couchbase/subproject_repository.dart';
-import '../resources/couchbase/location_repository.dart';
-import '../resources/couchbase/section_repository.dart';
-import '../bloc/settings_bloc.dart';
+
 import '../bloc/projects_bloc.dart';
 import '../bloc/projects_event.dart';
 import '../bloc/projects_state.dart';
-import '../resources/repository.dart';
 import 'addedit_project.dart';
 import 'cachedimage_widget.dart';
 import 'project_details.dart';

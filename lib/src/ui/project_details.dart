@@ -625,8 +625,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
                     try {
                       // prefer stored coords if they exist and are non-zero
-                      double lat = (currentProject.latitude ?? 0.0);
-                      double lng = (currentProject.longitude ?? 0.0);
+                      double lat = (currentProject.latitude);
+                      double lng = (currentProject.longitude);
 
                       // If coords not set (0,0) attempt geocoding
                       if (lat == 0.0 && lng == 0.0) {

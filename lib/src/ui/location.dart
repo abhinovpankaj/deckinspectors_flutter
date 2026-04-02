@@ -365,9 +365,8 @@ class _LocationPageState extends State<LocationPage> {
         child: InkWell(
           onTap: () {
             if (appSettings.isInvasiveMode) {
-              
               gotoInvasiveDetails(
-                sections[index].id as String,
+                sections[index].id,
                 sections[index].name as String,
               );
             } else {
@@ -789,9 +788,7 @@ class _LocationPageState extends State<LocationPage> {
       if (!mounted) {
         return;
       }
-      setState(
-        () {},
-      );
+      setState(() {});
     });
   }
 }

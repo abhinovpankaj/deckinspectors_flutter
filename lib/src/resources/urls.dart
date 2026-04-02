@@ -1,6 +1,6 @@
 class URLS {
   static const String baseUrl =
-      'https://deckmultitenantwebservices-uat.azurewebsites.net/api';
+      'https://deckmultitenantwebservices.azurewebsites.net/api';
   //static const String baseUrl = 'http://localhost:3000/api';
   static const String allProjectsUrl = '$baseUrl/project/allprojects';
   static const String addProjectsUrl = '$baseUrl/project/add';
