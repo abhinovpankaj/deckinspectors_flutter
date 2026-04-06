@@ -120,6 +120,7 @@ class ReplicatorProvider {
           'ConclusiveSection',
           'InvasiveSection',
           'DynamicVisualSection',
+          'LocationForm',
         ];
         for (final name in collectionNames) {
           final collection = await db.collection(name, 'inventory');

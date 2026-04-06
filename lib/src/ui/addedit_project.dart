@@ -240,7 +240,10 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   Widget _buildForm(BuildContext context, AddEditProjectState state) {
     List<DropdownMenuItem<LocationForm>> dropdownItems = [];
     dropdownItems.add(
-      const DropdownMenuItem(value: null, child: Text("E3 Form")),
+      const DropdownMenuItem(
+        value: null,
+        child: Text("E3 Inspections Default"),
+      ),
     );
     if (state is AddEditProjectLoaded && state.forms.isNotEmpty) {
       for (final form in state.forms) {
