@@ -114,22 +114,26 @@ class ProjectRepository {
             Expression.property(attributeDocumentType)
                 .equalTo(Expression.string('LocationForm'))
                 .and(
-                  Expression.property('companyIdentifier')
-                      .equalTo(Expression.string(company)),
+                  Expression.property(
+                    'companyIdentifier',
+                  ).equalTo(Expression.string(company)),
                 ),
           );
 
       final result = await query.execute();
       final rows = await result.allResults();
 
-      return rows.map((row) {
-        final data = row.dictionary('LocationForm')?.toPlainMap();
-        if (data == null) return null;
-        final form = LocationForm.fromDocument(data);
-        final docId = row.string('docId');
-        if (docId != null && docId.isNotEmpty) form.id = docId;
-        return form;
-      }).whereType<LocationForm>().toList();
+      return rows
+          .map((row) {
+            final data = row.dictionary('LocationForm')?.toPlainMap();
+            if (data == null) return null;
+            final form = LocationForm.fromDocument(data);
+            final docId = row.string('docId');
+            if (docId != null && docId.isNotEmpty) form.id = docId;
+            return form;
+          })
+          .whereType<LocationForm>()
+          .toList();
     } catch (e) {
       debugPrint('Error fetching forms: $e');
       return [];

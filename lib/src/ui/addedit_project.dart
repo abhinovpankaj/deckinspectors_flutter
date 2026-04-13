@@ -117,7 +117,6 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       currentProject.longitude = longitude;
       currentProject.projecttype =
           isProjectSingleLevel ? 'singlelevel' : 'multilevel';
-      currentProject.formId = formId;
       currentProject.lasteditedby = userFullName;
       currentProject.editedat = DateTime.now().toIso8601String();
 
@@ -207,12 +206,18 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   LocationForm? selectedValue;
+  List<LocationForm> _cachedForms = [];
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AddEditProjectBloc, AddEditProjectState>(
       listener: (context, state) {
-        if (state is AddEditProjectLoaded && state.project != null) {
-          setState(() => currentProject = state.project!);
+        if (state is AddEditProjectLoaded) {
+          if (state.forms.isNotEmpty) {
+            setState(() => _cachedForms = state.forms);
+          }
+          if (state.project != null) {
+            setState(() => currentProject = state.project!);
+          }
         }
         if (state is AddEditProjectSaving) {
           ScaffoldMessenger.of(
@@ -238,27 +243,23 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   Widget _buildForm(BuildContext context, AddEditProjectState state) {
-    List<DropdownMenuItem<LocationForm>> dropdownItems = [];
-    dropdownItems.add(
+    List<DropdownMenuItem<LocationForm>> dropdownItems = [
       const DropdownMenuItem(
         value: null,
         child: Text("E3 Inspections Default"),
       ),
-    );
-    if (state is AddEditProjectLoaded && state.forms.isNotEmpty) {
-      for (final form in state.forms) {
-        dropdownItems.add(
-          DropdownMenuItem(value: form, child: Text(form.name ?? 'Form')),
-        );
-      }
+    ];
+    for (final form in _cachedForms) {
+      dropdownItems.add(
+        DropdownMenuItem(value: form, child: Text(form.name ?? 'Form')),
+      );
     }
-    // Display value: user selection or project's form when loaded
+    // Display value: user selection or project's saved form
     LocationForm? displayValue = selectedValue;
     if (displayValue == null &&
         currentProject.formId != null &&
-        currentProject.formId!.isNotEmpty &&
-        state is AddEditProjectLoaded) {
-      for (final f in state.forms) {
+        currentProject.formId!.isNotEmpty) {
+      for (final f in _cachedForms) {
         if (f.id == currentProject.formId) {
           displayValue = f;
           break;
@@ -412,62 +413,64 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
 
                   const SizedBox(height: 8),
                   if (isNewProject)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
                           'Location form type',
                           style: TextStyle(fontWeight: FontWeight.w500),
                         ),
-                        DropdownButton<LocationForm>(
-                          value: displayValue,
-                          hint: const Text('E3 form'),
-                          items: dropdownItems,
-                          onChanged: (value) {
-                            formId = value?.id;
-                            setState(() {
-                              selectedValue = value;
-                            });
-                          },
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<LocationForm>(
+                              isExpanded: true,
+                              value: displayValue,
+                              hint: const Text('E3 form'),
+                              items: dropdownItems,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedValue = value;
+                                  currentProject.formId = value?.id;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (!isNewProject)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Location form type',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            displayValue?.name ?? 'E3 Inspections Default',
+                            style: const TextStyle(fontWeight: FontWeight.w400),
+                          ),
                         ),
                       ],
                     ),
 
-                  // Center(
-                  //     child: TextField(
-                  //   controller: dateInput,
-                  //   //editing controller of this TextField
-                  //   decoration: const InputDecoration(
-                  //       icon: Icon(Icons.calendar_today), //icon of text field
-                  //       labelText:
-                  //           "Project inspection/edit date" //label text of field
-                  //       ),
-                  //   readOnly: true,
-                  //   //set it true, so that user will not able to edit text
-                  //   onTap: () async {
-                  //     DateTime? pickedDate = await showDatePicker(
-                  //         context: context,
-                  //         initialDate: dateInput.text == ''
-                  //             ? DateTime.now()
-                  //             : DateTime.parse(
-                  //                 currentProject.editedat as String),
-                  //         firstDate: DateTime(2000),
-                  //         //DateTime.now() - not to allow to choose before today.
-                  //         lastDate: DateTime(2100));
-
-                  //     if (pickedDate != null) {
-                  //       String formattedDate =
-                  //           DateFormat('MM-dd-yyyy').format(pickedDate);
-
-                  //       setState(() {
-                  //         dateInput.text =
-                  //             formattedDate;
-
-                  //         //set output date to TextField value.
-                  //       });
-                  //     } else {}
-                  //   },
-                  // )),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       side: BorderSide.none,

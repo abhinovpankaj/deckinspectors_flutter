@@ -4,16 +4,19 @@ import '../../bloc/users_bloc.dart';
 import '../../models/couchbase/couchbase_models.dart';
 import 'database_provider.dart';
 import 'image_repository.dart';
+import 'location_repository.dart';
 
 class DynamicRepository {
   final DatabaseProvider _databaseProvider;
   final ImageRepository _imageRepository;
   final UsersBloc _usersBloc;
+  final LocationRepository _locationRepository;
 
   DynamicRepository(
     this._databaseProvider,
     this._imageRepository,
     this._usersBloc,
+    this._locationRepository,
   );
 
   Future<String> createDynamicSection(
@@ -99,18 +102,36 @@ class DynamicRepository {
     );
   }
 
+  /// Fetch a LocationForm by its document ID to retrieve template questions.
+  Future<LocationForm?> getFormById(String formId) async {
+    try {
+      final doc = await _databaseProvider.formCollection.document(formId);
+      if (doc != null) {
+        final form = LocationForm.fromDocument(doc.toPlainMap());
+        form.id = doc.id;
+        return form;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching form by id: $e');
+      return null;
+    }
+  }
+
   Future<bool> addDynamicImagesUrl(
     String sectionName,
     String sectionId,
     DynamicVisualSection currentDynamicSection,
+    List<String> localPaths,
     List<String> urls,
   ) async {
     try {
-      for (var url in urls) {
+      for (int i = 0; i < localPaths.length; i++) {
+        final remoteUrl = i < urls.length ? urls[i] : '';
         final image = DeckImage(
-          localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          localUrl: localPaths[i],
+          remoteUrl: remoteUrl,
+          isuploaded: remoteUrl.startsWith('http'),
           parentid: currentDynamicSection.id,
           parenttype: 'dynamicSection',
           sectiontype: 'dynamicSectionImage',
@@ -118,13 +139,36 @@ class DynamicRepository {
           uploadedBy: _usersBloc.userDetails.username,
         );
         await _imageRepository.saveImage(image);
+
+        // Replace local path with remote URL in the images list
+        if (remoteUrl.isNotEmpty) {
+          if (currentDynamicSection.images.contains(localPaths[i])) {
+            final index = currentDynamicSection.images.indexOf(localPaths[i]);
+            currentDynamicSection.images[index] = remoteUrl;
+          } else {
+            currentDynamicSection.images.add(remoteUrl);
+          }
+        }
       }
-      currentDynamicSection.images.addAll(urls);
+
       final doc = MutableDocument.withId(
         currentDynamicSection.id as String,
         currentDynamicSection.toDocument(),
       );
       await _databaseProvider.dynamicSectionCollection.saveDocument(doc);
+
+      final newCoverUrl =
+          currentDynamicSection.images.isNotEmpty
+              ? currentDynamicSection.images.last
+              : '';
+      await _locationRepository.updateImageCount(
+        currentDynamicSection.parenttype,
+        currentDynamicSection.id as String,
+        currentDynamicSection.parentid as String,
+        currentDynamicSection.images.length,
+        newCoverUrl,
+      );
+
       return true;
     } catch (e) {
       debugPrint('Error adding dynamic images url: $e');
@@ -224,6 +268,20 @@ class DynamicRepository {
         section.toDocument(),
       );
       await _databaseProvider.dynamicSectionCollection.saveDocument(doc);
+
+      final coverUrl = section.images.isNotEmpty ? section.images.first : null;
+      await _locationRepository.updateLocationSection(
+        section.parenttype,
+        section.id as String,
+        section.parentid as String,
+        section.name,
+        null,
+        false,
+        section.furtherinvasivereviewrequired,
+        null,
+        section.images.length,
+        coverUrl: coverUrl,
+      );
 
       return section;
     } catch (e) {

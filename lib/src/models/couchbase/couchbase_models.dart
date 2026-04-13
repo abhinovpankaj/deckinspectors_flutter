@@ -455,35 +455,44 @@ class LocationForm extends CouchbaseDocument {
 // Question Document (nested in LocationForm)
 class Question {
   String? id;
-  String? question;
-  String? answerType;
-  List<String>? options;
-  String? answer;
+  String name;
+  String type;
+  List<String> allowedValues;
+  String answer;
+  List<String> multipleAnswers;
+  bool isMandatory;
 
   Question({
     this.id,
-    this.question,
-    this.answerType,
-    this.options,
-    this.answer,
+    this.name = '',
+    this.type = '',
+    this.allowedValues = const [],
+    this.answer = '',
+    this.multipleAnswers = const [],
+    this.isMandatory = false,
   });
 
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'docType': 'Question',
-    'question': question,
-    'answerType': answerType,
-    'options': options,
+    '_id': id,
+    'name': name,
+    'type': type,
+    'allowedValues': allowedValues,
     'answer': answer,
+    'multipleAnswers': multipleAnswers,
+    'isMandatory': isMandatory,
   };
 
   factory Question.fromMap(Map<String, dynamic> map) {
     return Question(
-      id: map['id'],
-      question: map['question'],
-      answerType: map['answerType'],
-      options: List<String>.from(map['options'] ?? []),
-      answer: map['answer'],
+      id: map['_id'] ?? map['id'],
+      name: map['name'] ?? map['question'] ?? '',
+      type: map['type'] ?? map['answerType'] ?? '',
+      allowedValues: List<String>.from(
+        map['allowedValues'] ?? map['options'] ?? [],
+      ),
+      answer: map['answer'] ?? '',
+      multipleAnswers: List<String>.from(map['multipleAnswers'] ?? []),
+      isMandatory: map['isMandatory'] ?? false,
     );
   }
 }
@@ -609,10 +618,12 @@ class DynamicVisualSection extends CouchbaseDocument {
     this.editedat,
     this.lasteditedby,
     this.additionalconsiderations,
-    this.images = const [],
-    this.questions = const [],
-    this.sections = const [],
-  });
+    List<String>? images,
+    List<Question>? questions,
+    List<Section>? sections,
+  }) : images = images ?? [],
+       questions = questions ?? [],
+       sections = sections ?? [];
 
   @override
   String get docType => 'DynamicVisualSection';

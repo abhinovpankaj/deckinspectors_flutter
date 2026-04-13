@@ -74,7 +74,7 @@ class AddEditProjectBloc
         default:
           break;
       }
-      emit(AddEditProjectLoaded(project: project));
+      emit(AddEditProjectLoaded(project: project, forms: current.forms));
     }
   }
 

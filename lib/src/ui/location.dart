@@ -13,6 +13,7 @@ import '../resources/couchbase/section_repository.dart';
 //import 'breadcrumb_navigation.dart';
 import 'addedit_location.dart';
 import 'cachedimage_widget.dart';
+import 'dynamic_section.dart';
 import 'invasivesection.dart';
 import 'section.dart';
 import 'showprojecttype_widget.dart';
@@ -667,24 +668,23 @@ class _LocationPageState extends State<LocationPage> {
         setState(() {});
       });
     } else {
-      // Navigator.push(
-      //   context,
-      //   DynamicVisualSectionPage.getRoute(
-
-      //     currentLocation.id as String,
-      //     userFullName,
-      //     locationType,
-      //     currentLocation.name as String,
-      //     formId as ObjectId,
-      //     true,
-      //     "New",
-      //   ),
-      // ).then((value) {
-      //   if (value == true) {
-      //     bloc.add(LoadLocationEvent(locationId));
-      //   }
-      //   setState(() {});
-      // });
+      Navigator.push(
+        context,
+        DynamicVisualSectionPage.getRoute(
+          currentLocation.id as String,
+          userFullName,
+          locationType,
+          currentLocation.name as String,
+          formId as String,
+          true,
+          "New",
+        ),
+      ).then((value) {
+        if (value == true) {
+          bloc.add(LoadLocationEvent(locationId));
+        }
+        setState(() {});
+      });
     }
   }
 
@@ -693,54 +693,61 @@ class _LocationPageState extends State<LocationPage> {
     final locationRepo = RepositoryProvider.of<LocationRepository>(context);
     final sectionRepo = RepositoryProvider.of<SectionRepository>(context);
     final imageRepo = RepositoryProvider.of<ImageRepository>(context);
-    Navigator.push(
-      context,
-      //just testing
-      //formId == null
-      //?
-      SectionPage.getRoute(
-        sectionId,
-        currentLocation.id as String,
-        userFullName,
-        locationType,
-        currentLocation.name as String,
-        false,
-        sectionName,
-        sectionRepository: sectionRepo,
-        locationRepository: locationRepo,
-        imageRepository: imageRepo,
-        onUploadComplete: () {
-          if (mounted) {
-            bloc.add(LoadLocationEvent(locationId));
-          }
-        },
-      ),
-      //:
-      // MaterialPageRoute(
-      //   builder:
-      //       (context) => DynamicVisualSectionPage(
-      //         sectionId,
-      //         currentLocation.id as String,
-      //         userFullName,
-      //         locationType,
-      //         currentLocation.name as String,
-      //         false,
-      //         formId as String,
-      //       ),
-      // ),
-    ).then((value) {
-      if (!mounted) {
-        return;
-      }
-      if (value is bool) {
+    if (formId != null) {
+      Navigator.push(
+        context,
+        DynamicVisualSectionPage.getRoute(
+          currentLocation.id as String,
+          userFullName,
+          locationType,
+          currentLocation.name as String,
+          formId as String,
+          false,
+          sectionId,
+        ),
+      ).then((value) {
+        if (!mounted) return;
         if (value == true) {
           Future.delayed(const Duration(milliseconds: 200), () {
             bloc.add(LoadLocationEvent(locationId));
           });
         }
-      }
-      setState(() {});
-    });
+        setState(() {});
+      });
+    } else {
+      Navigator.push(
+        context,
+        SectionPage.getRoute(
+          sectionId,
+          currentLocation.id as String,
+          userFullName,
+          locationType,
+          currentLocation.name as String,
+          false,
+          sectionName,
+          sectionRepository: sectionRepo,
+          locationRepository: locationRepo,
+          imageRepository: imageRepo,
+          onUploadComplete: () {
+            if (mounted) {
+              bloc.add(LoadLocationEvent(locationId));
+            }
+          },
+        ),
+      ).then((value) {
+        if (!mounted) {
+          return;
+        }
+        if (value is bool) {
+          if (value == true) {
+            Future.delayed(const Duration(milliseconds: 200), () {
+              bloc.add(LoadLocationEvent(locationId));
+            });
+          }
+        }
+        setState(() {});
+      });
+    }
   }
 
   void addEditLocation(Location currentLocation) {

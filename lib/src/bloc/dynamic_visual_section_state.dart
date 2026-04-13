@@ -11,6 +11,8 @@ class DynamicVisualSectionInitial extends DynamicVisualSectionState {}
 
 class DynamicVisualSectionLoading extends DynamicVisualSectionState {}
 
+class DynamicVisualSectionSaving extends DynamicVisualSectionState {}
+
 class DynamicVisualSectionLoaded extends DynamicVisualSectionState {
   final DynamicVisualSection section;
   const DynamicVisualSectionLoaded(this.section);
@@ -18,9 +20,28 @@ class DynamicVisualSectionLoaded extends DynamicVisualSectionState {
   List<Object?> get props => [section];
 }
 
-class DynamicVisualSectionSaved extends DynamicVisualSectionState {}
+class DynamicVisualSectionSaveSuccess extends DynamicVisualSectionState {
+  final DynamicVisualSection section;
+  const DynamicVisualSectionSaveSuccess(this.section);
+  @override
+  List<Object?> get props => [section];
+}
 
-class DynamicVisualSectionDeleted extends DynamicVisualSectionState {}
+class DynamicVisualSectionSaveFailure extends DynamicVisualSectionState {
+  final String error;
+  const DynamicVisualSectionSaveFailure(this.error);
+  @override
+  List<Object?> get props => [error];
+}
+
+class DynamicVisualSectionDeleteSuccess extends DynamicVisualSectionState {}
+
+class DynamicVisualSectionDeleteFailure extends DynamicVisualSectionState {
+  final String error;
+  const DynamicVisualSectionDeleteFailure(this.error);
+  @override
+  List<Object?> get props => [error];
+}
 
 class DynamicVisualSectionError extends DynamicVisualSectionState {
   final String message;
@@ -28,3 +49,6 @@ class DynamicVisualSectionError extends DynamicVisualSectionState {
   @override
   List<Object?> get props => [message];
 }
+
+// kept for backward compatibility — alias to DynamicVisualSectionDeleteSuccess
+class DynamicVisualSectionDeleted extends DynamicVisualSectionState {}

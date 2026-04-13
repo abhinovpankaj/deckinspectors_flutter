@@ -8,7 +8,7 @@ class DynamicVisualSectionBloc
   final DynamicRepository repository;
 
   DynamicVisualSectionBloc(this.repository)
-      : super(DynamicVisualSectionInitial()) {
+    : super(DynamicVisualSectionInitial()) {
     on<LoadDynamicVisualSection>(_onLoad);
     on<SaveDynamicVisualSection>(_onSave);
     on<DeleteDynamicVisualSection>(_onDelete);
@@ -16,8 +16,10 @@ class DynamicVisualSectionBloc
     on<RemoveDynamicVisualSectionImage>(_onRemoveImage);
   }
 
-  Future<void> _onLoad(LoadDynamicVisualSection event,
-      Emitter<DynamicVisualSectionState> emit) async {
+  Future<void> _onLoad(
+    LoadDynamicVisualSection event,
+    Emitter<DynamicVisualSectionState> emit,
+  ) async {
     emit(DynamicVisualSectionLoading());
     try {
       final section = await repository.getDynamicSection(event.sectionId);
@@ -31,50 +33,56 @@ class DynamicVisualSectionBloc
     }
   }
 
-  Future<void> _onSave(SaveDynamicVisualSection event,
-      Emitter<DynamicVisualSectionState> emit) async {
-    emit(DynamicVisualSectionLoading());
+  Future<void> _onSave(
+    SaveDynamicVisualSection event,
+    Emitter<DynamicVisualSectionState> emit,
+  ) async {
+    emit(DynamicVisualSectionSaving());
     try {
-      final result = await repository.addupdateDynamicSection(
-        event.section,
-        event.section.name ?? '',
-        event.section.additionalconsiderations ?? '',
-        event.isNewSection,
-        event.userFullName,
+      final section = await repository.addupdateDynamicVisualSection(
+        section: event.section,
+        name: event.name,
+        concerns: event.concerns,
+        questions: event.questions,
+        invasiveReviewRequired: event.invasiveReviewRequired,
+        unitUnavailable: event.unitUnavailable,
+        isNewSection: event.isNewSection,
+        userFullName: event.userFullName,
       );
-      if (result) {
-        emit(DynamicVisualSectionSaved());
-      } else {
-        emit(const DynamicVisualSectionError('Failed to save section'));
-      }
+      emit(DynamicVisualSectionSaveSuccess(section));
     } catch (e) {
-      emit(DynamicVisualSectionError(e.toString()));
+      emit(DynamicVisualSectionSaveFailure(e.toString()));
     }
   }
 
-  Future<void> _onDelete(DeleteDynamicVisualSection event,
-      Emitter<DynamicVisualSectionState> emit) async {
+  Future<void> _onDelete(
+    DeleteDynamicVisualSection event,
+    Emitter<DynamicVisualSectionState> emit,
+  ) async {
     emit(DynamicVisualSectionLoading());
     try {
       final sectionId = event.section.id;
       if (sectionId == null) {
-        emit(const DynamicVisualSectionError('Section id is null'));
+        emit(const DynamicVisualSectionDeleteFailure('Section id is null'));
         return;
       }
-
       final result = await repository.deleteDynamicSectionById(sectionId);
       if (result == 'success') {
-        emit(DynamicVisualSectionDeleted());
+        emit(DynamicVisualSectionDeleteSuccess());
       } else {
-        emit(const DynamicVisualSectionError('Failed to delete section'));
+        emit(
+          const DynamicVisualSectionDeleteFailure('Failed to delete section'),
+        );
       }
     } catch (e) {
-      emit(DynamicVisualSectionError(e.toString()));
+      emit(DynamicVisualSectionDeleteFailure(e.toString()));
     }
   }
 
-  Future<void> _onAddImages(AddDynamicVisualSectionImages event,
-      Emitter<DynamicVisualSectionState> emit) async {
+  Future<void> _onAddImages(
+    AddDynamicVisualSectionImages event,
+    Emitter<DynamicVisualSectionState> emit,
+  ) async {
     emit(DynamicVisualSectionLoading());
     try {
       final sectionId = event.section.id;
@@ -88,6 +96,7 @@ class DynamicVisualSectionBloc
         sectionId,
         event.section,
         event.imagePaths,
+        const [],
       );
       if (result) {
         emit(DynamicVisualSectionLoaded(event.section));
@@ -99,12 +108,16 @@ class DynamicVisualSectionBloc
     }
   }
 
-  Future<void> _onRemoveImage(RemoveDynamicVisualSectionImage event,
-      Emitter<DynamicVisualSectionState> emit) async {
+  Future<void> _onRemoveImage(
+    RemoveDynamicVisualSectionImage event,
+    Emitter<DynamicVisualSectionState> emit,
+  ) async {
     emit(DynamicVisualSectionLoading());
     try {
       final result = await repository.removeDynamicImageUrl(
-          event.section, event.imagePath);
+        event.section,
+        event.imagePath,
+      );
       if (result) {
         emit(DynamicVisualSectionLoaded(event.section));
       } else {

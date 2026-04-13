@@ -16,15 +16,36 @@ class LoadDynamicVisualSection extends DynamicVisualSectionEvent {
 
 class SaveDynamicVisualSection extends DynamicVisualSectionEvent {
   final DynamicVisualSection section;
-  final String userFullName;
-  final bool isNewSection;
+  final String name;
+  final String concerns;
   final List<Question> questions;
+  final bool invasiveReviewRequired;
   final bool unitUnavailable;
-  const SaveDynamicVisualSection(this.section, this.userFullName,
-      this.isNewSection, this.questions, this.unitUnavailable);
+  final bool isNewSection;
+  final String userFullName;
+
+  const SaveDynamicVisualSection({
+    required this.section,
+    required this.name,
+    required this.concerns,
+    required this.questions,
+    required this.invasiveReviewRequired,
+    required this.unitUnavailable,
+    required this.isNewSection,
+    required this.userFullName,
+  });
+
   @override
-  List<Object?> get props =>
-      [section, userFullName, isNewSection, questions, unitUnavailable];
+  List<Object?> get props => [
+    section,
+    name,
+    concerns,
+    questions,
+    invasiveReviewRequired,
+    unitUnavailable,
+    isNewSection,
+    userFullName,
+  ];
 }
 
 class DeleteDynamicVisualSection extends DynamicVisualSectionEvent {
