@@ -141,7 +141,8 @@ class _ReportsPage extends State<ReportsPage> {
     var shareResult = await Share.shareXFiles(
       files,
       subject: 'Project Report',
-      sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
     );
     scaffoldMessenger.showSnackBar(getResultSnackBar(shareResult));
   }
