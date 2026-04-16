@@ -146,6 +146,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _applyImageSettings(quality);
   }
 
+  final _exportLogsKey = GlobalKey();
+
   Future<void> _exportLogs() async {
     final files = await AppLogger.instance.getLogFiles();
     if (files.isEmpty) {
@@ -161,10 +163,13 @@ class _SettingsPageState extends State<SettingsPage> {
       'User requested log export (${files.length} files)',
     );
     final xFiles = files.map((file) => XFile(file.path)).toList();
+    final box = _exportLogsKey.currentContext?.findRenderObject() as RenderBox?;
     await Share.shareXFiles(
       xFiles,
       text: 'Deck Inspectors diagnostic logs',
       subject: 'Deck Inspectors Logs',
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
     );
   }
 
@@ -295,6 +300,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     shadowColor: Colors.blue,
                     elevation: 0,
                   ),
+                  key: _exportLogsKey,
                   onPressed: _exportLogs,
                   icon: const Icon(Icons.upload_file, color: Colors.blue),
                   label: const Text(

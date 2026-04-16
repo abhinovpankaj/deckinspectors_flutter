@@ -134,11 +134,15 @@ class _ReportsPage extends State<ReportsPage> {
     String fileName,
     String pdfFilePath,
   ) async {
-    //final box = context.findRenderObject() as RenderBox?;
+    final box = context.findRenderObject() as RenderBox?;
     final files = <XFile>[];
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     files.add(XFile(pdfFilePath, name: fileName));
-    var shareResult = await Share.shareXFiles(files, subject: 'Project Report');
+    var shareResult = await Share.shareXFiles(
+      files,
+      subject: 'Project Report',
+      sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    );
     scaffoldMessenger.showSnackBar(getResultSnackBar(shareResult));
   }
 

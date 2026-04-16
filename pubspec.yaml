@@ -89,7 +89,7 @@ dependencies:
   # The `cbl` package provides the Dart API; `cbl_flutter_ce` registers
   # the native platform implementation. Replace with `cbl_flutter_ee`
   # if you have the enterprise edition.
-  cbl_flutter_ce: ^3.3.5
+  cbl_flutter_ce: ^3.5.1
   equatable: ^2.0.8
   flutter_bloc: ^9.1.1
   geolocator: ^10.1.1
