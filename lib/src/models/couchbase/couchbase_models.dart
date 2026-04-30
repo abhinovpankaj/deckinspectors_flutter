@@ -710,7 +710,7 @@ class Child {
   factory Child.fromMap(Map<String, dynamic> map) {
     try {
       var child = Child(
-        id: map['id'],
+        id: (map['id'] as String?) ?? (map['_id'] as String?),
         name: map['name'],
         type: map['type'],
         description: map['description'],
@@ -773,7 +773,7 @@ class Section {
 
   factory Section.fromMap(Map<String, dynamic> doc, {String? id}) {
     var section = Section(
-      id: doc['id'] ?? doc['sectionId'],
+      id: doc['id'] ?? doc['sectionId'] ?? doc['_id'] ?? '',
       name: doc['name'],
       isInvasive: doc['isInvasive'] ?? false,
       visualsignsofleak: doc['visualsignsofleak'] ?? false,

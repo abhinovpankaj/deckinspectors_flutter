@@ -32,6 +32,11 @@ class ProjectRepository {
                     Expression.property('assignedto'),
                     value: Expression.string(loggedInUser),
                   ),
+                )
+                .and(
+                  Expression.property('iscomplete')
+                      .equalTo(Expression.boolean(false))
+                      .or(Expression.property('iscomplete').isNullOrMissing()),
                 ),
           );
 

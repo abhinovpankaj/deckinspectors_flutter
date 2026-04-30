@@ -59,9 +59,10 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
         //   child: const Icon(Icons.video_call),
         // ),
         appBar: AppBar(
-          title: baseUrl == ""
-              ? const Text('Loading')
-              : const Text('Live Stream from E3 Camera'),
+          title:
+              baseUrl == ""
+                  ? const Text('Loading')
+                  : const Text('Live Stream from E3 Camera'),
         ),
         body: Column(
           children: [
@@ -72,9 +73,7 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: WebViewWidget(controller: controller),
-                      ),
+                      Expanded(child: WebViewWidget(controller: controller)),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -96,13 +95,11 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
                             // This saves the images when 'Done' is pressed
                             // Currently just returning paths to caller
                             onPressed: () {
-                              Navigator.of(context).pop(
-                                  capturedImages.map((e) => e.path).toList());
+                              Navigator.of(
+                                context,
+                              ).pop(capturedImages.map((e) => e.path).toList());
                             },
-                            icon: const Icon(
-                              Icons.done,
-                              size: 40,
-                            ),
+                            icon: const Icon(Icons.done, size: 40),
                             label: Text(
                               'Save ${capturedImages.length}',
                               style: const TextStyle(fontSize: 15),
@@ -112,61 +109,68 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
                         Align(
                           alignment: Alignment.center,
                           child: InkWell(
-                            onTap: isCapturing
-                                ? null
-                                : () async {
-                                    if (isCapturing) return;
-                                    setState(() {
-                                      isCapturing = true;
-                                    });
-
-                                    try {
-                                      final response = await http
-                                          .get(Uri.parse('$baseUrl/capture'));
-
-                                      if (response.statusCode == 200 &&
-                                          response.headers['content-type']
-                                                  ?.contains('image/jpeg') ==
-                                              true) {
-                                        // Get temporary directory - images will be lost when app closes
-                                        final directory =
-                                            await getTemporaryDirectory();
-
-                                        // Create unique filename
-                                        final imagePath =
-                                            '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
-                                        final file = File(imagePath);
-
-                                        // Save image to temporary storage
-                                        await file
-                                            .writeAsBytes(response.bodyBytes);
-
-                                        setState(() {
-                                          capturedImages.add(XFile(imagePath));
-                                        });
-
-                                        Get.snackbar(
-                                          "Success",
-                                          "Image captured",
-                                          backgroundColor: Colors.green,
-                                          colorText: Colors.white,
-                                          duration: const Duration(seconds: 2),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      Get.snackbar(
-                                        "Error",
-                                        "Failed to capture image: $e",
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                        duration: const Duration(seconds: 3),
-                                      );
-                                    } finally {
+                            onTap:
+                                isCapturing
+                                    ? null
+                                    : () async {
+                                      if (isCapturing) return;
                                       setState(() {
-                                        isCapturing = false;
+                                        isCapturing = true;
                                       });
-                                    }
-                                  },
+
+                                      try {
+                                        final response = await http.get(
+                                          Uri.parse('$baseUrl/capture'),
+                                        );
+
+                                        if (response.statusCode == 200 &&
+                                            response.headers['content-type']
+                                                    ?.contains('image/jpeg') ==
+                                                true) {
+                                          // Save to app support directory so images persist across restarts
+                                          final directory =
+                                              await getApplicationSupportDirectory();
+
+                                          // Create unique filename
+                                          final imagePath =
+                                              '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+                                          final file = File(imagePath);
+
+                                          // Save image to temporary storage
+                                          await file.writeAsBytes(
+                                            response.bodyBytes,
+                                          );
+
+                                          setState(() {
+                                            capturedImages.add(
+                                              XFile(imagePath),
+                                            );
+                                          });
+
+                                          Get.snackbar(
+                                            "Success",
+                                            "Image captured",
+                                            backgroundColor: Colors.green,
+                                            colorText: Colors.white,
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        Get.snackbar(
+                                          "Error",
+                                          "Failed to capture image: $e",
+                                          backgroundColor: Colors.red,
+                                          colorText: Colors.white,
+                                          duration: const Duration(seconds: 3),
+                                        );
+                                      } finally {
+                                        setState(() {
+                                          isCapturing = false;
+                                        });
+                                      }
+                                    },
                             child: Container(
                               width: 80,
                               height: 80,
@@ -175,14 +179,16 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
-                                child: isCapturing
-                                    ? const CircularProgressIndicator(
-                                        color: Colors.white)
-                                    : const Icon(
-                                        Icons.camera,
-                                        color: Colors.lightBlue,
-                                        size: 70,
-                                      ),
+                                child:
+                                    isCapturing
+                                        ? const CircularProgressIndicator(
+                                          color: Colors.white,
+                                        )
+                                        : const Icon(
+                                          Icons.camera,
+                                          color: Colors.lightBlue,
+                                          size: 70,
+                                        ),
                               ),
                             ),
                           ),
@@ -219,48 +225,51 @@ class PiZeroCameraScreenState extends State<PiZeroCameraScreen> {
 
   Widget horizontalScrollChildren(BuildContext context, int index) {
     return SizedBox(
-        width: 100,
-        height: 100,
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                    boxShadow: [
-                      BoxShadow(blurRadius: 1.0, color: Colors.blue)
-                    ]),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: networkImage(capturedImages[index].path),
-                ),
+      width: 100,
+      height: 100,
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                boxShadow: [BoxShadow(blurRadius: 1.0, color: Colors.blue)],
               ),
-              Positioned(
-                top: 0,
-                width: 30,
-                height: 20,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () {
-                      if (capturedImages.isNotEmpty) {
-                        // Delete file from storage when removed from list
-                        File(capturedImages[index].path).deleteSync();
-                        setState(() {
-                          capturedImages.removeAt(index);
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.delete_forever,
-                        size: 20, color: Colors.blueAccent),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: networkImage(capturedImages[index].path),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              width: 30,
+              height: 20,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  onPressed: () {
+                    if (capturedImages.isNotEmpty) {
+                      // Delete file from storage when removed from list
+                      File(capturedImages[index].path).deleteSync();
+                      setState(() {
+                        capturedImages.removeAt(index);
+                      });
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.delete_forever,
+                    size: 20,
+                    color: Colors.blueAccent,
                   ),
                 ),
               ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

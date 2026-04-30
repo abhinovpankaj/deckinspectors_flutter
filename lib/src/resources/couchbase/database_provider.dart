@@ -225,6 +225,46 @@ class DatabaseProvider {
   //   }
   // }
 
+  /// Delete the local database entirely, forcing a full re-sync from App Services
+  /// on next startup. Use this when the replicator checkpoint is stale (e.g.
+  /// after a server-side migration) and migrated documents are not appearing.
+  Future<void> deleteAndResetDatabase() async {
+    try {
+      final dbName = currentInspectionDatabaseName;
+      final db = e3inspectionsDatabase;
+
+      // Must close before deleting — CBL cannot delete an open database.
+      if (db != null) {
+        await db.close();
+        e3inspectionsDatabase = null;
+      }
+
+      // Delete by name + directory using the static API so the checkpoint
+      // (stored inside the .cblite2 bundle) is fully removed.
+      final exists = await Database.exists(
+        dbName,
+        directory: cblDatabaseDirectory.path,
+      );
+      if (exists) {
+        await Database.remove(dbName, directory: cblDatabaseDirectory.path);
+        debugPrint(
+          '${DateTime.now()} [DatabaseProvider] info: local database "$dbName" deleted — will re-sync from App Services on next open.',
+        );
+      } else {
+        debugPrint(
+          '${DateTime.now()} [DatabaseProvider] info: deleteAndResetDatabase — database "$dbName" not found on disk, nothing to delete.',
+        );
+      }
+
+      isInitialized = false;
+      isReplicatorStarted = false;
+    } catch (e) {
+      debugPrint(
+        '${DateTime.now()} [DatabaseProvider] error: deleteAndResetDatabase: ${e.toString()}',
+      );
+    }
+  }
+
   /* closeDatabases - close the databases */
   Future<void> closeDatabases() async {
     try {

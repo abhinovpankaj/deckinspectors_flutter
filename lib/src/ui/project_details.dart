@@ -624,12 +624,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                     }
 
                     try {
-                      // prefer stored coords if they exist and are non-zero
-                      double lat = (currentProject.latitude);
-                      double lng = (currentProject.longitude);
+                      double lat;
+                      double lng;
 
-                      // If coords not set (0,0) attempt geocoding
-                      if (lat == 0.0 && lng == 0.0) {
+                      try {
                         final List<geocoding.Location> geoLocations =
                             await geocoding.locationFromAddress(address);
                         if (geoLocations.isNotEmpty) {
@@ -639,12 +637,28 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'Unable to find coordinates for address.',
+                                'Unable to find coordinates for this address.',
                               ),
                             ),
                           );
                           return;
                         }
+                      } on geocoding.NoResultFoundException {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('No location found for: $address'),
+                          ),
+                        );
+                        return;
+                      } catch (_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Geocoding failed. Please check the address.',
+                            ),
+                          ),
+                        );
+                        return;
                       }
 
                       final coords = Coords(lat, lng);
@@ -660,9 +674,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            'Failed to get coordinates: ${e.toString()}',
-                          ),
+                          content: Text('Navigation error: ${e.toString()}'),
                         ),
                       );
                     }

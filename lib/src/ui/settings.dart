@@ -378,6 +378,63 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
 
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide.none,
+                    minimumSize: const Size.fromHeight(40),
+                    backgroundColor: Colors.white,
+                    shadowColor: Colors.orange,
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (ctx) => AlertDialog(
+                            title: const Text('Reset & Re-sync'),
+                            content: const Text(
+                              'This will delete all local data and re-download everything from the server. Use this if recently migrated data is not appearing.\n\nContinue?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text(
+                                  'Reset',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                    );
+                    if (confirm == true) {
+                      await ReplicatorProvider.stopActiveReplicator();
+                      await DatabaseProvider().deleteAndResetDatabase();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.sync_problem_outlined,
+                    color: Colors.red,
+                  ),
+                  label: const Text(
+                    'Reset & Re-sync',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+
                 const SizedBox(height: 30),
                 const Align(
                   alignment: Alignment.centerLeft,

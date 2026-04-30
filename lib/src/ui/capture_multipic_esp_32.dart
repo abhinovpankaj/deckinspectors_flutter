@@ -241,9 +241,10 @@ class ESP32CameraScreenState extends State<ESP32CameraScreen> {
                                     await videoTrack.captureFrame();
 
                                 var imageBytes = frameBuffer.asUint8List();
-                                final directory = await getTemporaryDirectory();
+                                final directory =
+                                    await getApplicationSupportDirectory();
                                 final imagePath =
-                                    '${directory.path}/${UniqueKey().toString()}.jpg';
+                                    '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
                                 final file = File(imagePath);
                                 await file.writeAsBytes(imageBytes);
 
