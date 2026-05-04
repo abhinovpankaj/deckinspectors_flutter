@@ -26,6 +26,7 @@ import '../resources/couchbase/location_repository.dart';
 import '../resources/couchbase/section_repository.dart';
 
 import '../services/signalling.service.dart';
+import 'app_theme.dart';
 import 'breadcrumb_navigation.dart';
 //import 'capture_multipic_esp_32.dart';
 import 'capture_multipic_esp_32.dart';
@@ -281,8 +282,7 @@ class _SectionPageState extends State<SectionPage> {
         //     )),
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          leadingWidth: 120,
-          leading: ElevatedButton.icon(
+          leading: IconButton(
             onPressed: () async {
               if (isFormUpdated) {
                 bool? cangoback = await showDialog<bool>(
@@ -322,50 +322,23 @@ class _SectionPageState extends State<SectionPage> {
                 Navigator.of(context).pop();
               }
             },
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-            label: const Text(
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              'Back',
-              style: TextStyle(color: Colors.blue),
-            ),
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new),
+            tooltip: 'Back',
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
-          elevation: 0,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Details',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.normal,
-                ),
+          title: Text('Section Details', style: AppTextStyles.titleLarge),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ElevatedButton.icon(
+                onPressed: () => save(context, false),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Save'),
               ),
-              InkWell(
-                onTap: () {
-                  save(context, false);
-                },
-                child: const Chip(
-                  avatar: Icon(Icons.save_outlined, color: Colors.black),
-                  labelPadding: EdgeInsets.all(2),
-                  label: Text(
-                    'Save',
-                    style: TextStyle(color: Colors.black),
-                    selectionColor: Colors.white,
-                  ),
-                  shadowColor: Colors.blue,
-                  backgroundColor: Colors.blue,
-                  elevation: 10,
-                  autofocus: true,
-                ),
-              ),
-            ],
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(24),
+            child: BreadCrumbNavigator(),
           ),
         ),
         body:
@@ -606,7 +579,7 @@ class _SectionPageState extends State<SectionPage> {
       value: position,
       child: Row(
         children: [
-          Icon(iconData, color: Colors.blue),
+          Icon(iconData, color: AppColors.primary),
           const SizedBox(width: 15),
           Text(title),
         ],
@@ -707,7 +680,13 @@ class _SectionPageState extends State<SectionPage> {
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Location name'),
+              Text(
+                'Location name',
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 8),
               inputWidgetwithValidation(
                 'Location Name',
@@ -719,9 +698,11 @@ class _SectionPageState extends State<SectionPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Is access to unit unavailable',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Switch(
                     onChanged: (value) {
@@ -732,32 +713,28 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 0,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Unit photos(${capturedImages.length})'),
+                  Text(
+                    'Unit photos (${capturedImages.length})',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   PopupMenuButton(
-                    child: const Chip(
-                      avatar: Icon(
-                        Icons.add_a_photo_outlined,
-                        color: Colors.blue,
+                    child: TextButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                      label: const Text('Add Photos'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        textStyle: AppTextStyles.labelMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      labelPadding: EdgeInsets.all(2),
-                      label: Text(
-                        'Add Photos',
-                        style: TextStyle(color: Colors.blue, fontSize: 15),
-                      ),
-                      shadowColor: Colors.transparent,
-                      backgroundColor: Colors.transparent,
-                      elevation: 10,
-                      autofocus: true,
                     ),
                     onSelected: (value) {
                       _onMenuItemSelected(value as int);
@@ -887,9 +864,7 @@ class _SectionPageState extends State<SectionPage> {
                                   OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
                                       side: BorderSide.none,
-                                      // the height is 50, the width is full
                                       minimumSize: const Size.fromHeight(30),
-                                      shadowColor: Colors.blue,
                                       elevation: 0,
                                     ),
                                     onPressed: () {
@@ -915,13 +890,7 @@ class _SectionPageState extends State<SectionPage> {
                     ),
                   ),
               const SizedBox(height: 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 20,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -929,7 +898,10 @@ class _SectionPageState extends State<SectionPage> {
                     padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
                     child: Text(
                       'Exterior Elements',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -941,7 +913,7 @@ class _SectionPageState extends State<SectionPage> {
                           Text(
                             '${selectedExteriorelements.length} Selected',
                             style: const TextStyle(
-                              color: Colors.blue,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -949,7 +921,7 @@ class _SectionPageState extends State<SectionPage> {
                           const Icon(
                             Icons.arrow_forward_ios_outlined,
                             size: 14,
-                            color: Colors.blue,
+                            color: AppColors.primary,
                           ),
                         ],
                       ),
@@ -974,13 +946,7 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -988,7 +954,10 @@ class _SectionPageState extends State<SectionPage> {
                     padding: EdgeInsets.fromLTRB(0, 8, 0, 8),
                     child: Text(
                       'Waterproofing Elements',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -1017,7 +986,7 @@ class _SectionPageState extends State<SectionPage> {
                           Text(
                             '${selectedWaterproofingElements.length} Selected',
                             style: const TextStyle(
-                              color: Colors.blue,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1025,7 +994,7 @@ class _SectionPageState extends State<SectionPage> {
                           const Icon(
                             Icons.arrow_forward_ios_outlined,
                             size: 14,
-                            color: Colors.blue,
+                            color: AppColors.primary,
                           ),
                         ],
                       ),
@@ -1033,34 +1002,27 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 20,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Text(
                 'Visual Review',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               //radioWidget('visual', 3),
               getListTile('visual', 1),
               getListTile('visual', 2),
               getListTile('visual', 3),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 0,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Any visual signs of leaks',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Switch(
                     onChanged: (value) {
@@ -1071,19 +1033,15 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 0,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Further invasive review required',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Switch(
                     onChanged: (value) {
@@ -1094,32 +1052,31 @@ class _SectionPageState extends State<SectionPage> {
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Text(
                 'Conditional Assessment',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               //radioWidget('conditional', 3),
               getListTile('conditional', 1),
               getListTile('conditional', 2),
               getListTile('conditional', 3),
 
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [Text('Additional considerations or concerns')],
+                children: [
+                  Text(
+                    'Additional considerations or concerns',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               inputWidgetwithNoValidation(
@@ -1129,40 +1086,31 @@ class _SectionPageState extends State<SectionPage> {
                 _concernsController,
               ),
               const SizedBox(height: 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Text(
                 'Life expectancy exterior elevated elements (EEE)',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               radioWidget('EEE', 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Text(
                 'Life expectancy load bearing components (LBC)',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               radioWidget('LBC', 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Text(
                 'Life expectancy associated waterproofing elements (AWE)',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               radioWidget('AWE', 4),
               isNewSection
@@ -1172,10 +1120,8 @@ class _SectionPageState extends State<SectionPage> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
-                        // the height is 50, the width is full
                         minimumSize: const Size.fromHeight(30),
-                        backgroundColor: Colors.white,
-                        shadowColor: Colors.blue,
+                        backgroundColor: AppColors.surface,
                         elevation: 0,
                       ),
                       onPressed: () {

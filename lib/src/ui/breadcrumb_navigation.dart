@@ -1,120 +1,98 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 
+import 'app_theme.dart';
 import 'navigation_observer.dart';
 
 class BreadCrumbNavigator extends StatelessWidget {
   final List<Route> currentRouteStack;
-  BreadCrumbNavigator({super.key})
-      : currentRouteStack = routeStack
-            //.where((element) => element.settings.name != null)
-            .toList();
-
-  Widget build1(BuildContext context) {
-    return RowSuper(
-      alignment: Alignment.centerLeft,
-      mainAxisSize: MainAxisSize.max,
-      innerDistance: -16,
-      children: List<Widget>.from(currentRouteStack
-          .asMap()
-          .map(
-            (index, value) => MapEntry(
-                index,
-                GestureDetector(
-                    onTap: () {
-                      Navigator.popUntil(context,
-                          (route) => route == currentRouteStack[index]);
-                    },
-                    child: _BreadButton(
-                        index == 0
-                            ? 'Home'
-                            : currentRouteStack[index].settings.name as String,
-                        index == 0))),
-          )
-          .values),
-    );
-  }
+  BreadCrumbNavigator({super.key}) : currentRouteStack = routeStack.toList();
 
   @override
   Widget build(BuildContext context) {
-    for (var i = 1; i < currentRouteStack.length; i++) {
-      if (currentRouteStack[i].settings.name == null) {
-        currentRouteStack.remove(currentRouteStack[i]);
+    final crumbs = <Route>[];
+    for (final route in currentRouteStack) {
+      if (route == currentRouteStack.first || route.settings.name != null) {
+        crumbs.add(route);
       }
     }
 
-    return SizedBox(
-        height: 35,
-        child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: currentRouteStack.length,
-            itemBuilder: (BuildContext context, int index) {
-              return InkWell(
-                  onTap: () {
-                    try {
-                      Navigator.popUntil(context,
-                          (route) => route == currentRouteStack[index]);
-                    } catch (e) {
-                      debugPrint(e.toString());
-                    }
-                  },
-                  child: _BreadButton(
-                      index == 0
-                          ? 'Home'
-                          : currentRouteStack[index].settings.name as String,
-                      index == 0));
-            }));
-  }
-}
-
-class _BreadButton extends StatelessWidget {
-  final String text;
-  final bool isFirstButton;
-
-  const _BreadButton(this.text, this.isFirstButton);
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipPath(
-      clipper: _TriangleClipper(!isFirstButton),
-      child: Container(
-        color: Colors.blue,
-        child: Padding(
-          padding: EdgeInsetsDirectional.only(
-              start: isFirstButton ? 8 : 20, end: 28, top: 8, bottom: 8),
-          child: Text(
-            text,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
-          ),
+    return Container(
+      height: 26,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EDF4), width: 1)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (int i = 0; i < crumbs.length; i++) ...
+              [
+                if (i > 0)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 12,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                GestureDetector(
+                  onTap:
+                      i == crumbs.length - 1
+                          ? null
+                          : () {
+                            try {
+                              Navigator.popUntil(
+                                context,
+                                (route) => route == crumbs[i],
+                              );
+                            } catch (e) {
+                              debugPrint(e.toString());
+                            }
+                          },
+                  child:
+                      i == crumbs.length - 1
+                          ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withAlpha(18),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              i == 0
+                                  ? 'Home'
+                                  : crumbs[i].settings.name as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            i == 0
+                                ? 'Home'
+                                : crumbs[i].settings.name as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                ),
+              ],
+          ],
         ),
       ),
     );
-  }
-}
-
-class _TriangleClipper extends CustomClipper<Path> {
-  final bool twoSideClip;
-
-  _TriangleClipper(this.twoSideClip);
-
-  @override
-  Path getClip(Size size) {
-    final Path path = Path();
-    if (twoSideClip) {
-      path.moveTo(20, 0.0);
-      path.lineTo(0.0, size.height / 2);
-      path.lineTo(20, size.height);
-    } else {
-      path.lineTo(0, size.height);
-    }
-    path.lineTo(size.width, size.height);
-    path.lineTo(size.width - 20, size.height / 2);
-    path.lineTo(size.width, 0);
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return true;
   }
 }

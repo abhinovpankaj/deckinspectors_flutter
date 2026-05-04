@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 //import 'bloc/notificationcontroller.dart';
+import 'ui/app_theme.dart';
 import 'ui/login.dart';
 import 'ui/navigation_observer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -116,6 +117,7 @@ class _AppState extends State<App> {
           navigatorObservers: [NavigationObserver()],
           debugShowCheckedModeBanner: false,
           title: 'E3 Inspections',
+          theme: AppTheme.lightTheme,
           builder: (context, child) {
             final MediaQueryData data = MediaQuery.of(context);
             final double clampedScale =

@@ -18,6 +18,8 @@ import '../resources/couchbase/section_repository.dart';
 import 'capturemultipic.dart';
 import 'image_widget.dart';
 import 'package:image_picker/image_picker.dart';
+import 'app_theme.dart';
+import 'breadcrumb_navigation.dart';
 
 class InvasiveSectionPage extends StatefulWidget {
   final String sectionId;
@@ -81,68 +83,59 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
       length: _tabBarCount,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leadingWidth: 120,
-          leading: ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-            label: Text(
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              prevPageName,
-              style: const TextStyle(color: Colors.blue),
-            ),
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-            ),
-          ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
+          backgroundColor: AppColors.surface,
           elevation: 0,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Details',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  save(context);
-                },
-                child: const Chip(
-                  avatar: Icon(Icons.save_outlined, color: Colors.black),
-                  labelPadding: EdgeInsets.all(2),
-                  label: Text(
-                    'Save',
-                    style: TextStyle(color: Colors.black),
-                    selectionColor: Colors.white,
-                  ),
-                  shadowColor: Colors.blue,
-                  backgroundColor: Colors.blue,
-                  elevation: 10,
-                  autofocus: true,
-                ),
-              ),
-            ],
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => Navigator.of(context).pop(),
           ),
-          bottom: TabBar(
-            tabs:
-                _tabBarCount == 3
-                    ? const [
-                      Tab(text: "Visual Details", height: 32),
-                      Tab(text: "Invasive Details", height: 32),
-                      Tab(text: "Conclusive Details", height: 32),
-                    ]
-                    : const [
-                      Tab(text: "Visual Details", height: 32),
-                      Tab(text: "Invasive Details", height: 32),
-                    ],
-            labelColor: Colors.black,
+          title: Text('Section Details', style: AppTextStyles.titleLarge),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ElevatedButton.icon(
+                onPressed: () => save(context),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Save'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(68),
+            child: Column(
+              children: [
+                BreadCrumbNavigator(),
+                TabBar(
+                  tabs:
+                      _tabBarCount == 3
+                          ? const [
+                            Tab(text: "Visual Details", height: 32),
+                            Tab(text: "Invasive Details", height: 32),
+                            Tab(text: "Conclusive Details", height: 32),
+                          ]
+                          : const [
+                            Tab(text: "Visual Details", height: 32),
+                            Tab(text: "Invasive Details", height: 32),
+                          ],
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  indicatorColor: AppColors.primary,
+                ),
+              ],
+            ),
           ),
         ),
         body:
@@ -549,7 +542,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
       value: position,
       child: Row(
         children: [
-          Icon(iconData, color: Colors.blue),
+          Icon(iconData, color: AppColors.primary),
           const SizedBox(width: 15),
           Text(title),
         ],
@@ -646,15 +639,15 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                         margin: const EdgeInsets.fromLTRB(2, 8, 8, 8),
                         height: 180,
                         width: 300,
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
                           // image: DecorationImage(
                           //     image:
                           //         AssetImage('assets/images/icon.png'),
                           //     fit: BoxFit.cover),
-                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                          boxShadow: [
-                            BoxShadow(blurRadius: 1.0, color: Colors.blue),
+                          borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                          boxShadow: const [
+                            BoxShadow(blurRadius: 1.0, color: AppColors.cardBorder),
                           ],
                         ),
                         child: ClipRRect(
@@ -669,19 +662,13 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 20,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Exterior Elements',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     InkWell(
                       child: Row(
@@ -706,19 +693,13 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                     ),
                   ],
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Waterproofing Elements',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     InkWell(
                       onTap: () {},
@@ -743,31 +724,19 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                     ),
                   ],
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 20,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text(
                   'Visual Review',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 radioWidget('visual', 3),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Any visual signs of leaks',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     Switch(
                       onChanged: (value) {
@@ -777,19 +746,13 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                     ),
                   ],
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Further invasive review required',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     Switch(
                       onChanged: (value) {
@@ -799,26 +762,14 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                     ),
                   ],
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text(
                   'Conditional Assessment',
                   textAlign: TextAlign.left,
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 radioWidget('conditional', 3),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text('Additional considerations or concerns'),
                 const SizedBox(height: 8),
                 inputWidgetwithValidation(
@@ -828,40 +779,22 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                   _concernsController,
                 ),
                 const SizedBox(height: 4),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text(
                   'Life expectancy exterior elevated elements (EEE)',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 radioWidget('EEE', 4),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text(
                   'Life expectancy load bearing components (LBC)',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 radioWidget('LBC', 4),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 15,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 const Text(
                   'Life expectancy assciated waterproofing elements (AWE)',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 radioWidget('AWE', 4),
               ],
@@ -1545,7 +1478,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
               children: [
                 const Text(
                   'Post invasive repairs required',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 Switch(
                   onChanged: (value) {
@@ -1568,20 +1501,17 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
               children: [
                 Text('Invasive photos(${capturedInvasiveImages.length})'),
                 PopupMenuButton(
-                  child: const Chip(
-                    avatar: Icon(
+                  child: TextButton.icon(
+                    onPressed: null,
+                    icon: const Icon(
                       Icons.add_a_photo_outlined,
-                      color: Colors.blue,
+                      color: AppColors.primary,
+                      size: 18,
                     ),
-                    labelPadding: EdgeInsets.all(2),
-                    label: Text(
+                    label: const Text(
                       'Add Photos',
-                      style: TextStyle(color: Colors.blue, fontSize: 15),
+                      style: TextStyle(color: AppColors.primary, fontSize: 14),
                     ),
-                    shadowColor: Colors.transparent,
-                    backgroundColor: Colors.transparent,
-                    elevation: 10,
-                    autofocus: true,
                   ),
                   onSelected: (value) {
                     _onMenuItemSelected(value as int, 1);
@@ -1646,19 +1576,19 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                       ),
                                       height: 180,
                                       width: 300,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.orange,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
                                         // image: DecorationImage(
                                         //     image:
                                         //         AssetImage('assets/images/icon.png'),
                                         //     fit: BoxFit.cover),
-                                        borderRadius: BorderRadius.all(
+                                        borderRadius: const BorderRadius.all(
                                           Radius.circular(8.0),
                                         ),
-                                        boxShadow: [
+                                        boxShadow: const [
                                           BoxShadow(
                                             blurRadius: 1.0,
-                                            color: Colors.orange,
+                                            color: AppColors.cardBorder,
                                           ),
                                         ],
                                       ),
@@ -1681,13 +1611,13 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                                         weight: 3,
                                                         size: 50,
                                                         Icons.done,
-                                                        color: Colors.blue,
+                                                        color: AppColors.success,
                                                       )
                                                       : const Icon(
                                                         weight: 3,
                                                         size: 50,
                                                         Icons.sync,
-                                                        color: Colors.orange,
+                                                        color: AppColors.warning,
                                                       ),
                                             ),
                                           ],
@@ -1699,10 +1629,8 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                 OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide.none,
-                                    // the height is 50, the width is full
                                     minimumSize: const Size.fromHeight(30),
-                                    backgroundColor: Colors.white,
-                                    shadowColor: Colors.orange,
+                                    backgroundColor: AppColors.surface,
                                     elevation: 0,
                                   ),
                                   onPressed: () {
@@ -1710,11 +1638,11 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                   },
                                   icon: const Icon(
                                     Icons.delete_outline,
-                                    color: Colors.red,
+                                    color: AppColors.error,
                                   ),
                                   label: const Text(
                                     'Remove Photo',
-                                    style: TextStyle(color: Colors.red),
+                                    style: TextStyle(color: AppColors.error),
                                   ),
                                 ),
                               ],
@@ -1747,7 +1675,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
               children: [
                 const Text(
                   'Prop owner agreed to repairs',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 Switch(
                   onChanged: (value) {
@@ -1757,13 +1685,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                 ),
               ],
             ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 15,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
+            const Divider(height: 1),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1771,7 +1693,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                   child: Text(
                     maxLines: 2,
                     'Invasive repairs inspected and completed',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                 ),
                 Switch(
@@ -1782,13 +1704,7 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                 ),
               ],
             ),
-            const Divider(
-              color: Color.fromARGB(255, 222, 213, 213),
-              height: 15,
-              thickness: 1,
-              indent: 2,
-              endIndent: 2,
-            ),
+            const Divider(height: 1),
             Visibility(
               visible: invasiveRepairsCompleted,
               child: Column(
@@ -1796,40 +1712,22 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                 children: [
                   const Text(
                     'Life expectancy exterior elevated elements (EEE) updated',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   radioWidget('EEEConclusive', 4),
-                  const Divider(
-                    color: Color.fromARGB(255, 222, 213, 213),
-                    height: 15,
-                    thickness: 1,
-                    indent: 2,
-                    endIndent: 2,
-                  ),
+                  const Divider(height: 1),
                   const Text(
                     'Life expectancy load bearing components (LBC) updated',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   radioWidget('LBCConclusive', 4),
-                  const Divider(
-                    color: Color.fromARGB(255, 222, 213, 213),
-                    height: 15,
-                    thickness: 1,
-                    indent: 2,
-                    endIndent: 2,
-                  ),
+                  const Divider(height: 1),
                   const Text(
                     'Life expectancy associated waterproofing elements (AWE) updated',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   radioWidget('AWEConclusive', 4),
-                  const Divider(
-                    color: Color.fromARGB(255, 222, 213, 213),
-                    height: 15,
-                    thickness: 1,
-                    indent: 2,
-                    endIndent: 2,
-                  ),
+                  const Divider(height: 1),
                   inputWidgetwithValidation(
                     'Conclusive Description',
                     'Please add conclusive description',
@@ -1844,24 +1742,20 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                       ),
                       Expanded(
                         child: PopupMenuButton(
-                          child: const Chip(
-                            avatar: Icon(
+                          child: TextButton.icon(
+                            onPressed: null,
+                            icon: const Icon(
                               Icons.add_a_photo_outlined,
-                              color: Colors.blue,
+                              color: AppColors.primary,
+                              size: 18,
                             ),
-                            labelPadding: EdgeInsets.all(2),
-                            label: Text(
-                              maxLines: 2,
+                            label: const Text(
                               'Add Photos',
                               style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 15,
+                                color: AppColors.primary,
+                                fontSize: 14,
                               ),
                             ),
-                            shadowColor: Colors.transparent,
-                            backgroundColor: Colors.transparent,
-                            elevation: 10,
-                            autofocus: true,
                           ),
                           onSelected: (value) {
                             _onMenuItemSelected(value as int, 2);
@@ -1927,19 +1821,19 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                             ),
                                             height: 180,
                                             width: 300,
-                                            decoration: const BoxDecoration(
-                                              color: Colors.blue,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.surface,
                                               // image: DecorationImage(
                                               //     image:
                                               //         AssetImage('assets/images/icon.png'),
                                               //     fit: BoxFit.cover),
-                                              borderRadius: BorderRadius.all(
+                                              borderRadius: const BorderRadius.all(
                                                 Radius.circular(8.0),
                                               ),
-                                              boxShadow: [
+                                              boxShadow: const [
                                                 BoxShadow(
                                                   blurRadius: 1.0,
-                                                  color: Colors.blue,
+                                                  color: AppColors.cardBorder,
                                                 ),
                                               ],
                                             ),
@@ -1965,14 +1859,14 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                                               size: 50,
                                                               Icons.done,
                                                               color:
-                                                                  Colors.blue,
+                                                                  AppColors.success,
                                                             )
                                                             : const Icon(
                                                               weight: 3,
                                                               size: 50,
                                                               Icons.sync,
                                                               color:
-                                                                  Colors.orange,
+                                                                  AppColors.warning,
                                                             ),
                                                   ),
                                                 ],
@@ -1984,12 +1878,10 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                       OutlinedButton.icon(
                                         style: OutlinedButton.styleFrom(
                                           side: BorderSide.none,
-                                          // the height is 50, the width is full
                                           minimumSize: const Size.fromHeight(
                                             30,
                                           ),
-                                          backgroundColor: Colors.white,
-                                          shadowColor: Colors.blue,
+                                          backgroundColor: AppColors.surface,
                                           elevation: 0,
                                         ),
                                         onPressed: () {
@@ -1997,11 +1889,11 @@ class _InvasiveSectionPageState extends State<InvasiveSectionPage>
                                         },
                                         icon: const Icon(
                                           Icons.delete_outline,
-                                          color: Colors.red,
+                                          color: AppColors.error,
                                         ),
                                         label: const Text(
                                           'Remove Photo',
-                                          style: TextStyle(color: Colors.red),
+                                          style: TextStyle(color: AppColors.error),
                                         ),
                                       ),
                                     ],

@@ -27,6 +27,8 @@ import 'capture_multipic_esp_32.dart';
 import 'capture_multipic_raspi.dart';
 import 'capturemultipic.dart';
 import 'image_widget.dart';
+import 'app_theme.dart';
+import 'breadcrumb_navigation.dart';
 import 'package:http/http.dart' as http;
 
 class DynamicVisualSectionPage extends StatelessWidget {
@@ -427,47 +429,44 @@ class _DynamicVisualSectionPageBodyState
                 Navigator.of(context).pop();
               }
             },
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.primary),
             label: const Text(
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               'Back',
-              style: TextStyle(color: Colors.blue),
+              style: TextStyle(color: AppColors.primary),
             ),
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: Colors.transparent,
             ),
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
           elevation: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(24),
+            child: BreadCrumbNavigator(),
+          ),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Details', //can be replaced with the form name
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.normal,
-                ),
+              Text(
+                'Details',
+                style: AppTextStyles.titleLarge,
               ),
-              InkWell(
-                onTap: () {
-                  save(context);
-                },
-                child: const Chip(
-                  avatar: Icon(Icons.save_outlined, color: Colors.black),
-                  labelPadding: EdgeInsets.all(2),
-                  label: Text(
-                    'Save',
-                    style: TextStyle(color: Colors.black),
-                    selectionColor: Colors.white,
+              ElevatedButton.icon(
+                onPressed: () => save(context),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Save'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  shadowColor: Colors.blue,
-                  backgroundColor: Colors.blue,
-                  elevation: 10,
-                  autofocus: true,
                 ),
               ),
             ],
@@ -578,7 +577,7 @@ class _DynamicVisualSectionPageBodyState
       value: position,
       child: Row(
         children: [
-          Icon(iconData, color: Colors.blue),
+          Icon(iconData, color: AppColors.primary),
           const SizedBox(width: 15),
           Text(title),
         ],
@@ -748,7 +747,7 @@ class _DynamicVisualSectionPageBodyState
                 children: [
                   const Text(
                     'Is access to unit unavailable',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   Switch(
                     onChanged: (value) {
@@ -759,32 +758,23 @@ class _DynamicVisualSectionPageBodyState
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 0,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Unit photos(${capturedImages.length})'),
                   PopupMenuButton(
-                    child: const Chip(
-                      avatar: Icon(
+                    child: TextButton.icon(
+                      onPressed: null,
+                      icon: const Icon(
                         Icons.add_a_photo_outlined,
-                        color: Colors.blue,
+                        color: AppColors.primary,
+                        size: 18,
                       ),
-                      labelPadding: EdgeInsets.all(2),
-                      label: Text(
+                      label: const Text(
                         'Add Photos',
-                        style: TextStyle(color: Colors.blue, fontSize: 15),
+                        style: TextStyle(color: AppColors.primary, fontSize: 14),
                       ),
-                      shadowColor: Colors.transparent,
-                      backgroundColor: Colors.transparent,
-                      elevation: 10,
-                      autofocus: true,
                     ),
                     onSelected: (value) {
                       _onMenuItemSelected(value as int);
@@ -858,19 +848,19 @@ class _DynamicVisualSectionPageBodyState
                                         ),
                                         height: 180,
                                         width: 300,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.blue,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surface,
                                           // image: DecorationImage(
                                           //     image:
                                           //         AssetImage('assets/images/icon.png'),
                                           //     fit: BoxFit.cover),
-                                          borderRadius: BorderRadius.all(
+                                          borderRadius: const BorderRadius.all(
                                             Radius.circular(8.0),
                                           ),
-                                          boxShadow: [
+                                          boxShadow: const [
                                             BoxShadow(
                                               blurRadius: 1.0,
-                                              color: Colors.blue,
+                                              color: AppColors.cardBorder,
                                             ),
                                           ],
                                         ),
@@ -895,13 +885,13 @@ class _DynamicVisualSectionPageBodyState
                                                           size: 50,
                                                           Icons.done,
                                                           color:
-                                                              Colors.blueAccent,
+                                                              AppColors.success,
                                                         )
                                                         : const Icon(
                                                           weight: 3,
                                                           size: 50,
                                                           Icons.sync,
-                                                          color: Colors.orange,
+                                                          color: AppColors.warning,
                                                         ),
                                               ),
                                             ],
@@ -914,9 +904,8 @@ class _DynamicVisualSectionPageBodyState
                                   OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
                                       side: BorderSide.none,
-                                      // the height is 50, the width is full
                                       minimumSize: const Size.fromHeight(30),
-                                      shadowColor: Colors.blue,
+                                      backgroundColor: AppColors.surface,
                                       elevation: 0,
                                     ),
                                     onPressed: () {
@@ -928,11 +917,11 @@ class _DynamicVisualSectionPageBodyState
                                     },
                                     icon: const Icon(
                                       Icons.delete_outline,
-                                      color: Colors.red,
+                                      color: AppColors.error,
                                     ),
                                     label: const Text(
                                       'Remove Photo',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: AppColors.error),
                                     ),
                                   ),
                                 ],
@@ -942,19 +931,13 @@ class _DynamicVisualSectionPageBodyState
                     ),
                   ),
               const SizedBox(height: 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 20,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Further invasive review required',
-                    style: TextStyle(fontWeight: FontWeight.w500),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   Switch(
                     onChanged: (value) {
@@ -965,13 +948,7 @@ class _DynamicVisualSectionPageBodyState
                   ),
                 ],
               ),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [Text('Additional considerations or concerns')],
@@ -984,13 +961,7 @@ class _DynamicVisualSectionPageBodyState
                 _concernsController,
               ),
               const SizedBox(height: 4),
-              const Divider(
-                color: Color.fromARGB(255, 222, 213, 213),
-                height: 15,
-                thickness: 1,
-                indent: 2,
-                endIndent: 2,
-              ),
+              const Divider(height: 1),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -1004,7 +975,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         TextFormField(
@@ -1038,7 +1009,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         TextFormField(
@@ -1081,7 +1052,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         ListView.builder(
@@ -1109,13 +1080,7 @@ class _DynamicVisualSectionPageBodyState
                             );
                           },
                         ),
-                        const Divider(
-                          color: Color.fromARGB(255, 222, 213, 213),
-                          height: 15,
-                          thickness: 1,
-                          indent: 2,
-                          endIndent: 2,
-                        ),
+                        const Divider(height: 1),
                       ],
                     );
                   } else if (question.type.toLowerCase() == 'togglebutton') {
@@ -1124,7 +1089,7 @@ class _DynamicVisualSectionPageBodyState
                       children: [
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         Switch(
                           onChanged: (value) {
@@ -1136,13 +1101,7 @@ class _DynamicVisualSectionPageBodyState
                           },
                           value: question.answer.toUpperCase() == 'TRUE',
                         ),
-                        const Divider(
-                          color: Color.fromARGB(255, 222, 213, 213),
-                          height: 15,
-                          thickness: 1,
-                          indent: 2,
-                          endIndent: 2,
-                        ),
+                        const Divider(height: 1),
                       ],
                     );
                   } else if (question.type.toLowerCase() == 'checkbox') {
@@ -1152,7 +1111,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         ListView.builder(
@@ -1200,13 +1159,7 @@ class _DynamicVisualSectionPageBodyState
                             );
                           },
                         ),
-                        const Divider(
-                          color: Color.fromARGB(255, 222, 213, 213),
-                          height: 15,
-                          thickness: 1,
-                          indent: 2,
-                          endIndent: 2,
-                        ),
+                        const Divider(height: 1),
                       ],
                     );
                   } else if (question.type.toLowerCase() == 'dropdown') {
@@ -1216,7 +1169,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         DropdownButtonFormField(
@@ -1249,7 +1202,7 @@ class _DynamicVisualSectionPageBodyState
                         const SizedBox(height: 10),
                         Text(
                           question.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 5),
                         TextFormField(
@@ -1304,19 +1257,17 @@ class _DynamicVisualSectionPageBodyState
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
-                        // the height is 50, the width is full
                         minimumSize: const Size.fromHeight(30),
-                        backgroundColor: Colors.white,
-                        shadowColor: Colors.blue,
+                        backgroundColor: AppColors.surface,
                         elevation: 0,
                       ),
                       onPressed: () {
                         deleteSection(context, currentVisualSection);
                       },
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      icon: const Icon(Icons.delete_outline, color: AppColors.error),
                       label: const Text(
                         'Delete Location',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(color: AppColors.error),
                       ),
                     ),
                   ),

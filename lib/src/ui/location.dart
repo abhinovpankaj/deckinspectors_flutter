@@ -12,6 +12,8 @@ import '../resources/couchbase/location_repository.dart';
 import '../resources/couchbase/section_repository.dart';
 //import 'breadcrumb_navigation.dart';
 import 'addedit_location.dart';
+import 'app_theme.dart';
+import 'breadcrumb_navigation.dart';
 import 'cachedimage_widget.dart';
 import 'dynamic_section.dart';
 import 'invasivesection.dart';
@@ -85,32 +87,27 @@ class _LocationPageState extends State<LocationPage> {
           return Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
-              leadingWidth: 120,
-              leading: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context, true);
-                },
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-                label: const Text(
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  'Back',
-                  style: TextStyle(color: Colors.blue),
-                ),
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                ),
+              leading: IconButton(
+                onPressed: () => Navigator.pop(context, true),
+                icon: const Icon(Icons.arrow_back_ios_new),
+                tooltip: 'Back',
               ),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.blue,
-              elevation: 0,
               title: Text(
-                locationType,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.normal,
-                ),
+                currentLocation.name ?? locationType,
+                style: AppTextStyles.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+              actions: [
+                if (!appSettings.isInvasiveMode)
+                  IconButton(
+                    onPressed: () => addEditLocation(currentLocation),
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Edit Location',
+                  ),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(24),
+                child: BreadCrumbNavigator(),
               ),
             ),
             body: SingleChildScrollView(
@@ -144,11 +141,19 @@ class _LocationPageState extends State<LocationPage> {
           Container(
             height: 220,
             decoration: BoxDecoration(
-              color: appSettings.isInvasiveMode ? Colors.orange : Colors.blue,
+              color:
+                  appSettings.isInvasiveMode
+                      ? AppColors.warning
+                      : AppColors.primary,
               borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(8.0),
+                bottom: Radius.circular(12.0),
               ),
-              boxShadow: const [BoxShadow(blurRadius: 1.0, color: Colors.blue)],
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 4.0,
+                  color: AppColors.primary.withAlpha(60),
+                ),
+              ],
             ),
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
@@ -164,10 +169,7 @@ class _LocationPageState extends State<LocationPage> {
               child: Text(
                 currentLocation.name as String,
                 maxLines: 2,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.headlineMedium,
                 textAlign: TextAlign.left,
               ),
             ),
@@ -175,10 +177,14 @@ class _LocationPageState extends State<LocationPage> {
           const Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+              padding: EdgeInsets.fromLTRB(8, 6, 8, 0),
               child: Text(
                 'Description',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.left,
               ),
             ),
@@ -194,45 +200,16 @@ class _LocationPageState extends State<LocationPage> {
                     child: Text(
                       maxLines: 2,
                       currentLocation.description as String,
-                      style: const TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        fontSize: 14,
-                      ),
+                      style: AppTextStyles.bodyMedium,
                       textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Visibility(
-                    visible: !appSettings.isInvasiveMode,
-                    child: InkWell(
-                      onTap: () {
-                        addEditLocation(currentLocation);
-                      },
-                      child: const Chip(
-                        avatar: Icon(Icons.edit_outlined, color: Colors.blue),
-                        labelPadding: EdgeInsets.all(2),
-                        label: Text(
-                          'Edit',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const Divider(
-            color: Color.fromARGB(255, 222, 213, 213),
-            height: 5,
-            thickness: 2,
-            indent: 0,
-            endIndent: 0,
-          ),
+          const Divider(height: 1),
         ],
       ),
     );
@@ -256,39 +233,29 @@ class _LocationPageState extends State<LocationPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Padding(
-                  padding: EdgeInsets.all(2),
+                  padding: EdgeInsets.all(4),
                   child: Text(
-                    'Locations',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Visibility(
-                  visible: !appSettings.isInvasiveMode,
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: InkWell(
-                      onTap: () {
-                        addNewChild();
-                      },
-                      child: const Chip(
-                        avatar: Icon(
-                          Icons.add_circle_outline,
-                          color: Colors.blue,
-                        ),
-                        labelPadding: EdgeInsets.all(2),
-                        label: Text(
-                          'Add Location',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
+                    'Sections',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
+                if (!appSettings.isInvasiveMode)
+                  TextButton.icon(
+                    onPressed: addNewChild,
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: const Text('Add Section'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      textStyle: AppTextStyles.labelMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
               ],
             ),
             sections.isEmpty
@@ -298,9 +265,9 @@ class _LocationPageState extends State<LocationPage> {
                     style: TextStyle(fontSize: 16),
                   ),
                 )
-                : Expanded(
+                : SizedBox(
+                  height: 310,
                   child: ListView.builder(
-                    shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
                     itemCount: sections.length,
                     itemBuilder:
@@ -364,6 +331,7 @@ class _LocationPageState extends State<LocationPage> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(4, 2, 8, 4),
         child: InkWell(
+          borderRadius: BorderRadius.circular(12),
           onTap: () {
             if (appSettings.isInvasiveMode) {
               gotoInvasiveDetails(
@@ -374,260 +342,132 @@ class _LocationPageState extends State<LocationPage> {
               gotoDetails(sections[index].id, sections[index].name as String);
             }
           },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  color:
-                      appSettings.isInvasiveMode ? Colors.orange : Colors.blue,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(10),
-                    bottom: Radius.circular(00),
+          child: Card(
+            elevation: 2,
+            shadowColor: AppColors.cardBorder,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppColors.cardBorder, width: 1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // Image — 140px with photo count badge overlaid
+                SizedBox(
+                  height: 140,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      cachedNetworkImage(coverUrl),
+                      if (sections[index].isuploading)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: LinearProgressIndicator(
+                            backgroundColor: AppColors.primary.withAlpha(60),
+                            color: AppColors.primary,
+                            minHeight: 3,
+                          ),
+                        ),
+                      // photo count badge bottom-right
+                      Positioned(
+                        bottom: 6,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.photo_outlined,
+                                size: 10,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                sections[index].count.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: cachedNetworkImage(coverUrl),
-                ),
-              ),
-              Card(
-                shadowColor: Colors.blue,
-                elevation: 8,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                // Details — name + mode badge + compact 2-col stats
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
                           Expanded(
-                            flex: 3,
                             child: Text(
-                              overflow: TextOverflow.ellipsis,
                               sections[index].name as String,
                               maxLines: 1,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.titleMedium,
                             ),
                           ),
-                          Visibility(
-                            visible: sections[index].isuploading,
-                            child: const SizedBox(
-                              width: 80,
-                              child: LinearProgressIndicator(
-                                backgroundColor: Colors.orange,
-                                color: Colors.blue,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: appSettings.isInvasiveMode
+                                  ? AppColors.warning.withAlpha(30)
+                                  : AppColors.primary.withAlpha(20),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              appSettings.isInvasiveMode
+                                  ? 'Invasive'
+                                  : 'Visual',
+                              style: TextStyle(
+                                color: appSettings.isInvasiveMode
+                                    ? AppColors.warning
+                                    : AppColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const Divider(
-                      color: Colors.grey,
-                      height: 20,
-                      thickness: 1,
-                      indent: 15,
-                      endIndent: 15,
-                    ),
-                    Visibility(
-                      visible: formId == null,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const Expanded(
-                                flex: 1,
-                                child: Text(
-                                  maxLines: 1,
-                                  'Visual Review',
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  vreview,
-                                  style: const TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: formId == null,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const Expanded(
-                                flex: 1,
-                                child: Text(
-                                  maxLines: 1,
-                                  'Visual signs of leak',
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  visualLeaks == true ? 'Yes' : 'No',
-                                  style: const TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: formId == null,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const Expanded(
-                                flex: 1,
-                                child: Text(
-                                  maxLines: 1,
-                                  'Further Inspection',
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  furtherInvasive == true ? 'Yes' : 'No',
-                                  style: const TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: formId == null,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const Expanded(
-                                flex: 1,
-                                child: Text(
-                                  maxLines: 1,
-                                  'Conditional assesment',
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  assessment,
-                                  style: const TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const Expanded(
-                              flex: 1,
-                              child: Text(
-                                maxLines: 1,
-                                'Images',
-                                style: TextStyle(
-                                  overflow: TextOverflow.ellipsis,
-                                  fontSize: 13,
-                                ),
-                                textAlign: TextAlign.right,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                sections[index].count.toString(),
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                      if (formId == null) ...[
+                        const SizedBox(height: 6),
+                        const Divider(height: 1),
+                        const SizedBox(height: 6),
+                        _SectionStat('Review', vreview),
+                        const SizedBox(height: 4),
+                        _SectionStat('Assessment', assessment),
+                        const SizedBox(height: 4),
+                        _SectionStat('Leaks', visualLeaks ? 'Yes' : 'No'),
+                        const SizedBox(height: 4),
+                        _SectionStat('Further', furtherInvasive ? 'Yes' : 'No'),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -797,5 +637,33 @@ class _LocationPageState extends State<LocationPage> {
       }
       setState(() {});
     });
+  }
+}
+
+class _SectionStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _SectionStat(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
   }
 }

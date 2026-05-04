@@ -11,6 +11,7 @@ import '../resources/couchbase/location_repository.dart';
 import 'cachedimage_widget.dart';
 import 'capture_image.dart';
 import 'location.dart';
+import 'app_theme.dart';
 
 class AddEditLocationPage extends StatefulWidget {
   final Location currentLocation;
@@ -193,47 +194,41 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
           leadingWidth: 120,
           leading: ElevatedButton.icon(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.primary),
             label: const Text(
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
               'Back',
-              style: TextStyle(color: Colors.blue),
+              style: TextStyle(color: AppColors.primary),
             ),
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: Colors.transparent,
             ),
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
           elevation: 0,
           actions: [
-            InkWell(
-              onTap: () {
-                save(context);
-              },
-              child: const Chip(
-                avatar: Icon(Icons.save_outlined, color: Colors.black),
-                labelPadding: EdgeInsets.all(2),
-                label: Text(
-                  'Save',
-                  style: TextStyle(color: Colors.black),
-                  selectionColor: Colors.white,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ElevatedButton.icon(
+                onPressed: () => save(context),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Save'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                shadowColor: Colors.blue,
-                backgroundColor: Colors.blue,
-                elevation: 10,
-                autofocus: true,
               ),
             ),
           ],
           title: Text(
             pageTitle,
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.normal,
-            ),
+            style: AppTextStyles.titleLarge,
           ),
         ),
         body: SingleChildScrollView(
@@ -261,8 +256,8 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
                         minimumSize: const Size.fromHeight(40),
-                        backgroundColor: Colors.white,
-                        shadowColor: Colors.blue,
+                        backgroundColor: AppColors.surface,
+                        
                         elevation: 0,
                       ),
                       onPressed: () async {
@@ -275,11 +270,11 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                       },
                       icon: const Icon(
                         Icons.camera_outlined,
-                        color: Colors.blueAccent,
+                        color: AppColors.primary,
                       ),
                       label: const Text(
                         'Add image',
-                        style: TextStyle(color: Colors.blueAccent),
+                        style: TextStyle(color: AppColors.primary),
                       ),
                     ),
                     SizedBox(
@@ -297,13 +292,13 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                             }
                           },
                           child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.all(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: const BorderRadius.all(
                                 Radius.circular(8.0),
                               ),
-                              boxShadow: [
-                                BoxShadow(blurRadius: 1.0, color: Colors.blue),
+                              boxShadow: const [
+                                BoxShadow(blurRadius: 1.0, color: AppColors.cardBorder),
                               ],
                             ),
                             child:
@@ -324,8 +319,8 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                         style: OutlinedButton.styleFrom(
                           side: BorderSide.none,
                           minimumSize: const Size.fromHeight(40),
-                          backgroundColor: Colors.white,
-                          shadowColor: Colors.blue,
+                          backgroundColor: AppColors.surface,
+                          
                           elevation: 0,
                         ),
                         onPressed: () {
@@ -335,11 +330,11 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
                         },
                         icon: const Icon(
                           Icons.delete_outline_outlined,
-                          color: Colors.redAccent,
+                          color: AppColors.error,
                         ),
                         label: Text(
                           'Delete $pageType',
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(color: AppColors.error),
                         ),
                       ),
                     const SizedBox(height: 40),

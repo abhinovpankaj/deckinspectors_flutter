@@ -17,6 +17,8 @@ import '../resources/couchbase/subproject_repository.dart';
 import '../resources/couchbase/location_repository.dart';
 import '../resources/repository.dart';
 import 'addedit_subproject.dart';
+import 'app_theme.dart';
+import 'breadcrumb_navigation.dart';
 import 'cachedimage_widget.dart';
 import 'htmlviewer.dart';
 import 'location.dart';
@@ -284,28 +286,37 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leadingWidth: 140,
-        leading: ElevatedButton.icon(
+        leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
-          label: const Text('Home', style: TextStyle(color: Colors.blue)),
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new),
+          tooltip: 'Back',
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue,
-        elevation: 0,
-        title: const Text(
-          'Project',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+        title: BlocBuilder<ProjectDetailsBloc, ProjectDetailsState>(
+          buildWhen: (_, state) => state is ProjectDetailsLoaded,
+          builder: (context, state) {
+            if (state is ProjectDetailsLoaded) {
+              return Text(
+                state.project.name ?? 'Project',
+                style: AppTextStyles.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              );
+            }
+            return Text('Project', style: AppTextStyles.titleLarge);
+          },
+        ),
+        actions: [
+          if (!isInvasiveMode)
+            IconButton(
+              onPressed: addEditProject,
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit Project',
+            ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: BreadCrumbNavigator(),
         ),
       ),
-      // floatingActionButton: Padding(
-      //   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-      //   child: BreadCrumbNavigator(),
-      // ),
       body: BlocListener<ProjectDetailsBloc, ProjectDetailsState>(
         listener: (context, state) {
           if (state is ProjectDetailsSaved) {
@@ -584,12 +595,16 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           Container(
             height: 220,
             decoration: BoxDecoration(
-              color: isInvasiveMode ? Colors.orange : Colors.blue,
-              // image: networkImage(currentProject.url as String),
+              color: isInvasiveMode ? AppColors.warning : AppColors.primary,
               borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(8.0),
+                bottom: Radius.circular(12.0),
               ),
-              boxShadow: const [BoxShadow(blurRadius: 1.0, color: Colors.blue)],
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 4.0,
+                  color: AppColors.primary.withAlpha(60),
+                ),
+              ],
             ),
             child: Stack(
               alignment: Alignment.bottomRight,
@@ -703,33 +718,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                     child: Text(
                       name,
                       maxLines: 2,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        overflow: TextOverflow.ellipsis,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.headlineMedium,
                       textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Visibility(
-                    visible: !isInvasiveMode,
-                    child: InkWell(
-                      onTap: () {
-                        addEditProject();
-                      },
-                      child: const Chip(
-                        avatar: Icon(Icons.edit_outlined, color: Colors.blue),
-                        labelPadding: EdgeInsets.all(2),
-                        label: Text(
-                          'Edit Project ',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
                     ),
                   ),
                 ],
@@ -740,55 +731,55 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.edit_outlined,
+                        size: 13,
+                        color: AppColors.textHint,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Edited ${getCustomFormattedDateTime(editedat, 'MM/dd/yy hh:mm')}',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+                  if (!isInvasiveMode)
+                    TextButton.icon(
+                      onPressed: assignProject,
+                      icon: const Icon(Icons.people_outline, size: 16),
+                      label: const Text('Assign'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        textStyle: AppTextStyles.labelMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Edited on ${getCustomFormattedDateTime(editedat, 'MM/dd/yy hh:mm')}',
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  Visibility(
-                    visible: !isInvasiveMode,
-                    child: InkWell(
-                      onTap: () {
-                        assignProject();
-                      },
-                      child: const Chip(
-                        avatar: Icon(
-                          Icons.account_circle_outlined,
-                          color: Colors.blue,
-                        ),
-                        labelPadding: EdgeInsets.all(0),
-                        label: Text(
-                          'Assign Project ',
-                          style: TextStyle(color: Colors.blue),
-                          selectionColor: Colors.transparent,
-                        ),
-                        shadowColor: Colors.white,
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        autofocus: true,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
                     'Description',
-                    style: TextStyle(fontSize: 14),
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                     textAlign: TextAlign.left,
                   ),
                   //remove project download option
@@ -882,11 +873,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                     child: Text(
                       maxLines: 2,
                       description,
-                      style: const TextStyle(
-                        overflow: TextOverflow.ellipsis,
-                        fontSize: 16,
-                      ),
+                      style: AppTextStyles.bodyMedium,
                       textAlign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -894,13 +883,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
             ),
           ),
 
-          const Divider(
-            color: Color.fromARGB(255, 222, 213, 213),
-            height: 5,
-            thickness: 2,
-            indent: 0,
-            endIndent: 0,
-          ),
+          const Divider(height: 1),
         ],
       ),
     );
@@ -941,13 +924,32 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
         TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: "Buildings (${buildings.length})", height: 32),
-            Tab(text: "Project Locations (${locations.length})", height: 32),
+            Tab(
+              height: 44,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.business_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Text('Buildings (${buildings.length})'),
+                ],
+              ),
+            ),
+            Tab(
+              height: 44,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.place_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Text('Locations (${locations.length})'),
+                ],
+              ),
+            ),
           ],
-          labelColor: Colors.black,
         ),
         SizedBox(
-          height: 250,
+          height: 270,
           child: TabBarView(
             controller: _tabController,
             children: [
@@ -957,7 +959,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
           ),
         ),
       ],
-      // ),
     );
   }
 
@@ -977,25 +978,16 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
             visible: !isInvasiveMode,
             child: Align(
               alignment: Alignment.topRight,
-              child: InkWell(
-                onTap: () {
-                  addNewChild(currentProject.name as String);
-                },
-                child: Chip(
-                  avatar: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.blue,
+              child: TextButton.icon(
+                onPressed: () => addNewChild(currentProject.name as String),
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                label: Text('Add $type'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTextStyles.labelMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
-                  labelPadding: const EdgeInsets.all(2),
-                  label: Text(
-                    'Add $type',
-                    style: const TextStyle(color: Colors.blue, fontSize: 15),
-                    selectionColor: Colors.transparent,
-                  ),
-                  shadowColor: Colors.white,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  autofocus: true,
                 ),
               ),
             ),
@@ -1036,78 +1028,77 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   //Todo create widget for locations
   Widget horizontalScrollChildren(BuildContext context, int index) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width / 2,
-      height: 180,
+      width: MediaQuery.of(context).size.width * 0.52,
+      height: 210,
       child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                gotoDetails(
-                  locations[index]!.id as String,
-                  currentProject.name as String,
-                  locations[index]!.name as String,
-                );
-              },
-              child: Container(
-                height: 140,
-                width: 192,
-                decoration: BoxDecoration(
-                  color: isInvasiveMode ? Colors.orange : Colors.blue,
-                  // image: networkImage(currentProject.url as String),
-                  borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 1.0, color: Colors.blue),
-                  ],
+        padding: const EdgeInsets.all(4),
+        child: GestureDetector(
+          onTap: () {
+            gotoDetails(
+              locations[index]!.id as String,
+              currentProject.name as String,
+              locations[index]!.name as String,
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 4,
+                  color: Colors.black.withAlpha(12),
+                  offset: const Offset(0, 2),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: cachedNetworkImage(locations[index]!.url),
-                ),
-              ),
+              ],
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                child: Text(
-                  overflow: TextOverflow.ellipsis,
-                  locations[index]!.name as String,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
                   ),
-                  textAlign: TextAlign.left,
+                  child: SizedBox(
+                    height: 140,
+                    width: double.infinity,
+                    child:
+                        (locations[index]!.url != null &&
+                                locations[index]!.url!.isNotEmpty)
+                            ? cachedNetworkImage(locations[index]!.url)
+                            : Container(
+                              color: AppColors.primary.withAlpha(30),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.place_outlined,
+                                size: 40,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                  ),
                 ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        locations[index]!.description as String,
-                        style: const TextStyle(
-                          overflow: TextOverflow.ellipsis,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+                  child: Text(
+                    locations[index]!.name as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.titleMedium,
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                  child: Text(
+                    locations[index]!.description as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1115,78 +1106,77 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
   Widget horizontalScrollChildrenBuildings(BuildContext context, int index) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width / 2,
-      height: 180,
+      width: MediaQuery.of(context).size.width * 0.52,
+      height: 210,
       child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                gotoDetails(
-                  buildings[index]!.id as String,
-                  currentProject.name as String,
-                  buildings[index]!.name as String,
-                );
-              },
-              child: Container(
-                height: 140,
-                width: 192,
-                decoration: BoxDecoration(
-                  color: isInvasiveMode ? Colors.orange : Colors.blue,
-                  // image: networkImage(currentProject.url as String),
-                  borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                  boxShadow: const [
-                    BoxShadow(blurRadius: 1.0, color: Colors.blue),
-                  ],
+        padding: const EdgeInsets.all(4),
+        child: GestureDetector(
+          onTap: () {
+            gotoDetails(
+              buildings[index]!.id as String,
+              currentProject.name as String,
+              buildings[index]!.name as String,
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 4,
+                  color: Colors.black.withAlpha(12),
+                  offset: const Offset(0, 2),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: cachedNetworkImage(buildings[index]!.url),
-                ),
-              ),
+              ],
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-                child: Text(
-                  buildings[index]!.name as String,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
                   ),
-                  textAlign: TextAlign.left,
+                  child: SizedBox(
+                    height: 140,
+                    width: double.infinity,
+                    child:
+                        (buildings[index]!.url != null &&
+                                buildings[index]!.url!.isNotEmpty)
+                            ? cachedNetworkImage(buildings[index]!.url)
+                            : Container(
+                              color: AppColors.accent.withAlpha(30),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.business_outlined,
+                                size: 40,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                  ),
                 ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        buildings[index]!.description as String,
-                        style: const TextStyle(
-                          overflow: TextOverflow.ellipsis,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+                  child: Text(
+                    buildings[index]!.name as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.titleMedium,
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                  child: Text(
+                    buildings[index]!.description as String,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

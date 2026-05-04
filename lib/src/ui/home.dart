@@ -29,49 +29,35 @@ class _HomePageState extends State<HomePage> {
             )..add(LoadProjectsEvent()),
         child: const Center(child: ProjectsPage()),
       ),
-      //Center(child: OfflineModePage()),
       const Center(child: ReportsPage()),
       const Center(child: SettingsPage()),
     ];
     return Scaffold(
       body: SafeArea(child: pages[_currentIndex]),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        iconSize: 30,
-        selectedFontSize: 16,
-        unselectedFontSize: 14,
-        fixedColor: Colors.blue,
-        unselectedItemColor: Colors.lightBlueAccent,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-            // backgroundColor: Colors.orange
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.document_scanner),
-            label: 'Reports',
-            // backgroundColor: Colors.blueAccent
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-            // backgroundColor: Colors.blue
-          ),
-        ],
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
-
-          // if (index == 1) {
-          //   appSettings.isAppOfflineMode = true;
-          // } else {
-          //   appSettings.isAppOfflineMode = false;
-          // }
         },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.description_outlined),
+            selectedIcon: Icon(Icons.description),
+            label: 'Reports',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }

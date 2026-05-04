@@ -16,6 +16,7 @@ import '../resources/couchbase/database_provider.dart';
 import '../models/users_response.dart';
 import '../resources/couchbase/replicator_provider.dart';
 import '../services/image_sync_service.dart';
+import 'app_theme.dart';
 import 'home.dart';
 
 class LoginPage extends StatefulWidget {
@@ -267,11 +268,25 @@ class _LoginPageState extends State<LoginPage> {
                 Expanded(
                   flex: 2,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       logo(size.height / 8, size.height / 4),
-                      richText(16),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Deck Inspectors',
+                        style: AppTextStyles.headlineMedium.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                       const SizedBox(height: 4),
+                      Text(
+                        'Sign in to your account',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -288,13 +303,12 @@ class _LoginPageState extends State<LoginPage> {
                         children: <Widget>[
                           Text(
                             'Username',
-                            style: GoogleFonts.inter(
-                              fontSize: 14.0,
-                              color: Colors.black,
-                              height: 1.0,
+                            style: AppTextStyles.labelMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           emailTextField(size),
                         ],
                       ),
@@ -308,10 +322,9 @@ class _LoginPageState extends State<LoginPage> {
                         children: <Widget>[
                           Text(
                             'Password',
-                            style: GoogleFonts.inter(
-                              fontSize: 14.0,
-                              color: Colors.black,
-                              height: 1.0,
+                            style: AppTextStyles.labelMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -374,31 +387,6 @@ class _LoginPageState extends State<LoginPage> {
       'assets/images/icon.png',
       height: height_,
       width: width_,
-    );
-  }
-
-  Widget richText(double fontSize) {
-    return Text.rich(
-      TextSpan(
-        style: GoogleFonts.inter(
-          fontSize: 20.0,
-          color: const Color(0xFF21899C),
-          letterSpacing: 2,
-        ),
-        children: const [
-          TextSpan(
-            text: 'LOGIN',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          TextSpan(
-            text: 'PAGE',
-            style: TextStyle(
-              color: Color(0xFFFE9879),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -476,9 +464,9 @@ class _LoginPageState extends State<LoginPage> {
     return Transform.scale(
       scale: 1.1,
       child: CheckboxListTile(
-        title: const Text(
+        title: Text(
           'Remember me',
-          style: TextStyle(color: Color(0xFF21899C)),
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary),
         ),
         value: _isChecked,
         visualDensity: VisualDensity.compact,

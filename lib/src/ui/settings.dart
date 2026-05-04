@@ -11,6 +11,7 @@ import '../resources/couchbase/couchbase_services.dart';
 import '../resources/couchbase/database_provider.dart';
 import '../resources/couchbase/replicator_provider.dart';
 import '../services/app_logger.dart';
+import 'app_theme.dart';
 import 'login.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -178,16 +179,10 @@ class _SettingsPageState extends State<SettingsPage> {
     debugPrint(App.isImageUploading.toString());
     return Scaffold(
       appBar: AppBar(
-        leadingWidth: 20,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'App Settings',
-          style: TextStyle(color: Colors.black),
-        ),
+        automaticallyImplyLeading: false,
+        title: Text('Settings', style: AppTextStyles.titleLarge),
       ),
+      backgroundColor: AppColors.background,
       body: Center(
         child: ListView(
           children: [
@@ -197,23 +192,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.fromLTRB(16, 16, 8, 4),
                     child: Text(
-                      'Image Settings',
+                      'IMAGE QUALITY',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 SizedBox(
                   height: 200,
                   child: ListView(
@@ -224,7 +215,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         selected: isHighQuality,
                         leading:
                             isHighQuality
-                                ? const Icon(Icons.check, color: Colors.blue)
+                                ? const Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                )
                                 : const SizedBox(width: 40),
                         title: const Text('High Quality'),
                       ),
@@ -233,7 +227,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         selected: isMediumQuality,
                         leading:
                             isMediumQuality
-                                ? const Icon(Icons.check, color: Colors.blue)
+                                ? const Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                )
                                 : const SizedBox(width: 40),
                         title: const Text('Medium Quality'),
                       ),
@@ -242,7 +239,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         selected: isLowQuality,
                         leading:
                             isLowQuality
-                                ? const Icon(Icons.check, color: Colors.blue)
+                                ? const Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                )
                                 : const SizedBox(width: 40),
                         title: const Text('Low Quality'),
                       ),
@@ -252,23 +252,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.fromLTRB(16, 16, 8, 4),
                     child: Text(
-                      'Sync Settings',
+                      'SYNC',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -296,16 +292,15 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide.none,
                     minimumSize: const Size.fromHeight(40),
-                    backgroundColor: Colors.white,
-                    shadowColor: Colors.blue,
+                    backgroundColor: AppColors.surface,
                     elevation: 0,
                   ),
                   key: _exportLogsKey,
                   onPressed: _exportLogs,
-                  icon: const Icon(Icons.upload_file, color: Colors.blue),
+                  icon: const Icon(Icons.upload_file, color: AppColors.primary),
                   label: const Text(
                     'Export Logs',
-                    style: TextStyle(color: Colors.blue),
+                    style: TextStyle(color: AppColors.primary),
                   ),
                 ),
 
@@ -328,22 +323,29 @@ class _SettingsPageState extends State<SettingsPage> {
                 //       'Force Sync',
                 //       style: TextStyle(color: Colors.blue),
                 //     )),
-                const SizedBox(height: 30),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 8, 4),
+                    child: Text(
+                      'ACCOUNT',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const Divider(height: 1),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     side: BorderSide.none,
                     // the height is 50, the width is full
                     minimumSize: const Size.fromHeight(40),
-                    backgroundColor: Colors.white,
-                    shadowColor: Colors.orange,
+                    backgroundColor: AppColors.surface,
                     elevation: 0,
                   ),
                   onPressed: () async {
@@ -371,10 +373,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                     }
                   },
-                  icon: const Icon(Icons.logout_outlined, color: Colors.blue),
+                  icon: const Icon(
+                    Icons.logout_outlined,
+                    color: AppColors.primary,
+                  ),
                   label: const Text(
                     'Logout',
-                    style: TextStyle(color: Colors.orange),
+                    style: TextStyle(color: AppColors.primary),
                   ),
                 ),
 
@@ -383,8 +388,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide.none,
                     minimumSize: const Size.fromHeight(40),
-                    backgroundColor: Colors.white,
-                    shadowColor: Colors.orange,
+                    backgroundColor: AppColors.surface,
                     elevation: 0,
                   ),
                   onPressed: () async {
@@ -439,23 +443,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.fromLTRB(16, 16, 8, 4),
                     child: Text(
-                      'App Details',
+                      'APP DETAILS',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
                 ),
-                const Divider(
-                  color: Color.fromARGB(255, 222, 213, 213),
-                  height: 0,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                ),
+                const Divider(height: 1),
                 _infoTile('App name', _packageInfo.appName),
                 _infoTile('Package name', _packageInfo.packageName),
                 _infoTile('App version', _packageInfo.version),
