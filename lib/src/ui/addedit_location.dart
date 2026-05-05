@@ -118,7 +118,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
         imageURL,
         currentLocation.name ?? '',
         fullUserName,
-        currentLocation.id.toString(),
+        currentLocation.id ?? '',
         '',
         'location',
       );

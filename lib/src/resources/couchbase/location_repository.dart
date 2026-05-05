@@ -83,8 +83,8 @@ class LocationRepository {
           !_appSettings.activeConnection) {
         final image = DeckImage(
           localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          remoteUrl: url,
+          isuploaded: url.startsWith('http'),
           parentid: currentLocation.id,
           parenttype: 'location',
           sectiontype: 'locationImage',

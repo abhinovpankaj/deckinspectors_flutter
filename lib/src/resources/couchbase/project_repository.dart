@@ -176,8 +176,8 @@ class ProjectRepository {
           !appSettings.activeConnection) {
         final image = DeckImage(
           localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          remoteUrl: url,
+          isuploaded: url.startsWith('http'),
           parentid: project.id,
           parenttype: 'project',
           sectiontype: 'projectimage',
