@@ -495,14 +495,14 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   // that start turn-by-turn navigation. Falls back to web URLs.
   Future<void> _startNavigation(double lat, double lng) async {
     try {
-      if (await MapLauncher.isMapAvailable(MapType.google) ?? false) {
-        await MapLauncher.showDirections(
-          mapType: MapType.google,
-          destination: Coords(lat, lng),
-        );
-      } else if (await MapLauncher.isMapAvailable(MapType.apple) ?? false) {
+      if (await MapLauncher.isMapAvailable(MapType.apple) ?? false) {
         await MapLauncher.showDirections(
           mapType: MapType.apple,
+          destination: Coords(lat, lng),
+        );
+      } else if (await MapLauncher.isMapAvailable(MapType.google) ?? false) {
+        await MapLauncher.showDirections(
+          mapType: MapType.google,
           destination: Coords(lat, lng),
         );
       } else {
