@@ -96,6 +96,14 @@ class AddEditProjectBloc
         event.isNewProject,
       );
 
+      if (saveResult && event.imageChanged && event.imageURL.isNotEmpty && !event.imageURL.startsWith('assets/')) {
+        await projectRepository.updateProjectUrl(
+          event.project,
+          event.imageURL,
+          originalImagePath: event.originalImagePath,
+        );
+      }
+
       if (!saveResult) {
         emit(const AddEditProjectFailure(error: "failed to save the project"));
       } else {

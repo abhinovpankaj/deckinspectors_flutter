@@ -100,6 +100,8 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
   bool isNewLocation = true;
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
+  String? imageOriginalPath;
+  bool imageChanged = false;
 
   Future<void> save(BuildContext context) async {
     FocusScope.of(context).unfocus();
@@ -114,6 +116,8 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
     if (imageURL.isNotEmpty &&
         !imageURL.startsWith('assets/') &&
         imageURL != (currentLocation.url ?? '')) {
+      imageChanged = true;
+      imageOriginalPath = imageURL;
       final Object result = await imagesBloc.uploadImage(
         imageURL,
         currentLocation.name ?? '',
@@ -131,6 +135,7 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
         }
         // Prefer the remote URL; fall back to original path or local path
         imageURL = result.url ?? result.originalPath ?? imageURL;
+        imageOriginalPath = result.originalPath ?? imageOriginalPath;
         currentLocation.url = imageURL;
       }
     }
@@ -144,6 +149,8 @@ class _AddEditLocationPageState extends State<AddEditLocationPage> {
         fullUserName: fullUserName,
         description: description,
         imageURL: imageURL,
+        imageChanged: imageChanged,
+        originalImagePath: imageOriginalPath,
       ),
     );
   }

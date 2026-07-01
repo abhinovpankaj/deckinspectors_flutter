@@ -28,6 +28,8 @@ class SaveLocationEvent extends LocationEvent {
   final String description;
   final String name;
   final String imageURL;
+  final bool imageChanged;
+  final String? originalImagePath;
 
   const SaveLocationEvent({
     required this.location,
@@ -36,6 +38,8 @@ class SaveLocationEvent extends LocationEvent {
     required this.fullUserName,
     required this.description,
     required this.imageURL,
+    required this.imageChanged,
+    this.originalImagePath,
   });
 
   @override
@@ -46,6 +50,8 @@ class SaveLocationEvent extends LocationEvent {
     description,
     name,
     imageURL,
+    imageChanged,
+    originalImagePath,
   ];
 }
 

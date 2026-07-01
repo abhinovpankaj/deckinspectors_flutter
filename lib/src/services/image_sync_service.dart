@@ -174,6 +174,7 @@ class ImageSyncService {
       // ── Single-URL entities ──────────────────────────────────────────────
       case 'project':
         await _updateProjectUrl(parentId, remoteUrl);
+        break;
 
       case 'subProject':
         // 1. Update the subProject's own url field.
@@ -197,6 +198,7 @@ class ImageSyncService {
             );
           }
         }
+        break;
 
       case 'location':
         // 1. Update the location's own url field.
@@ -225,6 +227,7 @@ class ImageSyncService {
             );
           }
         }
+        break;
 
       // ── Image-list entities ───────────────────────────────────────────────
       case 'visualSection':
@@ -237,6 +240,7 @@ class ImageSyncService {
         );
         // Update coverUrl on the parent location/project section entry.
         await _updateSectionCoverUrl(parentId, remoteUrl);
+        break;
 
       case 'dynamicSection':
         await _replaceInImageList(
@@ -247,6 +251,7 @@ class ImageSyncService {
           remoteUrl,
         );
         await _updateSectionCoverUrl(parentId, remoteUrl);
+        break;
 
       case 'invasiveSection':
         await _replaceInImageList(
@@ -256,6 +261,7 @@ class ImageSyncService {
           localUrl,
           remoteUrl,
         );
+        break;
 
       case 'conclusiveSection':
         await _replaceInImageList(
@@ -265,6 +271,7 @@ class ImageSyncService {
           localUrl,
           remoteUrl,
         );
+        break;
 
       default:
         debugPrint(

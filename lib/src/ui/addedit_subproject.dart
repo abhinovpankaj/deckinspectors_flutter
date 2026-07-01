@@ -81,12 +81,16 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
   String name = "";
   final _formKey = GlobalKey<FormState>();
   String imageURL = 'assets/images/icon.png';
+  String? imageOriginalPath;
+  bool imageChanged = false;
 
   Future<void> save(BuildContext context) async {
     // Upload image if a new local file was captured
     if (imageURL.isNotEmpty &&
         !imageURL.startsWith('assets/') &&
         imageURL != (currentBuilding.url ?? '')) {
+      imageChanged = true;
+      imageOriginalPath = imageURL;
       final Object result = await imagesBloc.uploadImage(
         imageURL,
         currentBuilding.name ?? '',
@@ -104,6 +108,7 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
         }
         // Prefer the remote URL; fall back to original path or local path
         imageURL = result.url ?? result.originalPath ?? imageURL;
+        imageOriginalPath = result.originalPath ?? imageOriginalPath;
         currentBuilding.url = imageURL;
       }
     }
@@ -117,6 +122,8 @@ class _AddEditSubProjectPageState extends State<AddEditSubProjectPage> {
         isNewBuilding,
         fullUserName,
         imageURL,
+        imageChanged,
+        imageOriginalPath,
       ),
     );
   }

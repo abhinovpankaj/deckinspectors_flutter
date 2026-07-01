@@ -22,6 +22,8 @@ class SaveSubProjectEvent extends SubProjectEvent {
   final bool isNewBuilding;
   final String fullUserName;
   final String imageURL;
+  final bool imageChanged;
+  final String? originalImagePath;
   const SaveSubProjectEvent(
     this.subProject,
     this.name,
@@ -29,6 +31,8 @@ class SaveSubProjectEvent extends SubProjectEvent {
     this.isNewBuilding,
     this.fullUserName,
     this.imageURL,
+    this.imageChanged,
+    this.originalImagePath,
   );
   @override
   List<Object?> get props => [
@@ -38,6 +42,8 @@ class SaveSubProjectEvent extends SubProjectEvent {
     isNewBuilding,
     fullUserName,
     imageURL,
+    imageChanged,
+    originalImagePath,
   ];
 }
 

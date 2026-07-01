@@ -39,6 +39,9 @@ class SaveProject extends AddEditProjectEvent {
   final double latitude;
   final String? formId;
   final bool isNewProject;
+  final String imageURL;
+  final bool imageChanged;
+  final String? originalImagePath;
   const SaveProject({
     required this.project,
     required this.name,
@@ -49,6 +52,9 @@ class SaveProject extends AddEditProjectEvent {
     required this.latitude,
     required this.formId,
     required this.isNewProject,
+    required this.imageURL,
+    required this.imageChanged,
+    this.originalImagePath,
   });
   @override
   List<Object?> get props => [
@@ -60,7 +66,10 @@ class SaveProject extends AddEditProjectEvent {
         longitude,
         latitude,
         formId,
-        isNewProject
+        isNewProject,
+        imageURL,
+        imageChanged,
+        originalImagePath,
       ];
 }
 

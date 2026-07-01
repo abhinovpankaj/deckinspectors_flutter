@@ -77,12 +77,16 @@ class LocationRepository {
     }
   }
 
-  Future<bool> updateLocationUrl(Location currentLocation, String url) async {
+  Future<bool> updateLocationUrl(
+    Location currentLocation,
+    String url, {
+    String? originalImagePath,
+  }) async {
     try {
       if (_databaseProvider.isAppOfflineMode() ||
           !_appSettings.activeConnection) {
         final image = DeckImage(
-          localUrl: url,
+          localUrl: originalImagePath ?? url,
           remoteUrl: url,
           isuploaded: url.startsWith('http'),
           parentid: currentLocation.id,

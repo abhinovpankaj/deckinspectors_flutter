@@ -113,6 +113,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   final _formKey = GlobalKey<FormState>();
   double lattitude = 0.0;
   double longitude = 0.0;
+  String? imageOriginalPath;
+  bool imageChanged = false;
+
   save(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       currentProject.name = _nameController.text;
@@ -132,8 +135,10 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
         currentProject.createdat = DateTime.now().toUtc().toIso8601String();
       }
 
-      // If image changed, upload and update project url
+      // Upload image if changed and preserve the original file path
       if (imageURL != currentProject.url && imageURL.isNotEmpty) {
+        imageChanged = true;
+        imageOriginalPath = imageURL;
         final Object result = await imagesBloc.uploadImage(
           imageURL,
           currentProject.name as String,
@@ -152,6 +157,7 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
           }
           // Prefer remote url if provided, otherwise local path
           currentProject.url = result.url ?? result.originalPath ?? imageURL;
+          imageOriginalPath = result.originalPath ?? imageOriginalPath;
         }
       }
 
@@ -169,6 +175,9 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
             latitude: currentProject.latitude,
             formId: currentProject.formId,
             isNewProject: isNewProject,
+            imageURL: imageURL,
+            imageChanged: imageChanged,
+            originalImagePath: imageOriginalPath,
           ),
         );
         // UI will respond to BlocListener for success/failure

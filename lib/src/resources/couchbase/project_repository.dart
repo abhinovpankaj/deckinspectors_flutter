@@ -170,12 +170,16 @@ class ProjectRepository {
   }
 
   /// Update project URL and optionally queue an image doc when offline
-  Future<bool> updateProjectUrl(Project project, String url) async {
+  Future<bool> updateProjectUrl(
+    Project project,
+    String url, {
+    String? originalImagePath,
+  }) async {
     try {
       if (_databaseProvider.isAppOfflineMode() ||
           !appSettings.activeConnection) {
         final image = DeckImage(
-          localUrl: url,
+          localUrl: originalImagePath ?? url,
           remoteUrl: url,
           isuploaded: url.startsWith('http'),
           parentid: project.id,

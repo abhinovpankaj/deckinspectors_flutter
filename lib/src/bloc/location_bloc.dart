@@ -52,11 +52,13 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
       );
       if (ok) {
         // Persist the image URL and update the parent child reference
-        if (event.imageURL.isNotEmpty &&
+        if (event.imageChanged &&
+            event.imageURL.isNotEmpty &&
             !event.imageURL.startsWith('assets/')) {
           await locationRepository.updateLocationUrl(
             event.location,
             event.imageURL,
+            originalImagePath: event.originalImagePath,
           );
         }
         emit(LocationSaveSuccess());

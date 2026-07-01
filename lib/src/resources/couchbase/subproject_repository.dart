@@ -98,14 +98,18 @@ class SubprojectRepository {
     }
   }
 
-  Future<bool> updateSubProjectUrl(SubProject subProject, String url) async {
+  Future<bool> updateSubProjectUrl(
+    SubProject subProject,
+    String url, {
+    String? originalImagePath,
+  }) async {
     try {
       if (_databaseProvider.isAppOfflineMode() ||
           !appSettings.activeConnection) {
         final image = DeckImage(
-          localUrl: url,
-          remoteUrl: '',
-          isuploaded: false,
+          localUrl: originalImagePath ?? url,
+          remoteUrl: url,
+          isuploaded: url.startsWith('http'),
           parentid: subProject.id,
           parenttype: 'subProject',
           sectiontype: 'subProjectimage',
