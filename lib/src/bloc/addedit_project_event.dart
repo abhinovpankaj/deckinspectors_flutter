@@ -58,19 +58,19 @@ class SaveProject extends AddEditProjectEvent {
   });
   @override
   List<Object?> get props => [
-        project,
-        name,
-        address,
-        description,
-        userName,
-        longitude,
-        latitude,
-        formId,
-        isNewProject,
-        imageURL,
-        imageChanged,
-        originalImagePath,
-      ];
+    project,
+    name,
+    address,
+    description,
+    userName,
+    longitude,
+    latitude,
+    formId,
+    isNewProject,
+    imageURL,
+    imageChanged,
+    originalImagePath,
+  ];
 }
 
 class ResetAddEditProject extends AddEditProjectEvent {}

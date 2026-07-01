@@ -298,8 +298,10 @@ class ProjectRepository {
           project.children[index].isInvasive = isInvasive;
         }
       }
-      // Recompute project isInvasive from all children
-      project.isInvasive = project.children.any((c) => c.isInvasive);
+      // Recompute project isInvasive from children and direct project sections.
+      project.isInvasive =
+          project.children.any((c) => c.isInvasive) ||
+          project.sections.any((s) => s.isInvasive);
 
       await createOrUpdateProject(project);
       debugPrint('Project $parentId children now: ${project.children.length}');

@@ -260,6 +260,9 @@ class LocationRepository {
             }
           }
         }
+        parentProject.isInvasive = parentProject.sections.any(
+          (element) => element.isInvasive == true,
+        );
         final updatedDoc = MutableDocument.withId(
           parentProject.id as String,
           parentProject.toDocument(),
@@ -382,9 +385,13 @@ class LocationRepository {
               );
               if (childLocation.isNotEmpty) {
                 childLocation.first.isInvasive = parentSubProject.isInvasive;
-                parentProject.isInvasive = parentProject.children.any(
-                  (element) => element.isInvasive == true,
-                );
+                parentProject.isInvasive =
+                    parentProject.children.any(
+                      (element) => element.isInvasive == true,
+                    ) ||
+                    parentProject.sections.any(
+                      (element) => element.isInvasive == true,
+                    );
                 final updatedDoc = MutableDocument.withId(
                   parentProject.id as String,
                   parentProject.toDocument(),

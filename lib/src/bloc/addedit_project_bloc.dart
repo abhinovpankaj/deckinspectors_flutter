@@ -96,7 +96,10 @@ class AddEditProjectBloc
         event.isNewProject,
       );
 
-      if (saveResult && event.imageChanged && event.imageURL.isNotEmpty && !event.imageURL.startsWith('assets/')) {
+      if (saveResult &&
+          event.imageChanged &&
+          event.imageURL.isNotEmpty &&
+          !event.imageURL.startsWith('assets/')) {
         await projectRepository.updateProjectUrl(
           event.project,
           event.imageURL,
