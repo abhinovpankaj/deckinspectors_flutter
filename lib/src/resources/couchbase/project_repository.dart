@@ -211,7 +211,7 @@ class ProjectRepository {
     try {
       String loggedInUser = usersBloc.userDetails.username ?? '';
 
-      final creationtime = DateTime.now().toString();
+      final creationtime = DateTime.now().toUtc().toIso8601String();
 
       project.latitude = latitude;
       project.longitude = longitude;
@@ -232,7 +232,7 @@ class ProjectRepository {
       }
 
       project.createdat ??= creationtime;
-      project.editedat = DateTime.now().toString();
+      project.editedat = DateTime.now().toUtc().toIso8601String();
       await createOrUpdateProject(project);
       return true;
     } catch (e) {

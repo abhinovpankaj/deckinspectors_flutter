@@ -102,9 +102,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   getCustomFormattedDateTime(String givenDateTime, String dateFormat) {
-    // dateFormat = 'MM/dd/yy';
-    final DateTime docDateTime = DateTime.parse(givenDateTime);
-    return DateFormat(dateFormat).format(docDateTime);
+    try {
+      final DateTime docDateTime = DateTime.parse(givenDateTime);
+      final localDateTime =
+          docDateTime.isUtc ? docDateTime.toLocal() : docDateTime;
+      return DateFormat(dateFormat).format(localDateTime);
+    } catch (_) {
+      return givenDateTime;
+    }
   }
 
   @override
@@ -271,7 +276,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                     0,
                                                   ),
                                               child: Text(
-                                                'Edited at: ${projects[index].editedat != null ? getCustomFormattedDateTime(projects[index].editedat as String, 'MM/dd/yy hh:mm') : ''}',
+                                                'Edited at: ${projects[index].editedat != null ? getCustomFormattedDateTime(projects[index].editedat as String, 'MM/dd/yy HH:mm') : ''}',
                                                 textAlign: TextAlign.left,
                                                 style: const TextStyle(
                                                   color: Colors.black87,

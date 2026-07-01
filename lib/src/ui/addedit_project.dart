@@ -64,9 +64,14 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
   }
 
   getCustomFormattedDateTime(String givenDateTime, String dateFormat) {
-    // dateFormat = 'MM/dd/yy';
-    final DateTime docDateTime = DateTime.parse(givenDateTime);
-    return DateFormat(dateFormat).format(docDateTime);
+    try {
+      final DateTime docDateTime = DateTime.parse(givenDateTime);
+      final localDateTime =
+          docDateTime.isUtc ? docDateTime.toLocal() : docDateTime;
+      return DateFormat(dateFormat).format(localDateTime);
+    } catch (_) {
+      return givenDateTime;
+    }
   }
 
   @override
@@ -118,13 +123,13 @@ class _AddEditProjectPageState extends State<AddEditProjectPage> {
       currentProject.projecttype =
           isProjectSingleLevel ? 'singlelevel' : 'multilevel';
       currentProject.lasteditedby = userFullName;
-      currentProject.editedat = DateTime.now().toIso8601String();
+      currentProject.editedat = DateTime.now().toUtc().toIso8601String();
 
       // Ensure id and created metadata for new projects
       if (currentProject.id == '') {
         //currentProject.id = CouchbaseDocument.generateId();
         currentProject.createdby = userFullName;
-        currentProject.createdat = DateTime.now().toIso8601String();
+        currentProject.createdat = DateTime.now().toUtc().toIso8601String();
       }
 
       // If image changed, upload and update project url

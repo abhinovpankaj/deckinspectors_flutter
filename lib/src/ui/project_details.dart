@@ -386,7 +386,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
 
               var shortDate = DateTime.tryParse(currentProject.createdat ?? '');
               if (shortDate != null) {
-                createdAt = DateFormat.yMMMEd().format(shortDate);
+                createdAt = DateFormat.yMMMEd().format(shortDate.toLocal());
               } else {
                 createdAt = "";
               }
@@ -421,9 +421,14 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
   }
 
   getCustomFormattedDateTime(String givenDateTime, String dateFormat) {
-    // dateFormat = 'MM/dd/yy';
-    final DateTime docDateTime = DateTime.parse(givenDateTime);
-    return DateFormat(dateFormat).format(docDateTime);
+    try {
+      final DateTime docDateTime = DateTime.parse(givenDateTime);
+      final localDateTime =
+          docDateTime.isUtc ? docDateTime.toLocal() : docDateTime;
+      return DateFormat(dateFormat).format(localDateTime);
+    } catch (_) {
+      return givenDateTime;
+    }
   }
 
   Future<Coords?> _getCurrentCoords() async {
@@ -713,7 +718,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Edited on ${getCustomFormattedDateTime(editedat, 'MM/dd/yy hh:mm')}',
+                    'Edited on ${getCustomFormattedDateTime(editedat, 'MM/dd/yy HH:mm')}',
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 11,
